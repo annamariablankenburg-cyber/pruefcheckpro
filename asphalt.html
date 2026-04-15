@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BetonCheck — Geotechnik</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#04070d;--bg2:#0d0a07;--bg3:#15120a;--bg4:#1e1810;--border:rgba(245,158,11,0.08);--border2:rgba(245,158,11,0.2);--text:#fff8e8;--text2:#9e8a5a;--text3:#4a3e1e;--accent:#f59e0b;--gold:#f59e0b;--green:#34d399;--red:#f87171;--blue:#38bdf8;--font:"DM Sans",sans-serif;--display:"Syne",sans-serif;--mono:"JetBrains Mono",monospace;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;}
+body::after{content:"";position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(52,211,153,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(52,211,153,0.02) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;}
+.layout{display:flex;min-height:100vh;position:relative;z-index:1;}
+.sidebar{width:265px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);height:100vh;position:sticky;top:0;overflow-y:auto;display:flex;flex-direction:column;}
+.sb-logo{font-family:var(--display);font-size:14px;font-weight:800;color:var(--accent);display:flex;align-items:center;gap:8px;padding:16px 14px 8px;}
+.sb-sub{font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;padding:0 14px 12px;border-bottom:1px solid var(--border);}
+.sb-tabs{display:flex;padding:8px 10px;gap:4px;border-bottom:1px solid var(--border);}
+.sbt{flex:1;padding:7px 3px;border-radius:7px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:var(--font);transition:all 0.15s;background:none;color:var(--text2);text-align:center;}
+.sbt.active{background:rgba(245,158,11,0.12);color:var(--accent);}
+.sb-nav{padding:10px 8px;flex:1;}
+.sb-sec{margin-bottom:14px;}
+.sb-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:2px;font-family:var(--mono);padding:0 8px;margin-bottom:4px;}
+.sb-item{padding:8px 9px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--text2);transition:all 0.12s;border:1px solid transparent;display:flex;align-items:center;gap:8px;font-weight:500;}
+.sb-item:hover{background:var(--bg4);color:var(--text);}
+.sb-item.active{background:rgba(245,158,11,0.1);color:var(--accent);border-color:rgba(245,158,11,0.2);}
+.content{flex:1;min-width:0;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 26px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.tb-left{display:flex;align-items:center;gap:9px;}
+.mob-btn{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px;}
+.tb-h{font-family:var(--display);font-size:14px;font-weight:700;}
+.btn-print{padding:6px 13px;border-radius:7px;border:1px solid var(--border2);background:none;color:var(--text2);font-family:var(--font);font-size:12px;cursor:pointer;}
+.btn-print:hover{background:var(--bg3);color:var(--text);}
+.main{padding:28px 34px;max-width:880px;}
+.page{display:none;}.page.active{display:block;}
+.hb{background:linear-gradient(135deg,rgba(245,158,11,0.07),rgba(5,150,105,0.03));border:1px solid var(--border2);border-radius:14px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden;}
+.hb::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--gold));}
+.hb-norm{font-family:var(--mono);font-size:10px;color:var(--accent);margin-bottom:5px;letter-spacing:1px;}
+.hb-title{font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;}
+.hb-desc{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px;}
+.hb-tags{display:flex;gap:7px;flex-wrap:wrap;}
+.hb-tag{font-size:10px;font-family:var(--mono);padding:3px 8px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:17px;margin-bottom:15px;}
+.card-t{font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:11px;}
+.gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;}
+.gi{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px;}
+.gi-ico{font-size:17px;flex-shrink:0;}
+.gi-n{font-size:12px;font-weight:500;}
+.gi-s{font-size:10px;color:var(--text2);font-family:var(--mono);margin-top:1px;}
+.steps{display:flex;flex-direction:column;margin-bottom:16px;}
+.stp{background:var(--bg2);border:1px solid var(--border);overflow:hidden;}
+.stp:first-child{border-radius:11px 11px 0 0;}.stp:last-child{border-radius:0 0 11px 11px;}.stp+.stp{border-top:none;}.stp:hover{background:var(--bg3);}
+.stp-in{display:flex;align-items:stretch;}
+.stp-nc{background:rgba(245,158,11,0.06);border-right:1px solid var(--border);padding:15px 13px;min-width:52px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;}
+.stp-n{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--accent);line-height:1;}
+.stp-nl{font-size:7px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;}
+.stp-b{flex:1;padding:13px 17px;}
+.stp-t{font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:5px;}
+.stp-tx{font-size:13px;color:var(--text2);line-height:1.7;}
+.stp-tx strong{color:var(--text);}
+.stp-img{width:100%;border-radius:8px;margin-top:10px;overflow:hidden;background:var(--bg3);border:1px solid var(--border);display:flex;}
+.stp-svg{flex:1;display:flex;align-items:center;justify-content:center;padding:11px;min-height:130px;}
+.stp-ph{width:130px;flex-shrink:0;background:var(--bg4);border-left:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:11px;gap:5px;cursor:pointer;}
+.stp-ph:hover{background:rgba(245,158,11,0.05);}
+.ph-i{font-size:18px;opacity:0.35;}
+.ph-l{font-size:9px;color:var(--text3);text-align:center;font-family:var(--mono);}
+.h{border-radius:8px;padding:11px 15px;margin:10px 0;font-size:12px;line-height:1.7;}
+.h-i{background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);color:var(--text2);}
+.h-i strong{color:var(--accent);}
+.h-w{background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.18);color:var(--text2);}
+.h-w strong{color:var(--gold);}
+.h-d{background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.18);color:var(--text2);}
+.h-d strong{color:var(--red);}
+.tbl-box{border-radius:9px;overflow:hidden;border:1px solid var(--border);margin-bottom:15px;}
+.et{width:100%;border-collapse:collapse;font-size:12px;}
+.et th{padding:8px 12px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-family:var(--mono);border-bottom:1px solid var(--border);background:var(--bg3);}
+.et td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text2);}
+.et tr:last-child td{border-bottom:none;}
+.et tr:hover td{background:rgba(52,211,153,0.03);}
+.et td:first-child{font-family:var(--mono);color:var(--accent);font-weight:500;}
+.kurz{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:15px;margin-top:16px;}
+.kurz-t{font-family:var(--display);font-size:12px;font-weight:700;color:var(--accent);margin-bottom:9px;}
+.ks-list{display:flex;flex-direction:column;gap:5px;}
+.ks{display:flex;gap:8px;align-items:flex-start;font-size:11px;color:var(--text2);}
+.ks-n{background:var(--accent);color:#04070d;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;font-family:var(--mono);margin-top:2px;}
+.rc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:15px;}
+.rc-card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:20px;}
+.rc-title{font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:4px;}
+.rc-desc{font-size:12px;color:var(--text2);margin-bottom:14px;}
+.rc-ig{margin-bottom:10px;}
+.rc-lbl{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);margin-bottom:3px;display:block;}
+.rc-inp{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;}
+.rc-inp:focus{outline:none;border-color:var(--accent);}
+.rc-res{background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:8px;padding:11px 14px;margin-top:11px;font-family:var(--mono);font-size:15px;font-weight:700;color:var(--accent);text-align:center;}
+.rc-res.ok{color:var(--green);}
+.rc-res.warn{background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.2);color:var(--gold);}
+.rc-res.bad{background:rgba(248,113,113,0.06);border-color:rgba(248,113,113,0.2);color:var(--red);}
+.qz-wrap{max-width:600px;margin:0 auto;}
+.qz-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.qz-num{font-family:var(--mono);font-size:12px;color:var(--text2);}
+.qz-score{background:rgba(245,158,11,0.1);color:var(--accent);font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:100px;}
+.qz-pb-w{height:4px;background:var(--bg3);border-radius:100px;overflow:hidden;margin-bottom:24px;}
+.qz-pb{height:100%;background:linear-gradient(90deg,var(--accent),var(--blue));border-radius:100px;transition:width 0.4s;}
+.qz-q{font-family:var(--display);font-size:17px;font-weight:700;line-height:1.4;margin-bottom:20px;}
+.qz-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.qz-opt{padding:12px 15px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);cursor:pointer;font-size:13px;transition:all 0.15s;text-align:left;color:var(--text);font-family:var(--font);}
+.qz-opt:hover:not(:disabled){border-color:rgba(245,158,11,0.3);background:var(--bg3);}
+.qz-opt.correct{background:rgba(245,158,11,0.1);border-color:rgba(52,211,153,0.4);color:var(--accent);}
+.qz-opt.wrong{background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.4);color:var(--red);}
+.qz-opt:disabled{cursor:default;}
+.qz-expl{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:13px 15px;font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:14px;display:none;}
+.qz-expl.show{display:block;}
+.qz-next{background:var(--accent);color:#04070d;padding:10px 22px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:var(--font);display:none;}
+.qz-next.show{display:inline-flex;}
+.fc-filter{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+.fc-fb{padding:5px 12px;border-radius:100px;font-size:10px;font-family:var(--mono);cursor:pointer;border:1px solid var(--border2);background:none;color:var(--text2);transition:all 0.12s;}
+.fc-fb:hover,.fc-fb.active{background:rgba(245,158,11,0.1);color:var(--accent);border-color:rgba(245,158,11,0.25);}
+.fc-area{display:flex;flex-direction:column;align-items:center;}
+.fc-stat{font-family:var(--mono);font-size:12px;color:var(--text2);margin-bottom:18px;}
+.flashcard{width:100%;max-width:520px;height:250px;cursor:pointer;perspective:1000px;margin-bottom:22px;}
+.fc-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.5s cubic-bezier(0.4,0,0.2,1);}
+.flashcard.flipped .fc-inner{transform:rotateY(180deg);}
+.fc-front,.fc-back{position:absolute;inset:0;backface-visibility:hidden;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px;text-align:center;}
+.fc-front{background:var(--bg2);border:1px solid var(--border2);}
+.fc-back{background:var(--bg3);border:1px solid rgba(245,158,11,0.3);transform:rotateY(180deg);}
+.fc-cat{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:11px;}
+.fc-q{font-family:var(--display);font-size:17px;font-weight:700;line-height:1.4;}
+.fc-a{font-size:13px;color:var(--text2);line-height:1.65;}
+.fc-hint{font-size:10px;color:var(--text3);margin-top:12px;font-family:var(--mono);}
+.fc-btns{display:flex;gap:9px;justify-content:center;margin-bottom:16px;}
+.fc-btn{padding:9px 20px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:var(--font);transition:all 0.15s;}
+.fc-wrong{background:rgba(248,113,113,0.1);color:var(--red);border:1px solid rgba(248,113,113,0.3);}
+.fc-right{background:rgba(245,158,11,0.1);color:var(--green);border:1px solid rgba(245,158,11,0.3);}
+.fc-next-btn{background:var(--accent);color:#04070d;}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;}
+.mob-overlay.open{display:block;}
+.mob-bottom{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--bg2);border-top:1px solid var(--border2);padding:5px 2px;overflow-x:auto;}
+.mbn{display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border-radius:7px;cursor:pointer;border:none;background:none;color:var(--text2);font-family:var(--font);}
+.mbn.active{background:rgba(245,158,11,0.12);color:var(--accent);}
+.mbn-i{font-size:16px;line-height:1;}
+.mbn-l{font-size:8px;font-family:var(--mono);white-space:nowrap;}
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-265px;top:0;height:100vh;z-index:300;transition:left 0.25s ease;box-shadow:6px 0 30px rgba(0,0,0,0.6);}
+  .sidebar.open{left:0;}
+  .mob-btn{display:flex!important;align-items:center;}
+  .main{padding:16px 14px 85px;}
+  .topbar{padding:0 13px;}
+  .tb-h{font-size:12px;}
+  .mob-bottom{display:flex!important;}
+}
+</style>
+</head>
+<body>
+<div class="mob-overlay" id="mob-overlay" onclick="closeSB()"></div>
+<div class="layout">
+<div class="sidebar" id="sidebar">
+  <div class="sb-logo">&#127757; BetonCheck Asphalt</div>
+  <div class="sb-sub">Asphalttechnik &middot; Baustoffpr&uuml;fung</div>
+  <div class="sb-tabs">
+    <button class="sbt active" onclick="switchTab('a',this)">&#128214; Anleit.</button>
+    <button class="sbt" onclick="switchTab('n',this)">&#128218; Normen</button>
+    <button class="sbt" onclick="switchTab('z',this)">&#127891; Azubi</button>
+  </div>
+  <div class="sb-nav">
+    <div id="nav-a">
+      <div class="sb-sec"><div class="sb-lbl">Einbaukontrolle</div>
+        <div class="sb-item active" onclick="show('temperatur')">&#127777; Temperaturmessung</div>
+        <div class="sb-item" onclick="show('verdichtung')">&#128202; Verdichtungsgrad</div>
+        <div class="sb-item" onclick="show('schichtdicke')">&#128207; Schichtdicke</div>
+        <div class="sb-item" onclick="show('rauheit')">&#127944; Rauheit (Sandfleck)</div>
+      </div>
+      <div class="sb-sec"><div class="sb-lbl">Laborverfahren</div>
+        <div class="sb-item" onclick="show('marshall')">&#128296; Marshall-Versuch</div>
+        <div class="sb-item" onclick="show('raumgewicht')">&#9878; Raumgewicht Bohrkern</div>
+        <div class="sb-item" onclick="show('extraktion')">&#129514; Extraktion Bindemittel</div>
+      </div>
+      <div class="sb-sec"><div class="sb-lbl">Bauwerk</div>
+        <div class="sb-item" onclick="show('bohrkern')">&#128305; Bohrkernentnahme</div>
+      </div>
+    </div>
+    <div id="nav-n" style="display:none">
+      <div class="sb-sec"><div class="sb-lbl">Asphalt-Normen</div>
+        <div class="sb-item" onclick="show('n12697')">&#128216; DIN EN 12697 Reihe</div>
+        <div class="sb-item" onclick="show('ntlasphalt')">&#128216; TL Asphalt-StB</div>
+        <div class="sb-item" onclick="show('nztvlsw')">&#128216; ZTV Asphalt-StB</div>
+        <div class="sb-item" onclick="show('nasphaltarten')">&#128202; Asphaltarten Vergleich</div>
+      </div>
+    </div>
+    <div id="nav-z" style="display:none">
+      <div class="sb-sec"><div class="sb-lbl">Lernmodule</div>
+        <div class="sb-item" onclick="show('karten')">&#127183; Lernkarten</div>
+        <div class="sb-item" onclick="show('quiz')">&#129504; Quiz</div>
+        <div class="sb-item" onclick="show('rechner')">&#129518; Rechner</div>
+        <div class="sb-item" onclick="show('tabellen')">&#128202; Tabellen</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="content">
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-btn" style="display:none" onclick="toggleSB()">&#9776;</button>
+      <div class="tb-h" id="tb-h">Temperaturmessung &mdash; Asphalteinbau</div>
+    </div>
+    <button class="btn-print" onclick="window.print()">&#128424; Drucken</button>
+  </div>
+  <div class="main">
+
+<!-- TEMPERATUR EINBAU -->
+<div class="page active" id="page-temperatur">
+  <div class="hb"><div class="hb-norm">TL Asphalt-StB &middot; Einbaukontrolle</div>
+    <div class="hb-title">Temperaturmessung beim Asphalteinbau</div>
+    <div class="hb-desc">Kontrolle der Einbau- und Liefertemperatur. Zu kalter Asphalt laesst sich nicht verdichten, zu heisser schaedigt das Bindemittel.</div>
+    <div class="hb-tags"><span class="hb-tag">TL Asphalt</span><span class="hb-tag">Einbautemperatur</span><span class="hb-tag">Verdichtungsfenster</span></div>
+  </div>
+  <div class="card"><div class="card-t">&#128295; Geraete</div>
+    <div class="gg">
+      <div class="gi"><div class="gi-ico">&#127777;</div><div><div class="gi-n">Einstechthermometer</div><div class="gi-s">bis 200&deg;C, &plusmn;2&deg;C</div></div></div>
+      <div class="gi"><div class="gi-ico">&#128247;</div><div><div class="gi-n">Infrarot-Thermometer</div><div class="gi-s">kontaktlos, schnell</div></div></div>
+      <div class="gi"><div class="gi-ico">&#128203;</div><div><div class="gi-n">Pruefprotokoll</div><div class="gi-s">Uhrzeit, Ort, Sorte</div></div></div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div><div class="stp-nl">LKW</div></div>
+      <div class="stp-b"><div class="stp-t">Temperatur am LKW messen</div>
+        <div class="stp-tx">Bei Anlieferung Thermometer mind. <strong>150mm tief</strong> in die Asphaltmischung einstechen. Mind. 3 Messungen an verschiedenen Stellen der Ladeflaeche.</div>
+        <div class="h h-i"><strong>Richtwerte Transporttemperatur:</strong> AC: 130&ndash;165&deg;C &bull; SMA: 140&ndash;175&deg;C &bull; PA: 150&ndash;185&deg;C</div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div><div class="stp-nl">Fertiger</div></div>
+      <div class="stp-b"><div class="stp-t">Einbautemperatur hinter dem Fertiger messen</div>
+        <div class="stp-tx">Direkt hinter der Bohle in den frisch eingebauten Streifen einstechen. <strong>Mind. 3 Messungen</strong> je Einbaustreifen. Werte notieren.</div>
+        <div class="stp-img"><div class="stp-svg">
+          <svg width="200" height="110" viewBox="0 0 200 110">
+            <rect x="10" y="75" width="180" height="25" rx="2" fill="#1a1005" stroke="#f59e0b" stroke-width="1.5"/>
+            <text x="100" y="91" fill="#9e8a5a" font-size="9" text-anchor="middle" font-family="monospace">Asphalt frisch</text>
+            <rect x="30" y="45" width="90" height="30" rx="3" fill="#231a08" stroke="#f59e0b" stroke-width="1.5"/>
+            <text x="75" y="63" fill="#f59e0b" font-size="9" text-anchor="middle" font-family="monospace">Fertiger &rarr;</text>
+            <line x1="155" y1="25" x2="155" y2="72" stroke="#fb923c" stroke-width="2"/>
+            <circle cx="155" cy="23" r="4" fill="#fb923c"/>
+            <text x="163" y="52" fill="#fb923c" font-size="9" font-family="monospace">145&deg;C</text>
+          </svg>
+        </div><div class="stp-ph" onclick="upl(this)"><div class="ph-i">&#128247;</div><div class="ph-l">Eigenes Foto</div><input type="file" accept="image/*" style="display:none" onchange="prv(this)"/></div></div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div><div class="stp-nl">Walze</div></div>
+      <div class="stp-b"><div class="stp-t">Mindesttemperatur fuer letzte Walzenueberfahrt pruefen</div>
+        <div class="stp-tx">Bei zu niedriger Temperatur (unter ca. 100&deg;C) Verdichtung sofort stoppen.</div>
+        <div class="h h-d"><strong>Achtung:</strong> Unter ~100&deg;C entstehen keine weiteren Verdichtungsgewinne, aber Risse!</div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">04</div><div class="stp-nl">Protokoll</div></div>
+      <div class="stp-b"><div class="stp-t">Alle Messungen protokollieren</div>
+        <div class="stp-tx">Uhrzeit, Stations-km, Asphaltsorte, Temperatur, Witterung, Einbaugeraet aufzeichnen.</div>
+      </div></div></div>
+  </div>
+  <div class="tbl-box"><table class="et"><thead><tr><th>Asphaltart</th><th>Min. Einbau (&deg;C)</th><th>Opt. Einbau (&deg;C)</th><th>Max. Lieferung (&deg;C)</th></tr></thead><tbody>
+    <tr><td>AC (Asphaltbeton)</td><td>120</td><td>130&ndash;155</td><td>165</td></tr>
+    <tr><td>SMA (Splittmastix)</td><td>130</td><td>140&ndash;165</td><td>175</td></tr>
+    <tr><td>PA (Poroesasphalt)</td><td>140</td><td>150&ndash;175</td><td>185</td></tr>
+    <tr><td>MA (Gussasphalt)</td><td>200</td><td>210&ndash;220</td><td>230</td></tr>
+  </tbody></table></div>
+  <div class="kurz"><div class="kurz-t">Kurzanleitung</div><div class="ks-list">
+    <div class="ks"><div class="ks-n">1</div><div>LKW: 150mm tief einstechen, Transporttemperatur messen</div></div>
+    <div class="ks"><div class="ks-n">2</div><div>Hinter Fertiger: mind. 3 Messungen je Einbaustreifen</div></div>
+    <div class="ks"><div class="ks-n">3</div><div>Letzte Walze: Mindesttemperatur ~100&deg;C pruefen</div></div>
+    <div class="ks"><div class="ks-n">4</div><div>Alles protokollieren: Zeit, Ort, Sorte, Temperatur</div></div>
+  </div></div>
+</div>
+
+<!-- MARSHALL -->
+<div class="page" id="page-marshall">
+  <div class="hb"><div class="hb-norm">DIN EN 12697-34 &middot; Laborversuch</div>
+    <div class="hb-title">Marshall-Versuch</div>
+    <div class="hb-desc">Bestimmung von Stabilitaet, Fliesswert und Marshall-Quotient. Wichtigstes Laborverfahren zur Beurteilung der Asphaltzusammensetzung.</div>
+    <div class="hb-tags"><span class="hb-tag">EN 12697-34</span><span class="hb-tag">Stabilitaet</span><span class="hb-tag">Fliesswert</span><span class="hb-tag">60&deg;C</span></div>
+  </div>
+  <div class="card"><div class="card-t">&#128295; Geraete</div>
+    <div class="gg">
+      <div class="gi"><div class="gi-ico">&#128305;</div><div><div class="gi-n">Marshall-Presse</div><div class="gi-s">50 kN, kalibriert</div></div></div>
+      <div class="gi"><div class="gi-ico">&#128167;</div><div><div class="gi-n">Wasserbad</div><div class="gi-s">60&deg;C &plusmn;1&deg;C</div></div></div>
+      <div class="gi"><div class="gi-ico">&#128296;</div><div><div class="gi-n">Marshall-Hammer</div><div class="gi-s">75 Schlaege je Seite</div></div></div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div><div class="stp-nl">Herstell.</div></div>
+      <div class="stp-b"><div class="stp-t">Probekoerper herstellen: 1200g, 75 Schlaege je Seite</div>
+        <div class="stp-tx">Asphalt auf Einbautemperatur erwaermen. <strong>1200g</strong> in Verdichtungsform (Diam 101,6mm) einwiegen. Beidseitig je <strong>75 Schlaege</strong> mit Marshall-Hammer.</div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div><div class="stp-nl">Masse</div></div>
+      <div class="stp-b"><div class="stp-t">Ausmessen und Raumgewicht bestimmen</div>
+        <div class="stp-tx">Hoehe (4 Messungen), Durchmesser messen. Masse in Luft, Wasser und Oberflaeche abtupfen &rarr; Raumgewicht r berechnen.</div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div><div class="stp-nl">Wasserbad</div></div>
+      <div class="stp-b"><div class="stp-t">Wasserbad 60&deg;C, mind. 30 Minuten</div>
+        <div class="stp-tx">Probekoerper in Wasserbad bei <strong>60 &plusmn; 1&deg;C, mind. 30 Min</strong> (max. 40 Min). Kein Boden- oder Randkontakt.</div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">04</div><div class="stp-nl">Pruefung</div></div>
+      <div class="stp-b"><div class="stp-t">Stabilitaetspruefung: 50 mm/min bis Bruch</div>
+        <div class="stp-tx">Innerhalb 30 Sek. nach Wasserbad einlegen. <strong>50 mm/min</strong> Belastung. Hoechstkraft (Stabilitaet) und Verformung bei Hoechstkraft (Fliesswert) ablesen.</div>
+        <div class="h h-i"><strong>Marshall-Quotient MQ = Stabilitaet (N) / Fliesswert (mm)</strong></div>
+      </div></div></div>
+  </div>
+  <div class="tbl-box"><table class="et"><thead><tr><th>Asphaltart</th><th>Min. Stabilitaet (kN)</th><th>Fliesswert (mm)</th></tr></thead><tbody>
+    <tr><td>AC 11 D (Deckschicht)</td><td>&ge; 6,0</td><td>2&ndash;5</td></tr>
+    <tr><td>AC 22 T (Tragschicht)</td><td>&ge; 7,5</td><td>2&ndash;5</td></tr>
+    <tr><td>SMA 11 S</td><td>&ge; 6,5</td><td>2&ndash;4</td></tr>
+  </tbody></table></div>
+  <div class="kurz"><div class="kurz-t">Kurzanleitung</div><div class="ks-list">
+    <div class="ks"><div class="ks-n">1</div><div>1200g einwiegen, je 75 Schlaege beidseitig</div></div>
+    <div class="ks"><div class="ks-n">2</div><div>Masse und Raumgewicht bestimmen</div></div>
+    <div class="ks"><div class="ks-n">3</div><div>60&deg;C Wasserbad mind. 30 Min</div></div>
+    <div class="ks"><div class="ks-n">4</div><div>50mm/min &rarr; Stabilitaet + Fliesswert ablesen</div></div>
+    <div class="ks"><div class="ks-n">5</div><div>MQ = Stabilitaet / Fliesswert berechnen</div></div>
+  </div></div>
+</div>
+
+<!-- RAUMGEWICHT -->
+<div class="page" id="page-raumgewicht">
+  <div class="hb"><div class="hb-norm">DIN EN 12697-6 &middot; Raumgewicht</div>
+    <div class="hb-title">Raumgewicht Bohrkern &mdash; Hydrostatisch</div>
+    <div class="hb-desc">Bestimmung des Raumgewichts von Asphaltprobekoerpern durch Wiegen in Luft und Wasser.</div>
+    <div class="hb-tags"><span class="hb-tag">EN 12697-6</span><span class="hb-tag">Raumgewicht</span><span class="hb-tag">Hydrostatisch</span></div>
+  </div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Trocknen und wiegen &rarr; m1 (trocken Luft)</div><div class="stp-tx">Probe bei 40&deg;C trocknen. Masse in Luft <strong>m1</strong> bestimmen.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">30 min waessern, unter Wasser wiegen &rarr; m2</div><div class="stp-tx">Probe 30 Min in Wasser (20&deg;C) legen. Unter Wasser wiegen &rarr; <strong>m2</strong>.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">Oberflaeche abtupfen, wiegen &rarr; m3</div><div class="stp-tx">Oberflaeche schnell abtupfen. Sofort wiegen &rarr; <strong>m3</strong>.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">04</div></div><div class="stp-b"><div class="stp-t">Raumgewicht berechnen</div><div class="stp-tx"><strong>r = m1 / (m3 - m2) &times; 0,998</strong><br>0,998 = Dichte Wasser bei 20&deg;C</div></div></div></div>
+  </div>
+</div>
+
+<!-- BOHRKERN -->
+<div class="page" id="page-bohrkern">
+  <div class="hb"><div class="hb-norm">EN 12697 &middot; Probenahme</div>
+    <div class="hb-title">Bohrkernentnahme</div>
+    <div class="hb-desc">Entnahme von Bohrkernen aus eingebautem Asphalt zur Bestimmung von Schichtdicke, Raumgewicht und Zusammensetzung.</div>
+    <div class="hb-tags"><span class="hb-tag">Bohrkern Diam 100mm</span><span class="hb-tag">Nassbohrung</span><span class="hb-tag">Sofort schliessen</span></div>
+  </div>
+  <div class="card"><div class="card-t">&#128295; Geraete</div>
+    <div class="gg">
+      <div class="gi"><div class="gi-ico">&#128305;</div><div><div class="gi-n">Kernbohrgeraet</div><div class="gi-s">Diam 100 oder 150mm</div></div></div>
+      <div class="gi"><div class="gi-ico">&#128167;</div><div><div class="gi-n">Wasseranschluss</div><div class="gi-s">Kuehlung Bohrkrone</div></div></div>
+      <div class="gi"><div class="gi-ico">&#128208;</div><div><div class="gi-n">Schublehre</div><div class="gi-s">Schichtdickenmessung</div></div></div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Bohrstelle festlegen (mind. 0,5m vom Rand)</div><div class="stp-tx">Bohrstelle nach Pruefplan. <strong>Mindestabstand Fahrbahnrand: 0,5m</strong>. Lage einmessen. Leitungen abklaeren!</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">Nassbohrung durch alle Asphaltschichten</div><div class="stp-tx">Senkrecht aufsetzen, mit Wasser kuehlen. <strong>Kein Trockenbohren!</strong> Durch alle Asphaltschichten bohren. Kern vorsichtig herausheben.</div>
+        <div class="stp-img"><div class="stp-svg">
+          <svg width="180" height="110" viewBox="0 0 180 110">
+            <rect x="10" y="65" width="160" height="12" rx="2" fill="#231a08" stroke="#f59e0b" stroke-width="1.5"/>
+            <rect x="10" y="77" width="160" height="10" rx="1" fill="#1a1208" stroke="#9e8a5a" stroke-width="1"/>
+            <rect x="10" y="87" width="160" height="16" rx="1" fill="#120e05" stroke="#9e8a5a" stroke-width="1"/>
+            <rect x="78" y="0" width="24" height="65" rx="4" fill="#1a1005" stroke="#f59e0b" stroke-width="1.5"/>
+            <text x="38" y="73" fill="#f59e0b" font-size="8" font-family="monospace">Deckschicht</text>
+            <text x="38" y="85" fill="#9e8a5a" font-size="8" font-family="monospace">Binder</text>
+            <text x="38" y="98" fill="#6b5a30" font-size="8" font-family="monospace">Tragschicht</text>
+            <text x="90" y="35" fill="#f59e0b" font-size="8" text-anchor="middle" font-family="monospace">Diam 100mm</text>
+          </svg>
+        </div><div class="stp-ph" onclick="upl(this)"><div class="ph-i">&#128247;</div><div class="ph-l">Eigenes Foto</div><input type="file" accept="image/*" style="display:none" onchange="prv(this)"/></div></div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">Fotografieren, Schichtdicken messen, beschriften</div><div class="stp-tx">Kern sofort fotografieren. <strong>Schichtdicken</strong> aller Schichten an mind. 3 Stellen messen. Beschriften: Datum, Ort, km.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">04</div></div><div class="stp-b"><div class="stp-t">Bohrloch sofort verschliessen</div><div class="stp-tx">Mit heissem oder Kaltasphalt verfuellen, verdichten. Verkehrssicherheit wiederherstellen.</div></div></div></div>
+  </div>
+  <div class="kurz"><div class="kurz-t">Kurzanleitung</div><div class="ks-list">
+    <div class="ks"><div class="ks-n">1</div><div>Bohrstelle festlegen, Leitungen pruefen</div></div>
+    <div class="ks"><div class="ks-n">2</div><div>Nassbohrung durch alle Schichten</div></div>
+    <div class="ks"><div class="ks-n">3</div><div>Sofort fotografieren + Schichtdicken messen</div></div>
+    <div class="ks"><div class="ks-n">4</div><div>Bohrloch sofort verschliessen</div></div>
+  </div></div>
+</div>
+
+<!-- SCHICHTDICKE -->
+<div class="page" id="page-schichtdicke">
+  <div class="hb"><div class="hb-norm">ZTV Asphalt-StB &middot; Einbaukontrolle</div>
+    <div class="hb-title">Schichtdickenpr&uuml;fung</div>
+    <div class="hb-desc">Ueberpruefung der eingebauten Schichtdicken anhand von Bohrkernen. Toleranz: &plusmn;10mm vom Sollwert.</div>
+    <div class="hb-tags"><span class="hb-tag">Schichtdicke</span><span class="hb-tag">Soll/Ist</span><span class="hb-tag">Toleranz &plusmn;10mm</span></div>
+  </div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Schichten im Bohrkern identifizieren</div><div class="stp-tx">Alle Schichten eindeutig zuordnen: Deckschicht, Binderschicht, Tragschicht. Schichttrennung oft durch unterschiedliche Kornstruktur sichtbar.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">Je Schicht mind. 3 Messungen mit Schublehre</div><div class="stp-tx">Mittelwert je Schicht bilden. Gesamtdicke = Summe aller Einzelschichten.</div><div class="h h-i" style="margin-top:8px;"><strong>Toleranz nach ZTV:</strong> Einzelwert &plusmn;10mm vom Sollwert. Mittelwert: 0/-5mm.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">Soll/Ist-Vergleich und Bewertung</div><div class="stp-tx">Gemessene Dicke mit Planvorgabe vergleichen. Bei Unterschreitung &rarr; Maengelanzeige.</div></div></div></div>
+  </div>
+</div>
+
+<!-- VERDICHTUNGSGRAD -->
+<div class="page" id="page-verdichtung">
+  <div class="hb"><div class="hb-norm">DIN EN 12697-8 &middot; Verdichtungskontrolle</div>
+    <div class="hb-title">Verdichtungsgrad von Asphalt</div>
+    <div class="hb-desc">Vergleich des Raumgewichts des eingebauten Asphalts (Bohrkern) mit der Bezugsdichte. Ergebnis: Verdichtungsgrad in %.</div>
+    <div class="hb-tags"><span class="hb-tag">VG &ge; 97%</span><span class="hb-tag">Raumgewicht</span><span class="hb-tag">Bezugsdichte</span></div>
+  </div>
+  <div class="h h-i"><strong>Formel:</strong> VG (%) = r_Bohrkern / r_Bezug &times; 100</div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Raumgewicht Bohrkern hydrostatisch bestimmen</div><div class="stp-tx">r = m1 / (m3 &minus; m2) &times; 0,998 (siehe Seite Raumgewicht).</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">Bezugsdichte aus Marshall-Probekoerpern</div><div class="stp-tx">Bezugsdichte aus Marshall-Labor oder Mischgutzusammensetzung.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">Verdichtungsgrad berechnen und bewerten</div><div class="stp-tx"><strong>VG = r_Kern / r_Bezug &times; 100</strong><br>Min. nach ZTV: VG &ge; 97% (Mittelwert). Kein Einzelwert &lt; 95%.</div></div></div></div>
+  </div>
+</div>
+
+<!-- RAUHEIT -->
+<div class="page" id="page-rauheit">
+  <div class="hb"><div class="hb-norm">DIN EN 13036-1 &middot; Textur</div>
+    <div class="hb-title">Rauheitsmessung &mdash; Sandfleckmethode</div>
+    <div class="hb-desc">Bestimmung der mittleren Texturtiefe (MTD) durch Ausbreiten von 25ml Sand auf der Fahrbahnoberflaech.</div>
+    <div class="hb-tags"><span class="hb-tag">EN 13036-1</span><span class="hb-tag">MTD</span><span class="hb-tag">25ml Sand</span></div>
+  </div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Trockene, saubere Messstelle waehlen</div><div class="stp-tx">Keine Naesse oder Verschmutzung erlaubt.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">25ml Rundsand kreisfoermig ausbreiten</div><div class="stp-tx"><strong>25ml Sand</strong> aufschuetten. Mit Ausbreitscheibe (Diam 64mm) kreisfoermig ausbreiten bis Textur gerade gefuellt.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">Durchmesser D in 4 Richtungen messen</div><div class="stp-tx">Mittelwert D berechnen.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">04</div></div><div class="stp-b"><div class="stp-t">Mittlere Texturtiefe berechnen</div><div class="stp-tx"><strong>MTD = 4 &times; 25000 / (pi &times; D&sup2;) in mm</strong></div><div class="h h-i" style="margin-top:8px;"><strong>Anforderungen:</strong> SMA: MTD &ge; 0,9 mm &bull; AC D: MTD &ge; 0,7 mm</div></div></div></div>
+  </div>
+  <div class="kurz"><div class="kurz-t">Kurzanleitung</div><div class="ks-list">
+    <div class="ks"><div class="ks-n">1</div><div>Trockene, saubere Messstelle</div></div>
+    <div class="ks"><div class="ks-n">2</div><div>25ml Sand kreisfoermig ausbreiten</div></div>
+    <div class="ks"><div class="ks-n">3</div><div>4 Durchmessermessungen &rarr; Mittelwert D</div></div>
+    <div class="ks"><div class="ks-n">4</div><div>MTD = 4&times;25000 / (pi&times;D&sup2;)</div></div>
+  </div></div>
+</div>
+
+<!-- EXTRAKTION -->
+<div class="page" id="page-extraktion">
+  <div class="hb"><div class="hb-norm">DIN EN 12697-1 &middot; Zusammensetzung</div>
+    <div class="hb-title">Extraktionsversuch &mdash; Bindemittelgehalt</div>
+    <div class="hb-desc">Bestimmung des Bindemittelgehalts durch Loesen des Bitumens mit einem Loesemittel.</div>
+    <div class="hb-tags"><span class="hb-tag">EN 12697-1</span><span class="hb-tag">Bitumengehalt</span><span class="hb-tag">Gefahrstoff!</span></div>
+  </div>
+  <div class="h h-d"><strong>Gefahrstoff:</strong> Loesemittel sind gesundheitsgefaehrdend. Nur im Abzug, volle Schutzausruestung!</div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Probe einwiegen &rarr; mA (mind. 1000g)</div><div class="stp-tx">Asphaltprobe einwiegen. Masse <strong>mA</strong> notieren.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">Extraktion bis Losung farblos (30-60 Min)</div><div class="stp-tx">Loesemittel zugeben. Geraet 30&ndash;60 Min laufen bis Loesung farblos. Abfiltrieren.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">Mineral bei 105&deg;C trocknen &rarr; mM</div><div class="stp-tx">Mineralgemisch trocknen. Masse <strong>mM</strong> bestimmen.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">04</div></div><div class="stp-b"><div class="stp-t">Bindemittelgehalt berechnen</div><div class="stp-tx"><strong>B (%) = (mA &minus; mM) / mA &times; 100</strong><br>Typisch: AC D: 5,5&ndash;7% &bull; SMA: 6&ndash;7% &bull; PA: 4&ndash;5%</div></div></div></div>
+  </div>
+</div>
+
+<!-- NORMEN -->
+<div class="page" id="page-n12697">
+  <div class="hb"><div class="hb-norm">DIN EN 12697 (Normenreihe)</div><div class="hb-title">DIN EN 12697 &mdash; Pruefverfahren Asphalt</div>
+    <div class="hb-desc">Europaische Normenreihe mit ueber 50 Teilen fuer alle Pruefverfahren an Bitumen und Asphalt.</div></div>
+  <div class="tbl-box"><table class="et"><thead><tr><th>Teil</th><th>Bezeichnung</th><th>Inhalt</th></tr></thead><tbody>
+    <tr><td>-1</td><td>Bindemittelgehalt</td><td>Extraktion</td></tr>
+    <tr><td>-2</td><td>Korngroessenverteilung</td><td>Siebung nach Extraktion</td></tr>
+    <tr><td>-6</td><td>Raumgewicht</td><td>Hydrostatisches Verfahren</td></tr>
+    <tr><td>-8</td><td>Hohlraumgehalt</td><td>Hohlraum im eingebauten Asphalt</td></tr>
+    <tr><td>-34</td><td>Marshall-Versuch</td><td>Stabilitaet, Fliesswert, MQ</td></tr>
+  </tbody></table></div>
+</div>
+<div class="page" id="page-ntlasphalt">
+  <div class="hb"><div class="hb-norm">TL Asphalt-StB</div><div class="hb-title">Technische Lieferbedingungen Asphalt</div>
+    <div class="hb-desc">Regelt Zusammensetzung, Eigenschaften und Kennzeichnung von Asphaltmischgut.</div></div>
+  <div class="tbl-box"><table class="et"><thead><tr><th>Kuerzel</th><th>Bezeichnung</th><th>Anwendung</th></tr></thead><tbody>
+    <tr><td>AC</td><td>Asphaltbeton</td><td>Trag-, Binder-, Deckschicht</td></tr>
+    <tr><td>SMA</td><td>Splittmastixasphalt</td><td>Deckschicht, hohe Beanspruchung</td></tr>
+    <tr><td>PA</td><td>Poroesasphalt</td><td>Deckschicht, Laermminderung</td></tr>
+    <tr><td>MA</td><td>Gussasphalt</td><td>Bruecken, Parkhaeuser</td></tr>
+    <tr><td>ABi</td><td>Asphaltbinder</td><td>Binderschicht</td></tr>
+  </tbody></table></div>
+</div>
+<div class="page" id="page-nztvlsw">
+  <div class="hb"><div class="hb-norm">ZTV Asphalt-StB</div><div class="hb-title">Zusaetzliche Technische Vertragsbedingungen</div>
+    <div class="hb-desc">Regelt Ausfuehrung und Pruefung von Asphaltarbeiten: Einbau, Verdichtung, Toleranzen.</div></div>
+  <div class="tbl-box"><table class="et"><thead><tr><th>Merkmal</th><th>Anforderung</th></tr></thead><tbody>
+    <tr><td>Verdichtungsgrad</td><td>&ge; 97% (MW), kein Wert &lt; 95%</td></tr>
+    <tr><td>Schichtdicke</td><td>Einzelwert &plusmn;10mm vom Sollwert</td></tr>
+    <tr><td>Texturtiefe AC D</td><td>MTD &ge; 0,7 mm</td></tr>
+    <tr><td>Texturtiefe SMA</td><td>MTD &ge; 0,9 mm</td></tr>
+    <tr><td>Bindemittelgehalt</td><td>Sollwert &plusmn; 0,3%</td></tr>
+  </tbody></table></div>
+</div>
+<div class="page" id="page-nasphaltarten">
+  <div class="hb"><div class="hb-norm">Uebersicht</div><div class="hb-title">Asphaltarten &mdash; Vergleich</div></div>
+  <div class="tbl-box"><table class="et"><thead><tr><th>Art</th><th>Bindemittel</th><th>Hohlraum</th><th>Staerken</th><th>Einsatz</th></tr></thead><tbody>
+    <tr><td>AC D</td><td>5&ndash;7%</td><td>3&ndash;8%</td><td>Wirtschaftlich</td><td>Deckschicht</td></tr>
+    <tr><td>SMA</td><td>6&ndash;7%</td><td>2&ndash;5%</td><td>Griffig, langlebig</td><td>BAB Deckschicht</td></tr>
+    <tr><td>PA</td><td>4&ndash;5%</td><td>20&ndash;28%</td><td>Laermminderung</td><td>BAB Deckschicht</td></tr>
+    <tr><td>MA</td><td>8&ndash;10%</td><td>&lt; 1%</td><td>Hohlraumfrei</td><td>Bruecken, Industrie</td></tr>
+    <tr><td>AC B</td><td>4&ndash;5%</td><td>4&ndash;9%</td><td>Lastverteilung</td><td>Binderschicht</td></tr>
+    <tr><td>AC T</td><td>3,5&ndash;5%</td><td>5&ndash;12%</td><td>Lastabtragung</td><td>Tragschicht</td></tr>
+  </tbody></table></div>
+</div>
+
+<!-- LERNKARTEN -->
+<div class="page" id="page-karten">
+  <div style="margin-bottom:18px;"><div style="font-family:var(--display);font-size:22px;font-weight:800;margin-bottom:5px;">Lernkarten Asphalttechnik &#127183;</div></div>
+  <div class="fc-filter">
+    <button class="fc-fb active" onclick="filterFC('alle',this)">Alle</button>
+    <button class="fc-fb" onclick="filterFC('grundlagen',this)">Grundlagen</button>
+    <button class="fc-fb" onclick="filterFC('formeln',this)">Formeln</button>
+    <button class="fc-fb" onclick="filterFC('normen',this)">Normen</button>
+    <button class="fc-fb" onclick="filterFC('praxis',this)">Praxis</button>
+  </div>
+  <div class="fc-area">
+    <div class="fc-stat" id="fc-stat">Karte 1 von 15</div>
+    <div class="flashcard" id="flashcard" onclick="flipFC()">
+      <div class="fc-inner">
+        <div class="fc-front"><div class="fc-cat" id="fc-cat">GRUNDLAGEN</div><div class="fc-q" id="fc-q">Was ist Splittmastixasphalt (SMA)?</div><div class="fc-hint">Klicke zum Aufdecken</div></div>
+        <div class="fc-back"><div class="fc-cat">ANTWORT</div><div class="fc-a" id="fc-a">Hohlraumarmer Asphalt mit hohem Splittanteil und Bitumengehalt (6-7%). Sehr griffig und langlebig. Einsatz auf hochbelasteten Deckschichten, v.a. Bundesautobahnen.</div></div>
+      </div>
+    </div>
+    <div class="fc-btns">
+      <button class="fc-btn fc-wrong" onclick="rateFC(false)">&#10007; Nochmal</button>
+      <button class="fc-btn fc-next-btn" onclick="nextFC()">Weiter &rarr;</button>
+      <button class="fc-btn fc-right" onclick="rateFC(true)">&#10003; Gewusst</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="page" id="page-quiz">
+  <div style="margin-bottom:18px;"><div style="font-family:var(--display);font-size:22px;font-weight:800;margin-bottom:5px;">Quiz Asphalttechnik &#129504;</div></div>
+  <div class="qz-wrap" id="qz-area">
+    <div class="qz-hd"><div class="qz-num" id="qz-num">Frage 1 / 15</div><div class="qz-score" id="qz-score">0 richtig</div></div>
+    <div class="qz-pb-w"><div class="qz-pb" id="qz-pb" style="width:7%"></div></div>
+    <div class="qz-q" id="qz-q"></div>
+    <div class="qz-opts" id="qz-opts"></div>
+    <div class="qz-expl" id="qz-expl"></div>
+    <button class="qz-next" id="qz-next" onclick="nextQZ()">Naechste Frage &rarr;</button>
+  </div>
+  <div id="qz-result" style="display:none;text-align:center;padding:32px 0;">
+    <div style="font-size:52px;margin-bottom:14px;" id="qz-ico"></div>
+    <div style="font-family:var(--display);font-size:24px;font-weight:800;margin-bottom:8px;" id="qz-rtitle"></div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:22px;" id="qz-rsub"></div>
+    <button class="fc-btn fc-next-btn" onclick="restartQZ()">Quiz wiederholen</button>
+  </div>
+</div>
+
+<!-- RECHNER -->
+<div class="page" id="page-rechner">
+  <div style="margin-bottom:18px;"><div style="font-family:var(--display);font-size:22px;font-weight:800;margin-bottom:5px;">Rechner Asphalttechnik &#129518;</div></div>
+  <div class="rc-grid">
+    <div class="rc-card">
+      <div class="rc-title">Raumgewicht Bohrkern</div>
+      <div class="rc-desc">Hydrostatisches Verfahren EN 12697-6</div>
+      <div class="rc-ig"><label class="rc-lbl">m1 &mdash; trocken in Luft (g)</label><input class="rc-inp" type="number" id="rg-m1" placeholder="z.B. 1245" oninput="cRG()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">m2 &mdash; unter Wasser (g)</label><input class="rc-inp" type="number" id="rg-m2" placeholder="z.B. 710" oninput="cRG()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">m3 &mdash; oberfl.trocken Luft (g)</label><input class="rc-inp" type="number" id="rg-m3" placeholder="z.B. 1250" oninput="cRG()"/></div>
+      <div class="rc-res" id="rg-res">r = &mdash; g/cm3</div>
+    </div>
+    <div class="rc-card">
+      <div class="rc-title">Verdichtungsgrad Asphalt</div>
+      <div class="rc-desc">Bohrkern vs. Bezugsdichte</div>
+      <div class="rc-ig"><label class="rc-lbl">r Bohrkern (g/cm3)</label><input class="rc-inp" type="number" id="vg-k" placeholder="z.B. 2.42" step="0.01" oninput="cVG()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">r Bezug/Marshall (g/cm3)</label><input class="rc-inp" type="number" id="vg-r" placeholder="z.B. 2.50" step="0.01" oninput="cVG()"/></div>
+      <div class="rc-res" id="vg-res">VG = &mdash; %</div>
+    </div>
+    <div class="rc-card">
+      <div class="rc-title">Bindemittelgehalt</div>
+      <div class="rc-desc">Aus Extraktion EN 12697-1</div>
+      <div class="rc-ig"><label class="rc-lbl">mA &mdash; Asphalt gesamt (g)</label><input class="rc-inp" type="number" id="bg-a" placeholder="z.B. 1200" oninput="cBG()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">mM &mdash; Mineral nach Extr. (g)</label><input class="rc-inp" type="number" id="bg-m" placeholder="z.B. 1128" oninput="cBG()"/></div>
+      <div class="rc-res" id="bg-res">B = &mdash; %</div>
+    </div>
+    <div class="rc-card">
+      <div class="rc-title">Texturtiefe MTD (Sandfleck)</div>
+      <div class="rc-desc">EN 13036-1, V = 25ml</div>
+      <div class="rc-ig"><label class="rc-lbl">Durchmesser D (mm)</label><input class="rc-inp" type="number" id="mtd-d" placeholder="z.B. 210" oninput="cMTD()"/></div>
+      <div class="rc-res" id="mtd-res">MTD = &mdash; mm</div>
+    </div>
+    <div class="rc-card">
+      <div class="rc-title">Marshall-Quotient MQ</div>
+      <div class="rc-desc">Stabilitaet / Fliesswert</div>
+      <div class="rc-ig"><label class="rc-lbl">Stabilitaet (kN)</label><input class="rc-inp" type="number" id="mq-s" placeholder="z.B. 8.5" step="0.1" oninput="cMQ()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">Fliesswert (mm)</label><input class="rc-inp" type="number" id="mq-f" placeholder="z.B. 3.2" step="0.1" oninput="cMQ()"/></div>
+      <div class="rc-res" id="mq-res">MQ = &mdash; N/mm</div>
+    </div>
+    <div class="rc-card">
+      <div class="rc-title">Hohlraumgehalt</div>
+      <div class="rc-desc">Aus Raumgewicht und Rohdichte</div>
+      <div class="rc-ig"><label class="rc-lbl">Rohdichte rmax (g/cm3)</label><input class="rc-inp" type="number" id="hr-mx" placeholder="z.B. 2.54" step="0.01" oninput="cHR()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">Raumgewicht r (g/cm3)</label><input class="rc-inp" type="number" id="hr-rg" placeholder="z.B. 2.42" step="0.01" oninput="cHR()"/></div>
+      <div class="rc-res" id="hr-res">V = &mdash; %</div>
+    </div>
+  </div>
+</div>
+
+<!-- TABELLEN -->
+<div class="page" id="page-tabellen">
+  <div style="margin-bottom:18px;"><div style="font-family:var(--display);font-size:22px;font-weight:800;margin-bottom:5px;">Tabellen Asphalttechnik &#128202;</div></div>
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:var(--display);font-size:14px;font-weight:700;">Einbautemperaturen (Richtwerte)</div>
+      <div class="tbl-box" style="margin:0;border:none;border-radius:0;"><table class="et"><thead><tr><th>Asphaltart</th><th>Max. Lieferung (&deg;C)</th><th>Min. Einbau (&deg;C)</th><th>Letzte Walze (&deg;C)</th></tr></thead><tbody>
+        <tr><td>AC</td><td>165</td><td>120</td><td>95</td></tr>
+        <tr><td>SMA</td><td>175</td><td>130</td><td>105</td></tr>
+        <tr><td>PA</td><td>185</td><td>140</td><td>110</td></tr>
+        <tr><td>MA (Guss)</td><td>230</td><td>200</td><td>&mdash;</td></tr>
+      </tbody></table></div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:var(--display);font-size:14px;font-weight:700;">Bitumensorten nach EN 12591</div>
+      <div class="tbl-box" style="margin:0;border:none;border-radius:0;"><table class="et"><thead><tr><th>Sorte</th><th>Penetration (0,1mm)</th><th>Erweichungspunkt (&deg;C)</th><th>Anwendung</th></tr></thead><tbody>
+        <tr><td>50/70</td><td>50&ndash;70</td><td>46&ndash;54</td><td>Trag- und Binderschicht</td></tr>
+        <tr><td>70/100</td><td>70&ndash;100</td><td>43&ndash;51</td><td>Allgemeine Anwendung</td></tr>
+        <tr><td>PMB 25/55-55</td><td>25&ndash;55</td><td>&ge; 55</td><td>Hochbelastet, BAB</td></tr>
+      </tbody></table></div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:var(--display);font-size:14px;font-weight:700;">ZTV Asphalt-StB &mdash; Anforderungen</div>
+      <div class="tbl-box" style="margin:0;border:none;border-radius:0;"><table class="et"><thead><tr><th>Merkmal</th><th>Anforderung</th><th>Norm</th></tr></thead><tbody>
+        <tr><td>Verdichtungsgrad</td><td>&ge; 97% (MW), kein Wert &lt; 95%</td><td>EN 12697-8</td></tr>
+        <tr><td>Bindemittelgehalt</td><td>Sollwert &plusmn; 0,3%</td><td>EN 12697-1</td></tr>
+        <tr><td>Schichtdicke</td><td>Einzelwert &plusmn;10mm</td><td>Bohrkern</td></tr>
+        <tr><td>MTD AC D</td><td>&ge; 0,7 mm</td><td>EN 13036-1</td></tr>
+        <tr><td>MTD SMA</td><td>&ge; 0,9 mm</td><td>EN 13036-1</td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+</div>
+  </div><!-- main -->
+</div><!-- content -->
+</div><!-- layout -->
+
+<!-- MOBILE BOTTOM -->
+<div class="mob-bottom" id="mob-bottom">
+  <button class="mbn active" data-id="temperatur" onclick="show('temperatur')"><span class="mbn-i">&#127777;</span><span class="mbn-l">Temp.</span></button>
+  <button class="mbn" data-id="marshall" onclick="show('marshall')"><span class="mbn-i">&#128296;</span><span class="mbn-l">Marshall</span></button>
+  <button class="mbn" data-id="bohrkern" onclick="show('bohrkern')"><span class="mbn-i">&#128305;</span><span class="mbn-l">Bohrkern</span></button>
+  <button class="mbn" data-id="schichtdicke" onclick="show('schichtdicke')"><span class="mbn-i">&#128207;</span><span class="mbn-l">Schicht</span></button>
+  <button class="mbn" data-id="verdichtung" onclick="show('verdichtung')"><span class="mbn-i">&#128202;</span><span class="mbn-l">VG</span></button>
+  <button class="mbn" data-id="rauheit" onclick="show('rauheit')"><span class="mbn-i">&#127944;</span><span class="mbn-l">Rauheit</span></button>
+  <button class="mbn" data-id="karten" onclick="show('karten')"><span class="mbn-i">&#127183;</span><span class="mbn-l">Karten</span></button>
+  <button class="mbn" data-id="quiz" onclick="show('quiz')"><span class="mbn-i">&#129504;</span><span class="mbn-l">Quiz</span></button>
+  <button class="mbn" data-id="rechner" onclick="show('rechner')"><span class="mbn-i">&#129518;</span><span class="mbn-l">Rechn.</span></button>
+</div>
+
+<script>
+const H={proctor:'Temperaturmessung &mdash; Asphalteinbau',platte:'Plattendruckversuch &mdash; DIN 18134',dpr:'Verdichtungsgrad Dpr',wassergehalt:'Wassergehalt &mdash; DIN 18121',siebung:'Siebanalyse &mdash; DIN 18123',atterberg:'Atterbergsche Grenzen',schlaemm:'Schlammanalyse',cbr:'CBR-Versuch',rammson:'Rammsondierung DPL',n18196:'DIN 18196 Bodenklassen',n18300:'DIN 18300 Erdarbeiten',n18127:'DIN 18127 Proctor',n18134:'DIN 18134 Platte',n18123:'DIN 18123 Siebung',n18122:'DIN 18122 Atterberg',karten:'Lernkarten Geotechnik',quiz:'Quiz Geotechnik',rechner:'Rechner Geotechnik',tabellen:'Tabellen Geotechnik'};
+function show(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));document.querySelectorAll('.mbn').forEach(i=>i.classList.remove('active'));const p=document.getElementById('page-'+id);if(p)p.classList.add('active');const si=document.querySelector('.sb-item[onclick="show(\''+id+'\')"]');if(si)si.classList.add('active');const mi=document.querySelector('.mbn[data-id="'+id+'"]');if(mi)mi.classList.add('active');document.getElementById('tb-h').innerHTML=H[id]||id;window.scrollTo(0,0);closeSB();}
+function toggleSB(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('mob-overlay').classList.toggle('open');}
+function closeSB(){document.getElementById('sidebar').classList.remove('open');document.getElementById('mob-overlay').classList.remove('open');}
+function switchTab(t,btn){document.querySelectorAll('.sbt').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('nav-a').style.display=t==='a'?'block':'none';document.getElementById('nav-n').style.display=t==='n'?'block':'none';document.getElementById('nav-z').style.display=t==='z'?'block':'none';if(t==='z')show('karten');if(t==='n')show('n12697');if(t==='a')show('temperatur');}
+window.addEventListener('resize',()=>{document.querySelector('.mob-btn').style.display=window.innerWidth<=768?'flex':'none';});
+if(window.innerWidth<=768)document.querySelector('.mob-btn').style.display='flex';
+function upl(el){el.querySelector('input[type="file"]').click();}
+function prv(input){if(!input.files||!input.files[0])return;const r=new FileReader();r.onload=e=>{const p=input.closest('.stp-ph');p.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;"/>';};r.readAsDataURL(input.files[0]);}
+
+const KARTEN=[
+  {cat:'grundlagen',q:'Was ist Splittmastixasphalt (SMA)?',a:'Hohlraumarmer Asphalt mit hohem Splittanteil und Bitumengehalt (6-7%). Sehr griffig und langlebig. Einsatz auf hochbelasteten Deckschichten, v.a. Bundesautobahnen.'},
+  {cat:'grundlagen',q:'Was ist Poroesasphalt (PA)?',a:'Asphalt mit sehr hohem Hohlraumgehalt (20-28%). Vorteile: Laermminderung (~3-5 dB(A)), kein Aquaplaning. Empfindlicher gegen Frost und Verschmutzung.'},
+  {cat:'grundlagen',q:'Was ist Gussasphalt (MA)?',a:'Hohlraumarmer Asphalt (<1%) mit hohem Bitumengehalt (8-10%). Vergussverfahren bei 200-220 Grad, keine Verdichtung. Einsatz auf Bruecken und Parkhaeusern.'},
+  {cat:'formeln',q:'Wie berechnet man den Verdichtungsgrad von Asphalt?',a:'VG (%) = r_Bohrkern / r_Bezug x 100. Mindestanforderung: VG >= 97% (Mittelwert). Kein Einzelwert unter 95%.'},
+  {cat:'formeln',q:'Wie berechnet man den Bindemittelgehalt?',a:'B (%) = (mA - mM) / mA x 100. mA = Ausgangsmasse Asphalt, mM = Mineralmasse nach Extraktion.'},
+  {cat:'formeln',q:'Wie berechnet man die Texturtiefe MTD?',a:'MTD = 4 x 25000 / (pi x D^2). D = Sandfleckdurchmesser in mm. V = 25 ml = 25.000 mm3.'},
+  {cat:'formeln',q:'Was ist der Marshall-Quotient MQ?',a:'MQ = Stabilitaet (N) / Fliesswert (mm). Einheit N/mm. Hoher MQ = sproe und formstabil. Niedriger MQ = weich, verformungsanfaellig.'},
+  {cat:'normen',q:'Was regelt DIN EN 12697-34?',a:'Marshall-Versuch: Bestimmung von Stabilitaet, Fliesswert und Marshall-Quotient an Asphaltprobekoerpern bei 60 Grad.'},
+  {cat:'normen',q:'Was regelt DIN EN 12697-1?',a:'Bestimmung des Bindemittelgehalts durch Extraktion. Ergebnis: Bitumengehalt in % der Gesamtmasse.'},
+  {cat:'normen',q:'Was regelt EN 13036-1?',a:'Bestimmung der mittleren Texturtiefe MTD von Fahrbahnoberflaehen mit der Sandfleckmethode (25ml Sand).'},
+  {cat:'praxis',q:'Warum ist die Einbautemperatur so wichtig?',a:'Zu kalt (<120 Grad): nicht verdichtbar, Hohlraeume, Frostschaeden. Zu heiss (>165 Grad bei AC): Bitumen altert, sproede, Risse. Optimales Verdichtungsfenster: 120-155 Grad.'},
+  {cat:'praxis',q:'Wie lange muss ein Marshall-Probekoerper konditioniert werden?',a:'Mind. 30 Minuten (max. 40 Min) bei 60 +/-1 Grad C. Pruefung innerhalb von 30 Sek nach dem Wasserbad.'},
+  {cat:'grundlagen',q:'Welche Asphaltschichten hat ein typischer Strassenaufbau?',a:'Von unten: Frostschutzschicht -> Schottertragschicht -> AC T (Trag) -> AC B (Binder) -> Deckschicht (AC D / SMA / PA)'},
+  {cat:'praxis',q:'Was muss nach einer Bohrkernentnahme sofort gemacht werden?',a:'Bohrloch sofort mit heissem oder Kaltasphalt verfuellen und verdichten. Verkehrssicherheit wiederherstellen!'},
+  {cat:'grundlagen',q:'Welchen Hohlraumgehalt hat Poroesasphalt (PA)?',a:'20-28% Hohlraumgehalt. Das Wasser laeuft durch die Poren ab (Drainwirkung), Laerm wird absorbiert. Nachteil: empfindlich gegen Verschmutzung.'},
+];
+let fcData=[...KARTEN],fcIdx=0,fcOk=0;
+function filterFC(cat,btn){document.querySelectorAll('.fc-fb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');fcData=cat==='alle'?[...KARTEN]:KARTEN.filter(k=>k.cat===cat);fcIdx=0;fcOk=0;document.getElementById('flashcard').classList.remove('flipped');renderFC();}
+function renderFC(){if(!fcData.length)return;const c=fcData[fcIdx];document.getElementById('fc-stat').textContent='Karte '+(fcIdx+1)+' von '+fcData.length+' · '+fcOk+' gewusst';document.getElementById('fc-cat').textContent=c.cat.toUpperCase();document.getElementById('fc-q').textContent=c.q;document.getElementById('fc-a').textContent=c.a;document.getElementById('flashcard').classList.remove('flipped');}
+function flipFC(){document.getElementById('flashcard').classList.toggle('flipped');}
+function nextFC(){fcIdx=(fcIdx+1)%fcData.length;renderFC();}
+function rateFC(ok){if(ok)fcOk=Math.min(fcOk+1,fcData.length);nextFC();}
+
+const QUIZ=[
+  {q:'Welche Mindest-Einbautemperatur gilt fuer AC?',opts:['90 Grad','120 Grad','140 Grad','100 Grad'],correct:1,ex:'Mindesteinbautemperatur AC: 120 Grad. Darunter nicht mehr ausreichend verdichtbar.'},
+  {q:'Was bedeutet Verdichtungsgrad 97% bei Asphalt?',opts:['97% Bitumengehalt','Bohrkern hat 97% der Bezugsdichte','97% Hohlraum','97% Stabilitaet'],correct:1,ex:'VG = r_Kern / r_Bezug x 100. 97% bedeutet: Bohrkern hat 97% der Bezugsdichte. Mindestanforderung nach ZTV.'},
+  {q:'Wie lange konditioniert man Marshall-Probekoerper?',opts:['10 Minuten bei 40 Grad','30 Minuten bei 60 Grad','60 Minuten bei 80 Grad','15 Minuten bei 100 Grad'],correct:1,ex:'Mind. 30 Min (max. 40 Min) bei 60 +/-1 Grad. Pruefung innerhalb 30 Sek danach.'},
+  {q:'Was ist die Belastungsgeschwindigkeit beim Marshall-Versuch?',opts:['25 mm/min','50 mm/min','100 mm/min','10 mm/min'],correct:1,ex:'50 mm/min bis zur Hoechstkraft. Normiert nach EN 12697-34.'},
+  {q:'Wie viele Schlaege je Seite beim Marshall-Probekoerper?',opts:['25','50','75','100'],correct:2,ex:'75 Schlaege je Seite (beidseitig). Toleranz: +/-10 Schlaege.'},
+  {q:'Was regelt DIN EN 12697-1?',opts:['Raumgewicht','Bindemittelgehalt','Spurrinne','Schichtdicke'],correct:1,ex:'EN 12697-1: Bestimmung des loeslichen Bindemittelgehalts durch Extraktion.'},
+  {q:'Welche Texturtiefe MTD ist fuer SMA Deckschicht gefordert?',opts:['MTD >= 0,5mm','MTD >= 0,7mm','MTD >= 0,9mm','MTD >= 1,2mm'],correct:2,ex:'SMA Deckschicht: MTD >= 0,9mm nach ZTV Asphalt-StB.'},
+  {q:'Wie wird das Raumgewicht eines Bohrkerns berechnet?',opts:['r = m1/(m1-m2)','r = m1/(m3-m2) x 0,998','r = m3/(m1-m2)','r = (m1+m2)/m3'],correct:1,ex:'r = m1/(m3-m2) x 0,998. m1=trocken Luft, m2=unter Wasser, m3=oberfl.trocken Luft.'},
+  {q:'Was ist Poroesasphalt (PA)?',opts:['Sehr dichter Asphalt','Asphalt mit 20-28% Hohlraum','Asphalt mit Kunststoffen','Asphalt ohne Bitumen'],correct:1,ex:'PA: Hohlraumgehalt 20-28%. Drainwirkung, Laermminderung (~3-5 dB). Einsatz auf BAB.'},
+  {q:'Welcher Hohlraumgehalt hat Gussasphalt (MA)?',opts:['0-1%','3-8%','10-15%','20-28%'],correct:0,ex:'MA: Hohlraumgehalt <1%. Wird heiss vergossen (200 Grad) ohne Verdichtung. Fuer Bruecken und Parkhaeuser.'},
+  {q:'Was ist die Toleranz fuer Schichtdicken nach ZTV?',opts:['+/-5mm','Einzelwert +/-10mm','Einzelwert +/-20mm','+/-2mm'],correct:1,ex:'Einzelwert: +/-10mm vom Sollwert erlaubt. Mittelwert: Unterschreitung auf 0/-5mm begrenzt.'},
+  {q:'Was berechnet man mit: (mA - mM) / mA x 100?',opts:['Verdichtungsgrad','Raumgewicht','Bindemittelgehalt','Hohlraumgehalt'],correct:2,ex:'Bindemittelgehalt B(%) = (mA-mM)/mA x 100. mA=Asphaltmasse, mM=Mineralmasse nach Extraktion.'},
+  {q:'Wie gross ist der Sandfleckdurchmesser bei MTD berechnung?',opts:['Es wird V=25ml gemessen, D wird gemessen','D wird vorgegeben','25mm','D=pi'],correct:0,ex:'V=25ml ist festgelegt, D wird gemessen (4 Richtungen, Mittelwert). MTD = 4 x 25000 / (pi x D2).'},
+  {q:'Was ist der Unterschied AC 11 D und AC 22 B?',opts:['Farbe unterschiedlich','Zahl = Groesstkorn, D=Deckschicht, B=Binder','Nur der Preis','Herstellungsart'],correct:1,ex:'Zahl = Groesstkorn mm. D=Deckschicht, B=Binderschicht, T=Tragschicht. AC 11 D: Deckschicht, Korn max 11mm.'},
+  {q:'Ab welcher Tiefe muss beim LKW die Einbautemperatur gemessen werden?',opts:['25mm','75mm','150mm','300mm'],correct:2,ex:'Mind. 150mm tief in die Asphaltmischung einstechen fuer repraesentative Temperaturmessung.'},
+];
+let qIdx=0,qScore=0,qAnswered=false;
+function renderQZ(){document.getElementById('qz-area').style.display='block';document.getElementById('qz-result').style.display='none';const q=QUIZ[qIdx];document.getElementById('qz-num').textContent='Frage '+(qIdx+1)+' / '+QUIZ.length;document.getElementById('qz-score').textContent=qScore+' richtig';document.getElementById('qz-pb').style.width=((qIdx+1)/QUIZ.length*100)+'%';document.getElementById('qz-q').textContent=q.q;document.getElementById('qz-opts').innerHTML=q.opts.map((o,i)=>'<button class="qz-opt" onclick="answerQZ('+i+')">'+o+'</button>').join('');document.getElementById('qz-expl').className='qz-expl';document.getElementById('qz-next').className='qz-next';qAnswered=false;}
+function answerQZ(idx){if(qAnswered)return;qAnswered=true;const q=QUIZ[qIdx];document.querySelectorAll('.qz-opt').forEach(b=>b.disabled=true);document.querySelectorAll('.qz-opt')[q.correct].classList.add('correct');if(idx!==q.correct)document.querySelectorAll('.qz-opt')[idx].classList.add('wrong');else qScore++;document.getElementById('qz-expl').innerHTML='<strong>Erklaerung:</strong> '+q.ex;document.getElementById('qz-expl').className='qz-expl show';document.getElementById('qz-next').className='qz-next show';document.getElementById('qz-score').textContent=qScore+' richtig';}
+function nextQZ(){qIdx++;if(qIdx>=QUIZ.length){document.getElementById('qz-area').style.display='none';const pct=Math.round(qScore/QUIZ.length*100);document.getElementById('qz-result').style.display='block';document.getElementById('qz-ico').textContent=pct>=80?'&#127942;':pct>=60?'&#128077;':'&#128218;';document.getElementById('qz-rtitle').textContent=pct>=80?'Ausgezeichnet!':pct>=60?'Gut gemacht!':'Weiter ueben!';document.getElementById('qz-rsub').textContent=qScore+' von '+QUIZ.length+' richtig ('+pct+'%)';}else{renderQZ();}}
+function restartQZ(){qIdx=0;qScore=0;qAnswered=false;renderQZ();}
+function cRG(){const m1=+document.getElementById('rg-m1').value,m2=+document.getElementById('rg-m2').value,m3=+document.getElementById('rg-m3').value;const el=document.getElementById('rg-res');if(!m1||!m2||!m3){el.textContent='r = -- g/cm3';el.className='rc-res';return;}const r=(m1/(m3-m2)*0.998).toFixed(3);el.textContent='r = '+r+' g/cm3';el.className='rc-res ok';}
+function cVG(){const k=+document.getElementById('vg-k').value,r=+document.getElementById('vg-r').value;const el=document.getElementById('vg-res');if(!k||!r){el.textContent='VG = -- %';el.className='rc-res';return;}const vg=(k/r*100).toFixed(1);el.textContent='VG = '+vg+'% '+(vg>=97?'OK':'zu gering');el.className='rc-res'+(vg>=97?' ok':' bad');}
+function cBG(){const a=+document.getElementById('bg-a').value,m=+document.getElementById('bg-m').value;const el=document.getElementById('bg-res');if(!a||!m){el.textContent='B = -- %';el.className='rc-res';return;}const b=((a-m)/a*100).toFixed(2);el.textContent='B = '+b+'%';el.className='rc-res ok';}
+function cMTD(){const d=+document.getElementById('mtd-d').value;const el=document.getElementById('mtd-res');if(!d){el.textContent='MTD = -- mm';el.className='rc-res';return;}const mtd=(4*25000/(Math.PI*d*d)).toFixed(2);el.textContent='MTD = '+mtd+' mm '+(mtd>=0.7?'OK':'zu gering');el.className='rc-res'+(mtd>=0.7?' ok':' bad');}
+function cMQ(){const s=+document.getElementById('mq-s').value,f=+document.getElementById('mq-f').value;const el=document.getElementById('mq-res');if(!s||!f){el.textContent='MQ = -- N/mm';el.className='rc-res';return;}const mq=Math.round(s*1000/f);el.textContent='MQ = '+mq+' N/mm';el.className='rc-res ok';}
+function cHR(){const mx=+document.getElementById('hr-mx').value,rg=+document.getElementById('hr-rg').value;const el=document.getElementById('hr-res');if(!mx||!rg){el.textContent='V = -- %';el.className='rc-res';return;}const v=((mx-rg)/mx*100).toFixed(1);el.textContent='V = '+v+'%';el.className='rc-res ok';}
+function cWG(){const m1=+document.getElementById('wg-m1').value,m2=+document.getElementById('wg-m2').value,m3=+document.getElementById('wg-m3').value;const el=document.getElementById('wg-res');if(!m1||!m2||!m3){el.textContent='w = -- %';el.className='rc-res';return;}const w=((m2-m3)/(m3-m1)*100).toFixed(1);el.textContent='w = '+w+' %';el.className='rc-res ok';}
+function cRD(){const r=+document.getElementById('rd-r').value,w=+document.getElementById('rd-w').value;const el=document.getElementById('rd-res');if(!r){el.textContent='rd = -- g/cm3';el.className='rc-res';return;}const rd=(r/(1+w/100)).toFixed(3);el.textContent='rd = '+rd+' g/cm3';el.className='rc-res ok';}
+function cDPR(){const b=+document.getElementById('dpr-b').value,p=+document.getElementById('dpr-p').value;const el=document.getElementById('dpr-res');if(!b||!p){el.textContent='Dpr = -- %';el.className='rc-res';return;}const d=(b/p*100).toFixed(1);el.textContent='Dpr = '+d+'% '+(d>=97?'OK':'zu gering');el.className='rc-res'+(d>=97?' ok':' bad');}
+function cIP(){const wl=+document.getElementById('ip-wl').value,wp=+document.getElementById('ip-wp').value;const el=document.getElementById('ip-res');if(!wl||!wp){el.textContent='IP = -- %';el.className='rc-res';return;}const ip=(wl-wp).toFixed(1);const cls=ip<7?'wenig plastisch':ip<=17?'mittelpplastisch':'sehr plastisch';el.textContent='IP = '+ip+'% ('+cls+')';el.className='rc-res ok';}
+function cIC(){const wl=+document.getElementById('ic-wl').value,w=+document.getElementById('ic-w').value,ip=+document.getElementById('ic-ip').value;const el=document.getElementById('ic-res');if(!wl||!ip){el.textContent='IC = --';el.className='rc-res';return;}const ic=((wl-w)/ip).toFixed(2);const z=ic<0?'fluessig':ic<0.25?'sehr weich':ic<0.5?'weich':ic<0.75?'steif':ic<1?'halbfest':'fest';el.textContent='IC = '+ic+' ('+z+')';el.className='rc-res ok';}
+function cEV(){const e1=+document.getElementById('ev1').value,e2=+document.getElementById('ev2').value;const el=document.getElementById('ev-res');if(!e1||!e2){el.textContent='Ev2/Ev1 = --';el.className='rc-res';return;}const ratio=(e2/e1).toFixed(2);el.textContent='Ev2/Ev1 = '+ratio+' '+(ratio<=2.2?'OK':'zu hoch');el.className='rc-res'+(ratio<=2.2?' ok':' bad');}
+renderFC();renderQZ();
+</script>
+</body>
+</html>

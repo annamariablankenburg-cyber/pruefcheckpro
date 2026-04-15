@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#020408">
+<link rel="manifest" href="manifest.json">
+<title>BetonCheck Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Space Grotesk',sans-serif;background:#020408;color:#e8f0fe;}
+
+/* ── LOGIN SCREEN ── */
+#login-screen{position:fixed;inset:0;z-index:1000;background:#020408;display:flex;align-items:center;justify-content:center;padding:20px;}
+#login-screen::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(79,159,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(79,159,255,.03) 1px,transparent 1px);background-size:52px 52px;}
+.login-orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;}
+.lo1{width:400px;height:400px;background:rgba(79,159,255,.1);top:-100px;left:-100px;}
+.lo2{width:300px;height:300px;background:rgba(0,212,170,.07);bottom:-60px;right:-60px;}
+.login-box{position:relative;z-index:2;width:100%;max-width:420px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:40px 36px;backdrop-filter:blur(20px);}
+.login-logo{display:flex;align-items:center;gap:11px;margin-bottom:32px;}
+.llm{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#4f9fff,#00d4aa);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#020408;font-family:'JetBrains Mono',monospace;}
+.llt{font-size:16px;font-weight:600;color:#e8f0fe;}
+.llt span{color:#4f9fff;}
+.login-title{font-family:'Instrument Serif',serif;font-size:26px;margin-bottom:6px;}
+.login-sub{font-size:13px;color:#6b8299;margin-bottom:28px;font-weight:300;}
+.login-tabs{display:flex;gap:4px;background:rgba(255,255,255,.04);border-radius:10px;padding:4px;margin-bottom:24px;}
+.login-tab{flex:1;padding:8px;border-radius:7px;background:none;border:none;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;color:#6b8299;cursor:pointer;transition:all .2s;}
+.login-tab.active{background:rgba(79,159,255,.15);color:#4f9fff;}
+.login-field{margin-bottom:16px;}
+.login-label{font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;color:#6b8299;margin-bottom:6px;display:block;}
+.login-input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:12px 14px;color:#e8f0fe;font-family:'Space Grotesk',sans-serif;font-size:14px;transition:border-color .2s;outline:none;}
+.login-input:focus{border-color:rgba(79,159,255,.4);background:rgba(79,159,255,.04);}
+.login-input::placeholder{color:#3d5066;}
+.login-role{display:flex;gap:8px;margin-bottom:20px;}
+.role-toggle{flex:1;padding:10px;border-radius:9px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;color:#6b8299;cursor:pointer;transition:all .2s;text-align:center;}
+.role-toggle.active-p{background:rgba(79,159,255,.12);border-color:rgba(79,159,255,.25);color:#4f9fff;}
+.role-toggle.active-a{background:rgba(0,212,170,.12);border-color:rgba(0,212,170,.25);color:#00d4aa;}
+.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,#4f9fff,#0ea5e9);border:none;border-radius:10px;color:#020408;font-size:15px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .2s;margin-bottom:12px;}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,159,255,.3);}
+.login-err{font-size:12px;color:#f87171;text-align:center;margin-top:8px;min-height:18px;font-family:'JetBrains Mono',monospace;}
+.login-note{font-size:11px;color:#3d5066;text-align:center;font-family:'JetBrains Mono',monospace;margin-top:8px;}
+
+/* ── APP SHELL ── */
+#app-shell{display:none;height:100vh;flex-direction:row;overflow:hidden;}
+#app-shell.active{display:flex;}
+
+/* SIDEBAR */
+.sidebar{width:224px;flex-shrink:0;background:rgba(8,12,20,.95);border-right:1px solid rgba(79,159,255,.07);display:flex;flex-direction:column;height:100vh;overflow-y:auto;z-index:10;}
+.sb-brand{padding:18px 15px 12px;border-bottom:1px solid rgba(79,159,255,.07);}
+.sb-logo-w{display:flex;align-items:center;gap:9px;margin-bottom:4px;}
+.sbm{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#4f9fff,#00d4aa);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#020408;font-family:'JetBrains Mono',monospace;}
+.sbt-logo{font-size:13px;font-weight:600;color:#e8f0fe;}
+.sbt-logo span{color:#4f9fff;}
+.sb-user-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:100px;font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+.badge-p{background:rgba(79,159,255,.1);color:#4f9fff;border:1px solid rgba(79,159,255,.2);}
+.badge-a{background:rgba(0,212,170,.1);color:#00d4aa;border:1px solid rgba(0,212,170,.2);}
+.sb-nav{padding:10px 8px;flex:1;}
+.sb-sec{margin-bottom:16px;}
+.sb-sec-lbl{font-size:8px;color:#1e2d3d;font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;padding:0 9px;margin-bottom:4px;}
+.sbn{display:flex;align-items:center;gap:9px;width:100%;padding:9px 10px;border-radius:9px;background:none;border:1px solid transparent;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;color:#64748b;transition:all .12s;text-align:left;text-decoration:none;}
+.sbn:hover{background:rgba(255,255,255,.04);color:#e8f0fe;}
+.sbn.act-b{background:rgba(79,159,255,.1);color:#4f9fff;border-color:rgba(79,159,255,.18);}
+.sbn.act-g{background:rgba(0,212,170,.1);color:#00d4aa;border-color:rgba(0,212,170,.18);}
+.sbn.act-a{background:rgba(245,158,11,.1);color:#f59e0b;border-color:rgba(245,158,11,.18);}
+.sbn.act-h{background:rgba(139,92,246,.1);color:#a78bfa;border-color:rgba(139,92,246,.18);}
+.sbn-ico{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
+.sb-div{height:1px;background:rgba(255,255,255,.05);margin:6px 10px;}
+.sb-logout{margin:10px 8px;padding:9px 10px;border-radius:9px;background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.12);cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;color:#f87171;display:flex;align-items:center;gap:8px;transition:all .15s;width:calc(100% - 16px);}
+.sb-logout:hover{background:rgba(248,113,113,.12);}
+
+/* MAIN */
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.topbar{height:50px;background:rgba(8,12,20,.9);border-bottom:1px solid rgba(79,159,255,.07);display:flex;align-items:center;justify-content:space-between;padding:0 18px;flex-shrink:0;}
+.tb-left{display:flex;align-items:center;gap:9px;}
+.mob-btn{display:none;background:none;border:none;color:#e8f0fe;font-size:18px;cursor:pointer;padding:4px;}
+.tb-title{font-family:'Instrument Serif',serif;font-size:15px;color:#e8f0fe;}
+.tb-right{font-size:10px;color:#1e2d3d;font-family:'JetBrains Mono',monospace;letter-spacing:1px;}
+.content{flex:1;overflow:hidden;position:relative;}
+.panel{position:absolute;inset:0;overflow-y:auto;display:none;-webkit-overflow-scrolling:touch;}
+.panel.active{display:block;}
+/* HOME panel */
+.home-body{padding:36px 32px 60px;max-width:900px;}
+.hm-welcome{font-family:'Instrument Serif',serif;font-size:clamp(28px,4vw,44px);line-height:1.1;margin-bottom:8px;}
+.hm-welcome em{font-style:italic;color:#4f9fff;}
+.hm-sub{font-size:14px;color:#6b8299;font-weight:300;margin-bottom:36px;}
+/* MODULE GRID in app */
+.app-mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:28px;}
+.amc{border-radius:14px;padding:22px;cursor:pointer;transition:all .2s;border:1px solid transparent;text-decoration:none;display:block;position:relative;}
+.amc:hover{transform:translateY(-3px);}
+.amc.ab{background:rgba(79,159,255,.05);border-color:rgba(79,159,255,.14);}
+.amc.ab:hover{background:rgba(79,159,255,.09);}
+.amc.ag{background:rgba(0,212,170,.05);border-color:rgba(0,212,170,.14);}
+.amc.ag:hover{background:rgba(0,212,170,.09);}
+.amc.aa{background:rgba(245,158,11,.05);border-color:rgba(245,158,11,.14);}
+.amc.aa:hover{background:rgba(245,158,11,.09);}
+.amc.av{background:rgba(139,92,246,.05);border-color:rgba(139,92,246,.14);}
+.amc.av:hover{background:rgba(139,92,246,.09);}
+.ami{font-size:28px;margin-bottom:10px;}
+.amt{font-family:'Instrument Serif',serif;font-size:18px;margin-bottom:5px;}
+.amc.ab .amt{color:#4f9fff;}.amc.ag .amt{color:#00d4aa;}.amc.aa .amt{color:#f59e0b;}.amc.av .amt{color:#a78bfa;}
+.amd{font-size:12px;color:#6b8299;line-height:1.55;font-weight:300;margin-bottom:12px;}
+.ama{font-size:11px;font-weight:500;}
+.amc.ab .ama{color:#4f9fff;}.amc.ag .ama{color:#00d4aa;}.amc.aa .ama{color:#f59e0b;}.amc.av .ama{color:#a78bfa;}
+/* LOCKED for azubi */
+.amc.locked{opacity:.4;cursor:not-allowed;}
+.amc.locked::after{content:'🔒 Nur Prüfer';position:absolute;top:12px;right:12px;font-size:9px;font-family:'JetBrains Mono',monospace;background:rgba(248,113,113,.1);color:#f87171;border:1px solid rgba(248,113,113,.2);padding:2px 8px;border-radius:100px;}
+/* Stats */
+.app-stats{display:flex;gap:14px;flex-wrap:wrap;padding:18px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:12px;}
+.ast{text-align:center;flex:1;min-width:60px;}
+.ast-n{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;line-height:1;}
+.ast-l{font-size:9px;color:#3d5066;font-family:'JetBrains Mono',monospace;margin-top:2px;letter-spacing:1px;text-transform:uppercase;}
+/* Module iframe panels */
+.module-frame{width:100%;height:100%;border:none;display:block;}
+/* Mobile */
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;backdrop-filter:blur(4px);}
+.mob-overlay.open{display:block;}
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-228px;top:0;height:100vh;z-index:300;transition:left .25s cubic-bezier(.4,0,.2,1);box-shadow:8px 0 40px rgba(0,0,0,.9);}
+  .sidebar.open{left:0;}
+  .mob-btn{display:flex!important;align-items:center;}
+  .topbar{padding:0 13px;}
+  .home-body{padding:18px 14px 40px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <div class="login-orb lo1"></div>
+  <div class="login-orb lo2"></div>
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="llm">BC</div>
+      <div class="llt">Beton<span>Check</span> Pro</div>
+    </div>
+    <div class="login-title">Willkommen zurück.</div>
+    <p class="login-sub">Melde dich an um fortzufahren.</p>
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="setMode('login')">Anmelden</button>
+      <button class="login-tab" onclick="setMode('register')">Registrieren</button>
+    </div>
+    <div class="login-field">
+      <label class="login-label">E-Mail</label>
+      <input class="login-input" type="email" id="inp-email" placeholder="name@firma.de"/>
+    </div>
+    <div class="login-field">
+      <label class="login-label">Passwort</label>
+      <input class="login-input" type="password" id="inp-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAuth()"/>
+    </div>
+    <div id="role-picker" style="display:none">
+      <label class="login-label" style="margin-bottom:8px;display:block;">Rolle wählen</label>
+      <div class="login-role">
+        <button class="role-toggle active-p" id="rb-p" onclick="setRole('pruefer')">🔬 Prüfer</button>
+        <button class="role-toggle" id="rb-a" onclick="setRole('azubi')">📚 Azubi</button>
+      </div>
+    </div>
+    <button class="btn-login" onclick="doAuth()" id="auth-btn">Anmelden</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-note">Demo: test@test.de / test1234</div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div class="mob-overlay" id="mob-ov" onclick="closeSB()"></div>
+<div id="app-shell">
+  <div class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo-w"><div class="sbm">BC</div><div class="sbt-logo">Beton<span>Check</span></div></div>
+      <span class="sb-user-badge badge-p" id="user-badge">🔬 Prüfer</span>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-sec">
+        <div class="sb-sec-lbl">Navigation</div>
+        <button class="sbn act-h" id="btn-home" onclick="showPanel('home')"><span class="sbn-ico">⌂</span>Startseite</button>
+        <a href="index.html" class="sbn"><span class="sbn-ico">🌐</span>Website</a>
+      </div>
+      <div class="sb-div"></div>
+      <div class="sb-sec" id="nav-beton">
+        <div class="sb-sec-lbl">🧱 Beton & Mörtel</div>
+        <button class="sbn" onclick="showPanel('wuerfel')"><span class="sbn-ico">◫</span>Würfelmanager</button>
+        <button class="sbn" onclick="showPanel('anleitungen')"><span class="sbn-ico">📖</span>Prüfverfahren</button>
+        <button class="sbn" onclick="showPanel('normen')"><span class="sbn-ico">📚</span>Normen</button>
+        <button class="sbn" onclick="showPanel('azubi')"><span class="sbn-ico">🎓</span>Azubi-Bereich</button>
+      </div>
+      <div class="sb-div"></div>
+      <div class="sb-sec">
+        <div class="sb-sec-lbl">🌍 Geotechnik</div>
+        <button class="sbn" onclick="showPanel('geo')"><span class="sbn-ico">📖</span>Alle Inhalte</button>
+      </div>
+      <div class="sb-div"></div>
+      <div class="sb-sec">
+        <div class="sb-sec-lbl">🛣️ Asphalttechnik</div>
+        <button class="sbn" onclick="showPanel('asphalt')"><span class="sbn-ico">📖</span>Alle Inhalte</button>
+      </div>
+    </div>
+    <button class="sb-logout" onclick="doLogout()">↩ Abmelden</button>
+  </div>
+
+  <div class="main-area">
+    <div class="topbar">
+      <div class="tb-left">
+        <button class="mob-btn" style="display:none" onclick="toggleSB()">☰</button>
+        <div class="tb-title" id="tb-title">Startseite</div>
+      </div>
+      <div class="tb-right" id="tb-right">BetonCheck Pro</div>
+    </div>
+    <div class="content">
+
+      <!-- HOME -->
+      <div class="panel active" id="panel-home">
+        <div class="home-body">
+          <div class="hm-welcome">Guten Tag,<br><em id="greet-name">Prüfer</em></div>
+          <p class="hm-sub">Was möchtest du heute tun?</p>
+          <div class="app-mgrid" id="app-mgrid">
+            <!-- rendered by JS based on role -->
+          </div>
+          <div class="app-stats">
+            <div class="ast"><div class="ast-n" style="color:#4f9fff">3</div><div class="ast-l">Fachbereiche</div></div>
+            <div class="ast"><div class="ast-n" style="color:#00d4aa">25+</div><div class="ast-l">Prüfverfahren</div></div>
+            <div class="ast"><div class="ast-n" style="color:#f59e0b">50+</div><div class="ast-l">Lernkarten</div></div>
+            <div class="ast"><div class="ast-n" style="color:#a78bfa">15+</div><div class="ast-l">Rechner</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODULE PANELS (loaded as iframes) -->
+      <div class="panel" id="panel-wuerfel"><iframe class="module-frame" id="frame-wuerfel" src="about:blank"></iframe></div>
+      <div class="panel" id="panel-anleitungen"><iframe class="module-frame" id="frame-anleitungen" src="about:blank"></iframe></div>
+      <div class="panel" id="panel-normen"><iframe class="module-frame" id="frame-normen" src="about:blank"></iframe></div>
+      <div class="panel" id="panel-azubi"><iframe class="module-frame" id="frame-azubi" src="about:blank"></iframe></div>
+      <div class="panel" id="panel-geo"><iframe class="module-frame" id="frame-geo" src="about:blank"></iframe></div>
+      <div class="panel" id="panel-asphalt"><iframe class="module-frame" id="frame-asphalt" src="about:blank"></iframe></div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── FIREBASE CONFIG ───
+const fbConfig = {
+  apiKey: "AIzaSyD5zBXhZj0kbwhT8qXOLxOOGVM6OiHxtXA",
+  authDomain: "pruefcheckpro.firebaseapp.com",
+  projectId: "pruefcheckpro",
+  storageBucket: "pruefcheckpro.firebasestorage.app",
+  messagingSenderId: "401257250920",
+  appId: "1:401257250920:web:fd29840f77833e13847bdd",
+  measurementId: "G-SGRD5V58LS"
+};
+let app, auth, db;
+try {
+  app = firebase.initializeApp(fbConfig);
+  auth = firebase.auth();
+  db = firebase.firestore();
+} catch(e) { console.warn('Firebase init failed:', e.message); }
+
+// ─── STATE ───
+let currentUser = null;
+let userRole = 'pruefer';
+let authMode = 'login';
+let selectedRole = 'pruefer';
+const PANEL_TITLES = {
+  home:'Startseite', wuerfel:'Würfelmanager', anleitungen:'Prüfverfahren Beton',
+  normen:'Normen Beton', azubi:'Azubi-Bereich Beton',
+  geo:'Geotechnik', asphalt:'Asphalttechnik'
+};
+const MODULE_FILES = {
+  wuerfel:'wuerfel.html', anleitungen:'beton.html',
+  normen:'beton.html', azubi:'beton.html',
+  geo:'geo.html', asphalt:'asphalt.html'
+};
+const loaded = {};
+
+// ─── AUTH HELPERS ───
+function setMode(m) {
+  authMode = m;
+  document.querySelectorAll('.login-tab').forEach((t,i) => t.classList.toggle('active', (m==='login'&&i===0)||(m==='register'&&i===1)));
+  document.getElementById('role-picker').style.display = m === 'register' ? 'block' : 'none';
+  document.getElementById('auth-btn').textContent = m === 'login' ? 'Anmelden' : 'Registrieren';
+  document.getElementById('login-err').textContent = '';
+}
+function setRole(r) {
+  selectedRole = r;
+  document.getElementById('rb-p').className = 'role-toggle' + (r==='pruefer' ? ' active-p' : '');
+  document.getElementById('rb-a').className = 'role-toggle' + (r==='azubi' ? ' active-a' : '');
+}
+async function doAuth() {
+  const email = document.getElementById('inp-email').value.trim();
+  const pw = document.getElementById('inp-pw').value;
+  const errEl = document.getElementById('login-err');
+  errEl.textContent = '';
+  if (!email || !pw) { errEl.textContent = 'Bitte E-Mail und Passwort eingeben.'; return; }
+  document.getElementById('auth-btn').textContent = '...';
+  try {
+    if (authMode === 'login') {
+      await auth.signInWithEmailAndPassword(email, pw);
+    } else {
+      const cred = await auth.createUserWithEmailAndPassword(email, pw);
+      // Save role to Firestore
+      if (db) await db.collection('users').doc(cred.user.uid).set({ role: selectedRole, email, createdAt: new Date() });
+    }
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found': 'Kein Konto mit dieser E-Mail.',
+      'auth/wrong-password': 'Falsches Passwort.',
+      'auth/email-already-in-use': 'E-Mail bereits registriert.',
+      'auth/weak-password': 'Passwort zu schwach (min. 6 Zeichen).',
+      'auth/invalid-email': 'Ungültige E-Mail-Adresse.',
+      'auth/invalid-credential': 'E-Mail oder Passwort falsch.',
+    };
+    errEl.textContent = msgs[e.code] || e.message;
+    document.getElementById('auth-btn').textContent = authMode === 'login' ? 'Anmelden' : 'Registrieren';
+  }
+}
+async function doLogout() {
+  if (auth) await auth.signOut();
+  currentUser = null; userRole = 'pruefer';
+  document.getElementById('app-shell').classList.remove('active');
+  document.getElementById('login-screen').style.display = 'flex';
+  setMode('login');
+}
+
+// ─── AUTH STATE ───
+if (auth) {
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      currentUser = user;
+      // Get role from Firestore
+      if (db) {
+        try {
+          const doc = await db.collection('users').doc(user.uid).get();
+          userRole = doc.exists ? (doc.data().role || 'pruefer') : 'pruefer';
+        } catch(e) { userRole = 'pruefer'; }
+      }
+      startApp(user);
+    }
+  });
+} else {
+  // Offline demo mode
+  document.getElementById('login-note').textContent = 'Demo-Modus (kein Internet)';
+}
+
+function startApp(user) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').classList.add('active');
+  // Update UI for role
+  const badge = document.getElementById('user-badge');
+  const greet = document.getElementById('greet-name');
+  const name = user.email.split('@')[0];
+  greet.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+  if (userRole === 'azubi') {
+    badge.textContent = '📚 Azubi';
+    badge.className = 'sb-user-badge badge-a';
+    // Hide prüfer-only nav items
+    document.querySelector('[onclick="showPanel(\'wuerfel\')"]').closest('.sbn').style.opacity = '0.3';
+    document.querySelector('[onclick="showPanel(\'wuerfel\')"]').closest('.sbn').style.pointerEvents = 'none';
+  } else {
+    badge.textContent = '🔬 Prüfer';
+    badge.className = 'sb-user-badge badge-p';
+  }
+  renderHomeCards();
+  showPanel('home');
+}
+
+// ─── HOME CARDS ───
+function renderHomeCards() {
+  const grid = document.getElementById('app-mgrid');
+  const isPruefer = userRole !== 'azubi';
+  grid.innerHTML = `
+    ${isPruefer ? `<a href="javascript:void(0)" onclick="showPanel('wuerfel')" class="amc av">
+      <div class="ami">◫</div><div class="amt">Würfelmanager</div>
+      <div class="amd">Würfel erfassen, Prüftermine, Cloud-Sync, PDF-Berichte.</div>
+      <div class="ama">Öffnen →</div></a>` : ''}
+    <a href="javascript:void(0)" onclick="showPanel('anleitungen')" class="amc ab">
+      <div class="ami">🧱</div><div class="amt">Beton & Mörtel</div>
+      <div class="amd">Prüfverfahren, Normen und Azubi-Modul für Beton und Mörtel.</div>
+      <div class="ama">Öffnen →</div></a>
+    <a href="javascript:void(0)" onclick="showPanel('geo')" class="amc ag">
+      <div class="ami">🌍</div><div class="amt">Geotechnik</div>
+      <div class="amd">Proctor, Plattendruckversuch, Siebanalyse, Atterberg und mehr.</div>
+      <div class="ama">Öffnen →</div></a>
+    <a href="javascript:void(0)" onclick="showPanel('asphalt')" class="amc aa">
+      <div class="ami">🛣️</div><div class="amt">Asphalttechnik</div>
+      <div class="amd">Marshall-Versuch, Bohrkern, Texturtiefe, Verdichtungsgrad.</div>
+      <div class="ama">Öffnen →</div></a>
+    <a href="javascript:void(0)" onclick="showPanel('azubi')" class="amc ag">
+      <div class="ami">🎓</div><div class="amt">Azubi-Bereich</div>
+      <div class="amd">Lernkarten, Quiz, Rechner und Tabellen für die Ausbildung.</div>
+      <div class="ama">Öffnen →</div></a>`;
+}
+
+// ─── PANEL NAVIGATION ───
+function showPanel(id) {
+  // Azubi restrictions
+  if (userRole === 'azubi' && id === 'wuerfel') {
+    alert('Würfelmanager ist nur für Prüfer verfügbar.');
+    return;
+  }
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sbn').forEach(b => b.classList.remove('act-b','act-g','act-a','act-h','act-v'));
+  const panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('active');
+  document.getElementById('tb-title').textContent = PANEL_TITLES[id] || id;
+  // Active nav button
+  const btn = document.getElementById('btn-' + id) ||
+              document.querySelector(`.sbn[onclick="showPanel('${id}')"]`);
+  if (btn) {
+    const cls = id==='wuerfel'?'act-v':id==='geo'?'act-g':id==='asphalt'?'act-a':id==='home'?'act-h':'act-b';
+    btn.classList.add(cls);
+  }
+  // Load iframe
+  if (id !== 'home' && !loaded[id]) {
+    const frame = document.getElementById('frame-' + id);
+    if (frame && MODULE_FILES[id]) { frame.src = MODULE_FILES[id]; loaded[id] = true; }
+  }
+  closeSB();
+  window.scrollTo(0,0);
+}
+
+function toggleSB() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('mob-ov').classList.toggle('open'); }
+function closeSB() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('mob-ov').classList.remove('open'); }
+window.addEventListener('resize', () => { const b = document.querySelector('.mob-btn'); if(b) b.style.display = innerWidth<=768?'flex':'none'; });
+if(innerWidth<=768) { const b=document.querySelector('.mob-btn'); if(b) b.style.display='flex'; }
+</script>
+</body>
+</html>

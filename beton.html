@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BetonCheck — Prüfverfahren Anleitungen</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#04070d;--bg2:#080e18;--bg3:#0d1520;--bg4:#111d2b;--border:rgba(56,189,248,0.08);--border2:rgba(56,189,248,0.18);--text:#e8f4ff;--text2:#7a9ab8;--text3:#3a5570;--accent:#38bdf8;--gold:#f59e0b;--green:#34d399;--red:#f87171;--orange:#fb923c;--font:'DM Sans',sans-serif;--display:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;}
+body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(56,189,248,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,0.02) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;}
+.layout{display:flex;min-height:100vh;position:relative;z-index:1;}
+/* SIDEBAR */
+.sidebar{width:270px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);height:100vh;position:sticky;top:0;overflow-y:auto;display:flex;flex-direction:column;}
+.sb-head{padding:18px 16px 14px;border-bottom:1px solid var(--border);}
+.sb-logo{font-family:var(--display);font-size:15px;font-weight:800;color:var(--accent);display:flex;align-items:center;gap:8px;margin-bottom:2px;}
+.sb-sub{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;}
+.sb-search{padding:10px 12px;border-bottom:1px solid var(--border);}
+.sb-search input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font);font-size:13px;}
+.sb-search input:focus{outline:none;border-color:var(--accent);}
+.sb-nav{padding:10px 10px;flex:1;}
+.sb-group{margin-bottom:16px;}
+.sb-group-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:2px;font-family:var(--mono);padding:0 8px;margin-bottom:5px;}
+.sb-item{padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.12s;border:1px solid transparent;display:flex;align-items:center;gap:10px;font-weight:500;}
+.sb-item:hover{background:var(--bg4);color:var(--text);}
+.sb-item.active{background:rgba(56,189,248,0.1);color:var(--accent);border-color:rgba(56,189,248,0.2);}
+.sb-item-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0;}
+.sb-tag{margin-left:auto;font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:100px;}
+.tag-frisch{background:rgba(56,189,248,0.1);color:var(--accent);}
+.tag-fest{background:rgba(52,211,153,0.1);color:var(--green);}
+/* CONTENT */
+.content{flex:1;min-width:0;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.tb-heading{font-family:var(--display);font-size:16px;font-weight:700;}
+.tb-right{display:flex;gap:8px;align-items:center;}
+.btn-print{padding:7px 16px;border-radius:8px;border:1px solid var(--border2);background:none;color:var(--text2);font-family:var(--font);font-size:13px;cursor:pointer;transition:all 0.15s;}
+.btn-print:hover{background:var(--bg3);color:var(--text);}
+.btn-pdf{padding:7px 16px;border-radius:8px;background:var(--accent);color:#04070d;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-pdf:hover{background:#7dd3fc;}
+.main{padding:36px 40px;max-width:920px;}
+/* PAGE */
+.page{display:none;}
+.page.active{display:block;}
+/* OVERVIEW */
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:8px;}
+.ov-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.ov-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity 0.3s;}
+.ov-card.frisch::before{background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.ov-card.fest::before{background:linear-gradient(90deg,var(--green),var(--accent));}
+.ov-card:hover{border-color:var(--border2);background:var(--bg3);transform:translateY(-3px);}
+.ov-card:hover::before{opacity:1;}
+.ov-icon{font-size:32px;margin-bottom:10px;}
+.ov-title{font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:5px;}
+.ov-desc{font-size:12px;color:var(--text2);line-height:1.5;}
+.ov-meta{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:11px;color:var(--text3);font-family:var(--mono);}
+/* ANLEITUNG */
+.al-header{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:28px;margin-bottom:28px;position:relative;overflow:hidden;}
+.al-header::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.frisch-header::before{background:linear-gradient(90deg,var(--accent),var(--gold));}
+.fest-header::before{background:linear-gradient(90deg,var(--green),var(--accent));}
+.al-norm{font-family:var(--mono);font-size:11px;color:var(--accent);margin-bottom:6px;letter-spacing:1px;}
+.al-title{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:10px;}
+.al-desc{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:16px;}
+.al-tags{display:flex;gap:8px;flex-wrap:wrap;}
+.al-tag{font-size:11px;font-family:var(--mono);padding:4px 10px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);}
+/* GERÄTE LISTE */
+.geraete-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;}
+.box-title{font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.geraete-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+.geraet-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;}
+.geraet-icon{font-size:20px;flex-shrink:0;}
+.geraet-name{font-size:13px;font-weight:500;}
+.geraet-spec{font-size:11px;color:var(--text2);font-family:var(--mono);margin-top:2px;}
+/* STEPS */
+.steps-container{display:flex;flex-direction:column;gap:0;margin-bottom:24px;}
+.step-card{background:var(--bg2);border:1px solid var(--border);border-radius:0;padding:0;transition:all 0.15s;overflow:hidden;}
+.step-card:first-child{border-radius:12px 12px 0 0;}
+.step-card:last-child{border-radius:0 0 12px 12px;}
+.step-card+.step-card{border-top:none;}
+.step-card:hover{background:var(--bg3);}
+.step-header{display:flex;align-items:stretch;gap:0;cursor:pointer;}
+.step-num-col{background:rgba(56,189,248,0.08);border-right:1px solid var(--border);padding:20px 18px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-width:60px;gap:6px;}
+.step-num{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent);line-height:1;}
+.step-num-lbl{font-size:8px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;}
+.step-body{flex:1;padding:18px 20px;}
+.step-title{font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:6px;}
+.step-text{font-size:13px;color:var(--text2);line-height:1.7;}
+.step-text strong{color:var(--text);}
+.step-img{width:100%;border-radius:10px;margin-top:14px;overflow:hidden;background:var(--bg3);border:1px solid var(--border);}
+.step-img-inner{display:flex;align-items:stretch;gap:0;}
+.step-svg{flex:1;display:flex;align-items:center;justify-content:center;padding:16px;min-height:160px;}
+.step-photo-placeholder{width:160px;flex-shrink:0;background:var(--bg4);border-left:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:8px;cursor:pointer;transition:background 0.15s;}
+.step-photo-placeholder:hover{background:rgba(56,189,248,0.05);}
+.photo-icon{font-size:24px;opacity:0.4;}
+.photo-lbl{font-size:10px;color:var(--text3);text-align:center;font-family:var(--mono);}
+.photo-uploaded{width:100%;height:100%;object-fit:cover;border-radius:0;}
+/* WICHTIG / WARNUNG */
+.hinweis{border-radius:10px;padding:14px 18px;margin:14px 0;font-size:13px;line-height:1.7;}
+.hinweis-info{background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);color:var(--text2);}
+.hinweis-info strong{color:var(--accent);}
+.hinweis-warn{background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.18);color:var(--text2);}
+.hinweis-warn strong{color:var(--gold);}
+.hinweis-danger{background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.18);color:var(--text2);}
+.hinweis-danger strong{color:var(--red);}
+/* ERGEBNIS-TABELLE */
+.ergebnis-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;}
+.etab{width:100%;border-collapse:collapse;font-size:13px;}
+.etab th{padding:10px 16px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-family:var(--mono);border-bottom:1px solid var(--border);background:var(--bg3);}
+.etab td{padding:10px 16px;border-bottom:1px solid var(--border);color:var(--text2);}
+.etab tr:last-child td{border-bottom:none;}
+.etab tr:hover td{background:rgba(56,189,248,0.03);}
+.etab td:first-child{font-family:var(--mono);color:var(--accent);font-weight:500;}
+/* KURZVERSION */
+.kurz-box{background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:20px;margin-top:24px;}
+.kurz-title{font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:14px;color:var(--accent);}
+.kurz-steps{display:flex;flex-direction:column;gap:6px;}
+.kurz-step{display:flex;gap:12px;align-items:flex-start;font-size:12px;color:var(--text2);}
+.kurz-num{background:var(--accent);color:#04070d;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;font-family:var(--mono);margin-top:1px;}
+/* PRINT */
+@media print{
+  body{background:#fff;color:#000;}
+  .sidebar,.topbar{display:none!important;}
+  .main{padding:20px;}
+  .page{display:block!important;}
+  .page:not(.active){display:none!important;}
+  .al-header,.geraete-box,.step-card,.ergebnis-box{background:#f8f9fa;border:1px solid #ddd;color:#000;}
+  .step-text,.al-desc,.geraet-spec,.etab td{color:#333;}
+  .step-num,.al-norm{color:#0284c7;}
+  .step-title,.al-title,.box-title{color:#000;}
+  .hinweis-warn{background:#fff8e1;border-color:#f59e0b;}
+  .hinweis-info{background:#e0f2fe;border-color:#38bdf8;}
+}
+/* MOBILE */
+.mob-btn{display:none;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;backdrop-filter:blur(4px);}
+.mob-overlay.open{display:block;}
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-285px;top:0;height:100vh;z-index:300;transition:left 0.25s ease;box-shadow:6px 0 32px rgba(0,0,0,0.6);}
+  .sidebar.open{left:0;}
+  .mob-btn{display:flex;align-items:center;}
+  .main{padding:18px 14px 90px;}
+  .topbar{padding:0 14px;}
+  .tb-heading{font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mob-bottom{display:flex !important;}
+}
+.mob-bottom{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--bg2);border-top:1px solid var(--border2);padding:6px 2px;gap:1px;}
+.mbn-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:8px;cursor:pointer;flex:1;border:none;background:none;color:var(--text2);transition:all 0.12s;font-family:var(--font);}
+.mbn-item:active,.mbn-item.active{background:rgba(56,189,248,0.12);color:var(--accent);}
+.mbn-icon{font-size:17px;line-height:1;}
+.mbn-lbl{font-size:8px;font-family:var(--mono);white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="sb-logo">▣ BetonCheck</div>
+    <div class="sb-sub">Prüfverfahren Anleitungen</div>
+  </div>
+  <div class="sb-search"><input type="text" placeholder="Verfahren suchen …" oninput="searchVerfahren(this.value)"/></div>
+  <div class="sb-nav">
+    <div class="sb-group">
+      <div class="sb-group-lbl">Frischbeton</div>
+      <div class="sb-item active" onclick="showAnleitung('setzmas')"><span class="sb-item-icon">📏</span>Setzmaß<span class="sb-tag tag-frisch">EN 12350-2</span></div>
+      <div class="sb-item" onclick="showAnleitung('ausbreit')"><span class="sb-item-icon">⭕</span>Ausbreitmaß<span class="sb-tag tag-frisch">EN 12350-5</span></div>
+      <div class="sb-item" onclick="showAnleitung('luftgehalt')"><span class="sb-item-icon">💨</span>Luftgehalt<span class="sb-tag tag-frisch">EN 12350-7</span></div>
+      <div class="sb-item" onclick="showAnleitung('rohdichte')"><span class="sb-item-icon">⚖️</span>Rohdichte<span class="sb-tag tag-frisch">EN 12350-6</span></div>
+      <div class="sb-item" onclick="showAnleitung('temperatur')"><span class="sb-item-icon">🌡️</span>Temperatur<span class="sb-tag tag-frisch">EN 12350-1</span></div>
+    </div>
+    <div class="sb-group">
+      <div class="sb-group-lbl">Festbeton</div>
+      <div class="sb-item" onclick="showAnleitung('wuerfelherst')"><span class="sb-item-icon">🔲</span>Würfelherstellung<span class="sb-tag tag-fest">EN 12390-2</span></div>
+      <div class="sb-item" onclick="showAnleitung('druckfest')"><span class="sb-item-icon">💪</span>Druckfestigkeit<span class="sb-tag tag-fest">EN 12390-3</span></div>
+      <div class="sb-item" onclick="showAnleitung('wasser')"><span class="sb-item-icon">💧</span>Wassereindringtiefe<span class="sb-tag tag-fest">EN 12390-8</span></div>
+    </div>
+    <div class="sb-group">
+      <div class="sb-group-lbl">Übersicht</div>
+      <div class="sb-item" onclick="showAnleitung('overview')"><span class="sb-item-icon">🏠</span>Alle Verfahren</div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE OVERLAY -->
+<div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+
+<!-- CONTENT -->
+<div class="content">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="mob-btn" onclick="toggleSidebar()">☰</button>
+      <div class="tb-heading" id="tb-heading">Setzmaß — EN 12350-2</div>
+    </div>
+    <div class="tb-right">
+      <button class="btn-print" onclick="window.print()">🖨 Drucken</button>
+    </div>
+  </div>
+  <div class="main">
+
+<!-- OVERVIEW -->
+<div class="page" id="page-overview">
+  <div style="margin-bottom:32px;">
+    <div style="font-family:var(--display);font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;">Alle Prüfverfahren</div>
+    <div style="font-size:15px;color:var(--text2);">Wähle ein Verfahren für die vollständige Schritt-für-Schritt Anleitung.</div>
+  </div>
+  <div style="font-size:12px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Frischbeton</div>
+  <div class="ov-grid" style="margin-bottom:28px;">
+    <div class="ov-card frisch" onclick="showAnleitung('setzmas')"><div class="ov-icon">📏</div><div class="ov-title">Setzmaß</div><div class="ov-desc">Konsistenzbestimmung mit dem Setzkegel (Abramskonus)</div><div class="ov-meta"><span>EN 12350-2</span><span>8 Schritte</span></div></div>
+    <div class="ov-card frisch" onclick="showAnleitung('ausbreit')"><div class="ov-icon">⭕</div><div class="ov-title">Ausbreitmaß</div><div class="ov-desc">Konsistenz durch Ausbreiten auf der Rüttelplatte</div><div class="ov-meta"><span>EN 12350-5</span><span>7 Schritte</span></div></div>
+    <div class="ov-card frisch" onclick="showAnleitung('luftgehalt')"><div class="ov-icon">💨</div><div class="ov-title">Luftgehalt</div><div class="ov-desc">Bestimmung des Luftgehalts mit dem Druckverfahren</div><div class="ov-meta"><span>EN 12350-7</span><span>7 Schritte</span></div></div>
+    <div class="ov-card frisch" onclick="showAnleitung('rohdichte')"><div class="ov-icon">⚖️</div><div class="ov-title">Rohdichte</div><div class="ov-desc">Frischbetonrohdichte durch Wiegen des Behälters</div><div class="ov-meta"><span>EN 12350-6</span><span>5 Schritte</span></div></div>
+    <div class="ov-card frisch" onclick="showAnleitung('temperatur')"><div class="ov-icon">🌡️</div><div class="ov-title">Temperatur</div><div class="ov-desc">Messung der Frischbetontemperatur</div><div class="ov-meta"><span>EN 12350-1</span><span>4 Schritte</span></div></div>
+  </div>
+  <div style="font-size:12px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Festbeton</div>
+  <div class="ov-grid">
+    <div class="ov-card fest" onclick="showAnleitung('wuerfelherst')"><div class="ov-icon">🔲</div><div class="ov-title">Würfelherstellung</div><div class="ov-desc">Sachgerechte Herstellung und Lagerung von Probekörpern</div><div class="ov-meta"><span>EN 12390-2</span><span>9 Schritte</span></div></div>
+    <div class="ov-card fest" onclick="showAnleitung('druckfest')"><div class="ov-icon">💪</div><div class="ov-title">Druckfestigkeit</div><div class="ov-desc">Prüfung der Druckfestigkeit an Würfeln und Zylindern</div><div class="ov-meta"><span>EN 12390-3</span><span>8 Schritte</span></div></div>
+    <div class="ov-card fest" onclick="showAnleitung('wasser')"><div class="ov-icon">💧</div><div class="ov-title">Wassereindringtiefe</div><div class="ov-desc">Bestimmung der Wasserdurchlässigkeit unter Druck</div><div class="ov-meta"><span>EN 12390-8</span><span>7 Schritte</span></div></div>
+  </div>
+</div>
+
+<!-- SETZMAS -->
+<div class="page active" id="page-setzmas">
+  <div class="al-header frisch-header">
+    <div class="al-norm">DIN EN 12350-2 · Frischbetonprüfung</div>
+    <div class="al-title">Setzmaß-Versuch</div>
+    <div class="al-desc">Der Setzmaß-Versuch bestimmt die Konsistenz von Frischbeton mit dem Setzkegel (Abramskonus). Er ist die am häufigsten verwendete Methode zur Konsistenzbestimmung auf Baustellen und in Werken.</div>
+    <div class="al-tags"><span class="al-tag">Frischbeton</span><span class="al-tag">Konsistenz</span><span class="al-tag">S1–S5</span><span class="al-tag">Klassen S1–S5</span></div>
+  </div>
+
+  <div class="geraete-box">
+    <div class="box-title">🛠️ Benötigte Geräte & Materialien</div>
+    <div class="geraete-grid">
+      <div class="geraet-item"><div class="geraet-icon">🔺</div><div><div class="geraet-name">Setzkegel</div><div class="geraet-spec">Ø unten 200mm, oben 100mm, H=300mm</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">🔩</div><div><div class="geraet-name">Stampfstab</div><div class="geraet-spec">Ø 16mm, L=600mm, runde Enden</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">📏</div><div><div class="geraet-name">Stahlmaßstab</div><div class="geraet-spec">mind. 300mm, Ablesegenauigkeit 5mm</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">🏗️</div><div><div class="geraet-name">Unterlagsplatte</div><div class="geraet-spec">Stahl, eben, mind. 500×500mm</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">🔪</div><div><div class="geraet-name">Glättekelle</div><div class="geraet-spec">zum Abstreichen</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">💧</div><div><div class="geraet-name">Wasser</div><div class="geraet-spec">zum Anfeuchten der Geräte</div></div></div>
+    </div>
+  </div>
+
+  <div class="hinweis hinweis-warn"><strong>⚠ Wichtig:</strong> Die Probe muss innerhalb von 5 Minuten nach der Probenahme geprüft werden. Geräte vor der Prüfung anfeuchten (nicht nass).</div>
+
+  <div class="box-title" style="font-family:var(--display);font-size:16px;font-weight:700;margin-bottom:14px;">⚙️ Schritt-für-Schritt Durchführung</div>
+  <div class="steps-container">
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num-col"><div class="step-num">01</div><div class="step-num-lbl">Vorbereitung</div></div>
+        <div class="step-body">
+          <div class="step-title">Geräte anfeuchten & aufstellen</div>
+          <div class="step-text">Setzkegel, Stampfstab und Unterlagsplatte mit einem feuchten Tuch abwischen. Unterlagsplatte auf eine <strong>erschütterungsfreie, ebene Fläche</strong> stellen. Kegel mit den Füßen auf die Platte stellen und mit den Füßen festhalten (oder Fußtritte benutzen).</div>
+          <div class="step-img">
+            <div class="step-img-inner">
+              <div class="step-svg">
+                <svg width="200" height="130" viewBox="0 0 200 130">
+                  <rect width="200" height="130" fill="none"/>
+                  <!-- Unterlagsplatte -->
+                  <rect x="20" y="110" width="160" height="8" rx="2" fill="#1a2230" stroke="#38bdf8" stroke-width="1.5"/>
+                  <!-- Setzkegel -->
+                  <polygon points="80,20 120,20 135,108 65,108" fill="#0d1520" stroke="#38bdf8" stroke-width="1.5"/>
+                  <line x1="80" y1="20" x2="120" y2="20" stroke="#38bdf8" stroke-width="1.5"/>
+                  <!-- Maße -->
+                  <text x="143" y="70" fill="#7a9ab8" font-size="9" font-family="monospace">300mm</text>
+                  <line x1="140" y1="20" x2="140" y2="108" stroke="#7a9ab8" stroke-width="0.5" stroke-dasharray="3,2"/>
+                  <text x="55" y="120" fill="#38bdf8" font-size="9" font-family="monospace">Unterlagsplatte</text>
+                  <text x="70" y="15" fill="#f59e0b" font-size="9" font-family="monospace">Ø 100mm</text>
+                  <text x="120" y="112" fill="#f59e0b" font-size="8" font-family="monospace">Ø 200mm</text>
+                </svg>
+              </div>
+              <div class="step-photo-placeholder" onclick="uploadPhoto(this)">
+                <div class="photo-icon">📷</div>
+                <div class="photo-lbl">Eigenes Foto<br>hier einfügen</div>
+                <input type="file" accept="image/*" style="display:none" onchange="previewPhoto(this)"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num-col"><div class="step-num">02</div><div class="step-num-lbl">1. Lage</div></div>
+        <div class="step-body">
+          <div class="step-title">1. Lage befüllen und stampfen</div>
+          <div class="step-text">Kegel bis ca. <strong>1/3 der Höhe (~100mm)</strong> mit Frischbeton befüllen. Anschließend <strong>25 gleichmäßig verteilte Stampfstöße</strong> mit dem Stampfstab aufbringen. Der Stampfstab darf dabei nicht auf die Bodenplatte auftreffen.</div>
+          <div class="hinweis hinweis-info" style="margin-top:10px;"><strong>💡 Tipp:</strong> Die 25 Stöße gleichmäßig spiralförmig von außen nach innen verteilen.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num-col"><div class="step-num">03</div><div class="step-num-lbl">2. Lage</div></div>
+        <div class="step-body">
+          <div class="step-title">2. Lage befüllen und stampfen</div>
+          <div class="step-text">Kegel bis ca. <strong>2/3 der Höhe (~200mm)</strong> befüllen. <strong>25 Stampfstöße</strong> — dabei nur leicht in die 1. Lage eindringen. Nicht durch die gesamte untere Lage stampfen.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num-col"><div class="step-num">04</div><div class="step-num-lbl">3. Lage</div></div>
+        <div class="step-body">
+          <div class="step-title">3. Lage befüllen, stampfen und abstreichen</div>
+          <div class="step-text">Kegel <strong>leicht über den Rand befüllen</strong>. 25 Stampfstöße aufbringen. Anschließend den überstehenden Beton mit der Glättekelle <strong>bündig abstreichen</strong>. Kegel und Unterlagsplatte vom Beton reinigen.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num-col"><div class="step-num">05</div><div class="step-num-lbl">Abheben</div></div>
+        <div class="step-body">
+          <div class="step-title">Setzkegel zügig abheben</div>
+          <div class="step-text">Den Setzkegel <strong>in 5–10 Sekunden senkrecht nach oben</strong> abheben — ohne Drehen, Kippen oder seitliche Bewegungen. Kegel neben die Probe stellen.</div>
+          <div class="hinweis hinweis-danger" style="margin-top:10px;"><strong>⚠ Achtung:</strong> Nicht zu langsam — der Beton darf nicht am Kegel kleben. Nicht zu schnell — sonst fällt die Probe um.</div>
+          <div class="step-img">
+            <div class="step-img-inner">
+              <div class="step-svg">
+                <svg width="200" height="140" viewBox="0 0 200 140">
+                  <!-- Platte -->
+                  <rect x="20" y="125" width="160" height="7" rx="2" fill="#1a2230" stroke="#38bdf8" stroke-width="1"/>
+                  <!-- Kegel links (abgehoben) -->
+                  <polygon points="30,20 55,20 65,120 20,120" fill="#0d1520" stroke="#38bdf8" stroke-width="1.5" opacity="0.5"/>
+                  <text x="25" y="15" fill="#38bdf8" font-size="8" font-family="monospace">Kegel</text>
+                  <!-- Pfeil nach oben -->
+                  <line x1="42" y1="60" x2="42" y2="20" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr)"/>
+                  <!-- Gesetzter Beton rechts -->
+                  <ellipse cx="130" cy="122" rx="42" ry="8" fill="#1a3520" stroke="#34d399" stroke-width="1"/>
+                  <path d="M88,122 Q100,80 130,75 Q160,80 172,122" fill="#1a3520" stroke="#34d399" stroke-width="1.5"/>
+                  <!-- Maß -->
+                  <line x1="130" y1="75" x2="130" y2="122" stroke="#34d399" stroke-width="1" stroke-dasharray="3,2"/>
+                  <text x="135" y="102" fill="#34d399" font-size="10" font-family="monospace" font-weight="bold">s = ?</text>
+                  <text x="100" y="138" fill="#7a9ab8" font-size="8" font-family="monospace">gesetzter Beton</text>
+                  <defs><marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker></defs>
+                </svg>
+              </div>
+              <div class="step-photo-placeholder" onclick="uploadPhoto(this)">
+                <div class="photo-icon">📷</div>
+                <div class="photo-lbl">Eigenes Foto<br>hier einfügen</div>
+                <input type="file" accept="image/*" style="display:none" onchange="previewPhoto(this)"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num-col"><div class="step-num">06</div><div class="step-num-lbl">Messen</div></div>
+        <div class="step-body">
+          <div class="step-title">Setzmaß messen</div>
+          <div class="step-text">Den Setzkegel neben die Probe stellen und den Stampfstab quer über den Kegel legen. Mit dem Maßstab die <strong>Differenz zwischen der Unterkante des Stampfstabs und dem höchsten Punkt des gesetzten Betons</strong> messen. Auf 5mm genau ablesen und notieren.</div>
+          <div class="hinweis hinweis-info" style="margin-top:10px;"><strong>Setzmaß s = 300mm − gemessene Höhe des gesetzten Betons</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num-col"><div class="step-num">07</div><div class="step-num-lbl">Beurteilung</div></div>
+        <div class="step-body">
+          <div class="step-title">Bruchbild und Ergebnis beurteilen</div>
+          <div class="step-text">Das Setzverhalten beurteilen: <strong>Echtes Setzen</strong> (gleichmäßig) → gültiges Ergebnis. <strong>Scheren</strong> (Probe kippt einseitig ab) → Versuch ungültig, wiederholen.</div>
+          <div class="hinweis hinweis-danger" style="margin-top:10px;"><strong>Ungültig wenn:</strong> Probe scherbruchförmig abgeglitten ist. Neuen Versuch mit frischer Probe durchführen.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num-col"><div class="step-num">08</div><div class="step-num-lbl">Protokoll</div></div>
+        <div class="step-body">
+          <div class="step-title">Ergebnis protokollieren</div>
+          <div class="step-text">Setzmaß in mm aufzeichnen, Konsistenzklasse bestimmen und im Prüfprotokoll eintragen. Bei Abweichung von der Soll-Klasse sofort Bauleitung informieren.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- steps -->
+
+  <div class="box-title" style="font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:12px;">📊 Auswertung — Konsistenzklassen</div>
+  <div class="ergebnis-box">
+    <table class="etab">
+      <thead><tr><th>Klasse</th><th>Setzmaß</th><th>Bezeichnung</th><th>Typische Anwendung</th><th>Beurteilung</th></tr></thead>
+      <tbody>
+        <tr><td>S1</td><td>10–40 mm</td><td>Steif</td><td>Fundamente, Bodenplatten</td><td>✓ bei Festlegung S1</td></tr>
+        <tr><td>S2</td><td>50–90 mm</td><td>Plastisch</td><td>Balkone, Stützen, Wände</td><td>✓ bei Festlegung S2</td></tr>
+        <tr><td>S3</td><td>100–150 mm</td><td>Weich</td><td>Bewehrte Wände, Decken</td><td>✓ bei Festlegung S3</td></tr>
+        <tr><td>S4</td><td>160–210 mm</td><td>Sehr weich</td><td>Dichte Bewehrung, Tiefbau</td><td>✓ bei Festlegung S4</td></tr>
+        <tr><td>S5</td><td>≥ 220 mm</td><td>Fließfähig</td><td>Pumpbeton, SVB</td><td>✓ bei Festlegung S5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="kurz-box">
+    <div class="kurz-title">📋 Kurzanleitung — Zum Ausdrucken</div>
+    <div class="kurz-steps">
+      <div class="kurz-step"><div class="kurz-num">1</div><div>Geräte anfeuchten, Kegel auf ebener Platte aufstellen</div></div>
+      <div class="kurz-step"><div class="kurz-num">2</div><div>1. Lage bis 1/3 füllen → 25 Stampfstöße</div></div>
+      <div class="kurz-step"><div class="kurz-num">3</div><div>2. Lage bis 2/3 füllen → 25 Stampfstöße</div></div>
+      <div class="kurz-step"><div class="kurz-num">4</div><div>3. Lage leicht überfüllen → 25 Stampfstöße → abstreichen</div></div>
+      <div class="kurz-step"><div class="kurz-num">5</div><div>Kegel in 5–10 Sekunden senkrecht abheben</div></div>
+      <div class="kurz-step"><div class="kurz-num">6</div><div>Setzmaß messen (auf 5mm genau) → Klasse bestimmen</div></div>
+      <div class="kurz-step"><div class="kurz-num">7</div><div>Bei Scheren: ungültig → Versuch wiederholen</div></div>
+      <div class="kurz-step"><div class="kurz-num">8</div><div>Ergebnis protokollieren</div></div>
+    </div>
+  </div>
+</div><!-- page-setzmas -->
+
+<!-- DRUCKFESTIGKEIT -->
+<div class="page" id="page-druckfest">
+  <div class="al-header fest-header">
+    <div class="al-norm">DIN EN 12390-3 · Festbetonprüfung</div>
+    <div class="al-title">Druckfestigkeitsprüfung</div>
+    <div class="al-desc">Prüfung der Druckfestigkeit von Festbeton-Probekörpern (Würfeln oder Zylindern) in der hydraulischen Druckprüfmaschine. Wichtigste Prüfung für den Nachweis der Betonqualität.</div>
+    <div class="al-tags"><span class="al-tag">Festbeton</span><span class="al-tag">Druckfestigkeit fc</span><span class="al-tag">Bruchbilder</span><span class="al-tag">Protokoll</span></div>
+  </div>
+  <div class="geraete-box">
+    <div class="box-title">🛠️ Benötigte Geräte</div>
+    <div class="geraete-grid">
+      <div class="geraet-item"><div class="geraet-icon">🏭</div><div><div class="geraet-name">Druckprüfmaschine</div><div class="geraet-spec">hydraulisch, kalibriert</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">📐</div><div><div class="geraet-name">Schublehre</div><div class="geraet-spec">Genauigkeit 0,1mm</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">⚖️</div><div><div class="geraet-name">Waage</div><div class="geraet-spec">Genauigkeit 10g</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">🔲</div><div><div class="geraet-name">Probekörper</div><div class="geraet-spec">Würfel 150×150×150mm</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">🧴</div><div><div class="geraet-name">Reinigungsmittel</div><div class="geraet-spec">für Druckplatten</div></div></div>
+    </div>
+  </div>
+  <div class="hinweis hinweis-warn"><strong>⚠ Kalibrierung:</strong> Die Druckprüfmaschine muss gültig kalibriert sein. Kalibriernachweis vor Prüfbeginn prüfen.</div>
+  <div class="box-title" style="font-family:var(--display);font-size:16px;font-weight:700;margin-bottom:14px;">⚙️ Schritt-für-Schritt</div>
+  <div class="steps-container">
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">01</div><div class="step-num-lbl">Vorbereitung</div></div><div class="step-body"><div class="step-title">Probekörper vorbereiten</div><div class="step-text">Probekörper aus der Lagerung entnehmen. Oberfläche mit einem feuchten Tuch reinigen. <strong>Abmessungen messen</strong> (Länge × Breite × Höhe in mm, auf 1mm genau). <strong>Masse bestimmen</strong> (auf 10g genau). Alle Werte notieren.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">02</div><div class="step-num-lbl">Prüfmaschine</div></div><div class="step-body"><div class="step-title">Druckplatten reinigen und prüfen</div><div class="step-text">Druckplatten mit einem trockenen Tuch reinigen. Oberfläche auf Schäden prüfen — <strong>Unebenheiten max. 0,06mm</strong>. Druckplatten dürfen keine Riefen oder Kerben haben.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">03</div><div class="step-num-lbl">Einlegen</div></div><div class="step-body"><div class="step-title">Probekörper zentriert einlegen</div><div class="step-text">Probekörper <strong>zentrisch</strong> auf die untere Druckplatte stellen. Die beim Herstellen verwendete <strong>Oberfläche senkrecht zur Lastachse</strong> positionieren (Herstellungsfläche = Seitenfläche beim Test). Zentrierkreuz nutzen.</div>
+            <div class="step-img"><div class="step-img-inner"><div class="step-svg">
+              <svg width="180" height="140" viewBox="0 0 180 140">
+                <!-- Druckplatten -->
+                <rect x="20" y="10" width="140" height="14" rx="3" fill="#1a2230" stroke="#38bdf8" stroke-width="1.5"/>
+                <rect x="20" y="116" width="140" height="14" rx="3" fill="#1a2230" stroke="#38bdf8" stroke-width="1.5"/>
+                <!-- Würfel -->
+                <rect x="55" y="50" width="70" height="66" rx="4" fill="#0d1520" stroke="#34d399" stroke-width="2"/>
+                <!-- Zentrierlinien -->
+                <line x1="90" y1="24" x2="90" y2="50" stroke="#38bdf8" stroke-width="1" stroke-dasharray="4,3"/>
+                <line x1="90" y1="116" x2="90" y2="83" stroke="#38bdf8" stroke-width="1" stroke-dasharray="4,3"/>
+                <!-- Kraft-Pfeile -->
+                <line x1="90" y1="24" x2="90" y2="34" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#a2)"/>
+                <text x="96" y="33" fill="#f59e0b" font-size="9" font-family="monospace">F</text>
+                <!-- Maße -->
+                <text x="132" y="88" fill="#7a9ab8" font-size="9" font-family="monospace">150</text>
+                <line x1="130" y1="50" x2="130" y2="116" stroke="#7a9ab8" stroke-width="0.5" stroke-dasharray="3,2"/>
+                <text x="25" y="90" fill="#34d399" font-size="8" font-family="monospace">zentrisch!</text>
+                <defs><marker id="a2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker></defs>
+              </svg>
+            </div><div class="step-photo-placeholder" onclick="uploadPhoto(this)"><div class="photo-icon">📷</div><div class="photo-lbl">Eigenes Foto<br>hier einfügen</div><input type="file" accept="image/*" style="display:none" onchange="previewPhoto(this)"/></div></div></div>
+          </div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">04</div><div class="step-num-lbl">Belastung</div></div><div class="step-body"><div class="step-title">Belastungsgeschwindigkeit einstellen</div><div class="step-text">Belastungsgeschwindigkeit auf <strong>0,6 ± 0,2 N/(mm²·s)</strong> einstellen. Bei einem Würfel 150×150mm (Ac = 22.500mm²) entspricht das einer Kraftzunahme von etwa <strong>13,5 kN/s</strong>.</div><div class="hinweis hinweis-info" style="margin-top:10px;"><strong>Rechnung:</strong> 0,6 N/mm²/s × 22.500 mm² = 13.500 N/s = 13,5 kN/s</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">05</div><div class="step-num-lbl">Prüfung</div></div><div class="step-body"><div class="step-title">Kontinuierlich bis zum Bruch belasten</div><div class="step-text">Belastung gleichmäßig und kontinuierlich steigern bis zum <strong>Bruch des Probekörpers</strong>. <strong>Höchstkraft F in kN</strong> ablesen und aufzeichnen. Belastungsgeschwindigkeit während der Prüfung nicht verändern.</div><div class="hinweis hinweis-danger" style="margin-top:10px;"><strong>⚠</strong> Kein Stoppen oder Unterbrechen der Belastung. Schutzvorrichtung der Maschine nutzen!</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">06</div><div class="step-num-lbl">Berechnung</div></div><div class="step-body"><div class="step-title">Druckfestigkeit berechnen</div><div class="step-text">fc = F / Ac<br><br><strong>F</strong> = abgelesene Höchstkraft in kN → umrechnen in N (× 1000)<br><strong>Ac</strong> = tragende Querschnittsfläche = Länge × Breite in mm²<br><strong>fc</strong> = Druckfestigkeit in N/mm²</div><div class="hinweis hinweis-info" style="margin-top:10px;"><strong>Beispiel:</strong> F = 855 kN, Würfel 150mm: fc = 855.000 / 22.500 = <strong>38,0 N/mm²</strong></div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">07</div><div class="step-num-lbl">Bruchbild</div></div><div class="step-body"><div class="step-title">Bruchbild beurteilen</div><div class="step-text">Bruchbild nach Typ 1–6 klassifizieren und fotografisch dokumentieren. <strong>Typ 1–3: zufriedenstellend. Typ 4–6: nicht zufriedenstellend</strong> → im Protokoll vermerken und Ursache angeben.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">08</div><div class="step-num-lbl">Protokoll</div></div><div class="step-body"><div class="step-title">Ergebnis protokollieren</div><div class="step-text">Alle Daten im Prüfprotokoll festhalten: Probekörper-ID, Abmessungen, Masse, Prüfdatum, Höchstkraft F, berechnete Druckfestigkeit fc, Bruchbild-Typ, Festigkeitsklasse, Bewertung (Bestanden/Nicht bestanden).</div></div></div></div>
+  </div>
+  <div class="kurz-box">
+    <div class="kurz-title">📋 Kurzanleitung</div>
+    <div class="kurz-steps">
+      <div class="kurz-step"><div class="kurz-num">1</div><div>Probekörper: Maße messen, Masse wiegen, Oberfläche reinigen</div></div>
+      <div class="kurz-step"><div class="kurz-num">2</div><div>Druckplatten reinigen (max. 0,06mm Unebenheit)</div></div>
+      <div class="kurz-step"><div class="kurz-num">3</div><div>Probekörper zentrisch einlegen (Herstellungsfläche senkrecht)</div></div>
+      <div class="kurz-step"><div class="kurz-num">4</div><div>Belastungsgeschwindigkeit: 0,6 ± 0,2 N/(mm²·s)</div></div>
+      <div class="kurz-step"><div class="kurz-num">5</div><div>Kontinuierlich bis zum Bruch belasten, F (kN) ablesen</div></div>
+      <div class="kurz-step"><div class="kurz-num">6</div><div>fc = F [N] / Ac [mm²] berechnen</div></div>
+      <div class="kurz-step"><div class="kurz-num">7</div><div>Bruchbild Typ 1–6 klassifizieren</div></div>
+      <div class="kurz-step"><div class="kurz-num">8</div><div>Alles protokollieren, Soll/Ist vergleichen</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- WÜRFELHERSTELLUNG -->
+<div class="page" id="page-wuerfelherst">
+  <div class="al-header fest-header">
+    <div class="al-norm">DIN EN 12390-2 · Probekörperherstellung</div>
+    <div class="al-title">Würfelherstellung & Einlagerung</div>
+    <div class="al-desc">Sachgerechte Herstellung und Lagerung von Betonprobekörpern (Würfeln) für die spätere Druckfestigkeitsprüfung. Fehler bei der Herstellung verfälschen alle späteren Prüfergebnisse.</div>
+    <div class="al-tags"><span class="al-tag">Probekörper</span><span class="al-tag">Herstellung</span><span class="al-tag">Lagerung 20°C</span></div>
+  </div>
+  <div class="geraete-box">
+    <div class="box-title">🛠️ Benötigte Geräte</div>
+    <div class="geraete-grid">
+      <div class="geraet-item"><div class="geraet-icon">🔲</div><div><div class="geraet-name">Würfelform</div><div class="geraet-spec">150×150×150mm, 3-teilig</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">🔩</div><div><div class="geraet-name">Stampfstab</div><div class="geraet-spec">Ø 16mm, L=600mm</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">🏗️</div><div><div class="geraet-name">Rütteltisch</div><div class="geraet-spec">oder Innenrüttler</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">🔪</div><div><div class="geraet-name">Glättekelle</div><div class="geraet-spec">zum Abziehen</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">🛢️</div><div><div class="geraet-name">Schalöl</div><div class="geraet-spec">zum Einfetten der Form</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">🏷️</div><div><div class="geraet-name">Beschriftung</div><div class="geraet-spec">wetterfest, dauerhaft</div></div></div>
+    </div>
+  </div>
+  <div class="steps-container">
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">01</div><div class="step-num-lbl">Form prüfen</div></div><div class="step-body"><div class="step-title">Form prüfen und einölen</div><div class="step-text">Form auf Schäden, Dichtigkeit und Maßhaltigkeit prüfen. Alle Innenflächen dünn mit <strong>Schalöl einpinseln</strong> — kein Überschuss. Verschraubung oder Klemmen fest anziehen. Form auf eine ebene, erschütterungsfreie Fläche stellen.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">02</div><div class="step-num-lbl">Befüllen</div></div><div class="step-body"><div class="step-title">Form befüllen — in 2 Lagen</div><div class="step-text">Form in <strong>2 gleich hohen Lagen</strong> befüllen (je ca. 75mm). Nach jeder Lage verdichten. Gesamtbefüllung über den Rand hinaus — Überschuss wird nach der Verdichtung abgezogen.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">03</div><div class="step-num-lbl">Verdichtung</div></div><div class="step-body"><div class="step-title">Jede Lage sorgfältig verdichten</div><div class="step-text"><strong>Handverdichtung:</strong> 25 Stampfstöße je Lage mit Stampfstab, gleichmäßig verteilt.<br><strong>Rüttelverdichtung:</strong> Form auf Rütteltisch, rütteln bis keine Luftblasen mehr austreten (ca. 10–30 Sekunden).</div><div class="hinweis hinweis-warn" style="margin-top:10px;"><strong>⚠</strong> Bei weichem Beton (S3–S5): Rüttelverdichtung bevorzugen. Bei steifem Beton (S1–S2): Handverdichtung ausreichend.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">04</div><div class="step-num-lbl">Abziehen</div></div><div class="step-body"><div class="step-title">Oberfläche abziehen und glätten</div><div class="step-text">Überschüssigen Beton mit der Glättekelle <strong>bündig mit dem Formrand abziehen</strong>. Oberfläche sorgfältig glätten. Keine Löcher oder Vertiefungen in der Oberfläche.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">05</div><div class="step-num-lbl">Beschriften</div></div><div class="step-body"><div class="step-title">Probekörper sofort beschriften</div><div class="step-text">Vor dem Abdecken unbedingt <strong>beschriften</strong>: Herstellungsdatum, Betonsorte, Werk, Baustelle, Würfelnummer, Prüftermin. Beschriftung muss <strong>wetterfest und dauerhaft</strong> sein.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">06</div><div class="step-num-lbl">Nachbehandlung</div></div><div class="step-body"><div class="step-title">Abdecken und Erstlagerung</div><div class="step-text">Probekörper sofort mit feuchtem Tuch oder Folie abdecken. <strong>Erstlagerung: 24 Stunden bei 20 ± 5°C</strong>, vor Erschütterungen und Austrocknung schützen. Nicht bewegen!</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">07</div><div class="step-num-lbl">Ausschalen</div></div><div class="step-body"><div class="step-title">Nach 24h ausschalen</div><div class="step-text">Nach <strong>24 Stunden (+/- 30 Minuten)</strong> vorsichtig ausschalen. Kanten und Flächen nicht beschädigen. Probekörper sofort weiterbeschriften (direkt auf den Beton mit fettem Stift oder Farbcode).</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">08</div><div class="step-num-lbl">Wasserlagerung</div></div><div class="step-body"><div class="step-title">Standardlagerung im Wasserbad</div><div class="step-text">Probekörper in Wasserbad oder Feuchtlageraum bei <strong>20 ± 2°C</strong> lagern. Wasserbad: Probekörper vollständig untergetaucht. Feuchtlagerung: relative Luftfeuchte ≥ 95%.</div><div class="hinweis hinweis-info" style="margin-top:10px;"><strong>💡 Lagerzeiten:</strong> 2d → 2 Tage / 7d → 7 Tage / 28d → 28 Tage / 56d → 56 Tage Lagerung bis zur Prüfung.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">09</div><div class="step-num-lbl">Dokumentation</div></div><div class="step-body"><div class="step-title">Im Würfelmanager erfassen</div><div class="step-text">Probekörper sofort digital erfassen: Werk, Datum, Betonsorte, Prüftage, Würfelnummer, Lieferschein, Baustelle eintragen. Prüftermin wird automatisch berechnet.</div></div></div></div>
+  </div>
+  <div class="kurz-box">
+    <div class="kurz-title">📋 Kurzanleitung</div>
+    <div class="kurz-steps">
+      <div class="kurz-step"><div class="kurz-num">1</div><div>Form prüfen → dünn einölen → festschrauben</div></div>
+      <div class="kurz-step"><div class="kurz-num">2</div><div>In 2 gleichen Lagen befüllen</div></div>
+      <div class="kurz-step"><div class="kurz-num">3</div><div>Jede Lage verdichten (25 Stöße oder Rütteln)</div></div>
+      <div class="kurz-step"><div class="kurz-num">4</div><div>Oberfläche bündig abziehen und glätten</div></div>
+      <div class="kurz-step"><div class="kurz-num">5</div><div>Sofort beschriften (wetterfest)</div></div>
+      <div class="kurz-step"><div class="kurz-num">6</div><div>Abdecken → 24h bei 20±5°C lagern</div></div>
+      <div class="kurz-step"><div class="kurz-num">7</div><div>Nach 24h ausschalen</div></div>
+      <div class="kurz-step"><div class="kurz-num">8</div><div>Wasserlagerung 20±2°C bis zur Prüfung</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- LUFTGEHALT -->
+<div class="page" id="page-luftgehalt">
+  <div class="al-header frisch-header">
+    <div class="al-norm">DIN EN 12350-7 · Frischbetonprüfung</div>
+    <div class="al-title">Luftgehalt — Druckverfahren</div>
+    <div class="al-desc">Bestimmung des Luftgehalts von Frischbeton mit dem Druckmessgerät (Luftporengehaltsprüfer). Wichtig für frostbeständigen LP-Beton.</div>
+    <div class="al-tags"><span class="al-tag">Frischbeton</span><span class="al-tag">Luftgehalt</span><span class="al-tag">LP-Beton</span></div>
+  </div>
+  <div class="geraete-box">
+    <div class="box-title">🛠️ Benötigte Geräte</div>
+    <div class="geraete-grid">
+      <div class="geraet-item"><div class="geraet-icon">🫙</div><div><div class="geraet-name">Luftporengehaltsprüfer</div><div class="geraet-spec">Typ B, Volumen 7–8 Liter</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">🔩</div><div><div class="geraet-name">Stampfstab</div><div class="geraet-spec">Ø 16mm</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">🔨</div><div><div class="geraet-name">Gummihammer</div><div class="geraet-spec">zum Abklopfen</div></div></div>
+      <div class="geraet-item"><div class="geraet-icon">💧</div><div><div class="geraet-name">Wasser</div><div class="geraet-spec">zum Befüllen und Abdichten</div></div></div>
+    </div>
+  </div>
+  <div class="steps-container">
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">01</div></div><div class="step-body"><div class="step-title">Behälter befüllen</div><div class="step-text">Behälter in <strong>3 Lagen</strong> befüllen, je Lage <strong>25 Stampfstöße</strong>. Seitenwände nach jeder Lage mit Gummihammer abklopfen (10 Schläge je Seite), um Hohlräume zu schließen. Oberfläche abziehen und glätten.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">02</div></div><div class="step-body"><div class="step-title">Deckel aufsetzen und abdichten</div><div class="step-text">Deckel des Luftporengehaltsprüfers aufsetzen und <strong>dicht verschrauben</strong>. Beide Absperrhähne schließen. Über einen Hahn Wasser einfüllen bis keine Luftblasen mehr austreten — dann diesen Hahn schließen.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">03</div></div><div class="step-body"><div class="step-title">Pumpen und Nullpunkt einstellen</div><div class="step-text">Mit der Handpumpe Druck aufpumpen bis zum <strong>Nullpunkt des Messgeräts</strong>. Gerät leicht klopfen um Anzeige zu stabilisieren.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">04</div></div><div class="step-body"><div class="step-title">Druckknopf betätigen und ablesen</div><div class="step-text"><strong>Absperrhahn zum Behälter öffnen</strong> — Druck bricht ein. Zeigerausschlag ablesen = Luftgehalt in %. Auf 0,1% genau ablesen.</div><div class="hinweis hinweis-info" style="margin-top:10px;"><strong>Typische Sollwerte LP-Beton:</strong> XF1: ≥ 3,5% · XF2/XF3: ≥ 4,0% · XF4: ≥ 4,5%</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">05</div></div><div class="step-body"><div class="step-title">Gerät entleeren und reinigen</div><div class="step-text">Druck ablassen, Gerät öffnen, Beton entfernen. Gerät sofort gründlich mit Wasser reinigen — Beton nicht ansteifen lassen.</div></div></div></div>
+  </div>
+  <div class="kurz-box"><div class="kurz-title">📋 Kurzanleitung</div><div class="kurz-steps"><div class="kurz-step"><div class="kurz-num">1</div><div>3 Lagen befüllen, je 25 Stöße, abklopfen</div></div><div class="kurz-step"><div class="kurz-num">2</div><div>Deckel dicht verschrauben, Wasser einfüllen bis luftfrei</div></div><div class="kurz-step"><div class="kurz-num">3</div><div>Aufpumpen bis Nullpunkt</div></div><div class="kurz-step"><div class="kurz-num">4</div><div>Hahn öffnen → Luftgehalt ablesen (auf 0,1%)</div></div><div class="kurz-step"><div class="kurz-num">5</div><div>Sofort reinigen, Ergebnis protokollieren</div></div></div></div>
+</div>
+
+<!-- ROHDICHTE -->
+<div class="page" id="page-rohdichte">
+  <div class="al-header frisch-header">
+    <div class="al-norm">DIN EN 12350-6 · Frischbetonprüfung</div>
+    <div class="al-title">Rohdichte Frischbeton</div>
+    <div class="al-desc">Bestimmung der Rohdichte von Frischbeton durch Wiegen eines befüllten Behälters bekannten Volumens.</div>
+    <div class="al-tags"><span class="al-tag">Frischbeton</span><span class="al-tag">Rohdichte</span><span class="al-tag">kg/m³</span></div>
+  </div>
+  <div class="geraete-box"><div class="box-title">🛠️ Benötigte Geräte</div><div class="geraete-grid"><div class="geraet-item"><div class="geraet-icon">🪣</div><div><div class="geraet-name">Behälter</div><div class="geraet-spec">V = 5 oder 10 Liter, bekanntes Volumen</div></div></div><div class="geraet-item"><div class="geraet-icon">⚖️</div><div><div class="geraet-name">Waage</div><div class="geraet-spec">Genauigkeit 10g</div></div></div><div class="geraet-item"><div class="geraet-icon">🔩</div><div><div class="geraet-name">Stampfstab</div><div class="geraet-spec">Ø 16mm</div></div></div><div class="geraet-item"><div class="geraet-icon">🔪</div><div><div class="geraet-name">Glättekelle</div><div class="geraet-spec">zum Abziehen</div></div></div></div></div>
+  <div class="steps-container">
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">01</div></div><div class="step-body"><div class="step-title">Behälter leer wiegen</div><div class="step-text">Leeren, gereinigten Behälter wiegen. <strong>Masse m₁</strong> auf 10g genau notieren.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">02</div></div><div class="step-body"><div class="step-title">Behälter befüllen und verdichten</div><div class="step-text">Behälter in 2 Lagen befüllen, je Lage 25 Stampfstöße. Oberfläche bündig abziehen.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">03</div></div><div class="step-body"><div class="step-title">Gefüllten Behälter wiegen</div><div class="step-text">Behälter mit Beton wiegen. <strong>Masse m₂</strong> notieren.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">04</div></div><div class="step-body"><div class="step-title">Rohdichte berechnen</div><div class="step-text"><strong>ρ = (m₂ − m₁) / V</strong><br><br>m₁ = Masse Behälter leer (kg)<br>m₂ = Masse Behälter + Beton (kg)<br>V = Behältervolumen (m³)<br><br>Ergebnis in kg/m³, auf 10 kg/m³ runden.</div><div class="hinweis hinweis-info" style="margin-top:10px;"><strong>Beispiel:</strong> m₁=2,1kg, m₂=12,6kg, V=0,005m³ → ρ = (12,6−2,1)/0,005 = <strong>2.100 kg/m³</strong></div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">05</div></div><div class="step-body"><div class="step-title">Ergebnis bewerten und protokollieren</div><div class="step-text">Normalbeton: typisch 2.200–2.500 kg/m³. Abweichungen können auf hohen Luftgehalt oder falsche Rezeptur hinweisen.</div></div></div></div>
+  </div>
+  <div class="kurz-box"><div class="kurz-title">📋 Kurzanleitung</div><div class="kurz-steps"><div class="kurz-step"><div class="kurz-num">1</div><div>Leeren Behälter wiegen → m₁</div></div><div class="kurz-step"><div class="kurz-num">2</div><div>2 Lagen befüllen, je 25 Stampfstöße, abziehen</div></div><div class="kurz-step"><div class="kurz-num">3</div><div>Gefüllten Behälter wiegen → m₂</div></div><div class="kurz-step"><div class="kurz-num">4</div><div>ρ = (m₂−m₁) / V → Ergebnis in kg/m³</div></div><div class="kurz-step"><div class="kurz-num">5</div><div>Bewerten + protokollieren</div></div></div></div>
+</div>
+
+<!-- AUSBREITMAS -->
+<div class="page" id="page-ausbreit">
+  <div class="al-header frisch-header">
+    <div class="al-norm">DIN EN 12350-5 · Frischbetonprüfung</div>
+    <div class="al-title">Ausbreitmaß</div>
+    <div class="al-desc">Konsistenzbestimmung von Frischbeton durch Messen des Ausbreitens auf der Rüttelplatte. Für weichere Betone (F3–F6) geeignet.</div>
+    <div class="al-tags"><span class="al-tag">Frischbeton</span><span class="al-tag">Konsistenz F1–F6</span><span class="al-tag">Rüttelplatte</span></div>
+  </div>
+  <div class="geraete-box"><div class="box-title">🛠️ Benötigte Geräte</div><div class="geraete-grid"><div class="geraet-item"><div class="geraet-icon">🎪</div><div><div class="geraet-name">Ausbreittisch</div><div class="geraet-spec">Plattengröße 700×700mm</div></div></div><div class="geraet-item"><div class="geraet-icon">🔺</div><div><div class="geraet-name">Setzkegel</div><div class="geraet-spec">H=200mm, Ø oben 130mm, unten 200mm</div></div></div><div class="geraet-item"><div class="geraet-icon">🔩</div><div><div class="geraet-name">Stampfstab</div><div class="geraet-spec">Ø 16mm</div></div></div><div class="geraet-item"><div class="geraet-icon">📏</div><div><div class="geraet-name">Lineal/Maßstab</div><div class="geraet-spec">mind. 700mm</div></div></div></div></div>
+  <div class="steps-container">
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">01</div></div><div class="step-body"><div class="step-title">Platte und Kegel anfeuchten</div><div class="step-text">Ausbreitplatte und Setzkegel anfeuchten. Kegel mittig auf die Platte stellen und mit den Händen festhalten.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">02</div></div><div class="step-body"><div class="step-title">In 2 Lagen befüllen</div><div class="step-text">Kegel in <strong>2 gleichen Lagen</strong> befüllen. Je Lage <strong>10 Stampfstöße</strong>. Überschuss abstreichen.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">03</div></div><div class="step-body"><div class="step-title">Kegel abheben</div><div class="step-text">Kegel senkrecht nach oben abheben.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">04</div></div><div class="step-body"><div class="step-title">Platte 15× heben und fallen lassen</div><div class="step-text">Platte gleichmäßig <strong>15× anheben und fallen lassen</strong> (Hubhöhe 40mm, in 15 Sekunden). Beton breitet sich aus.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">05</div></div><div class="step-body"><div class="step-title">Ausbreitmaß messen</div><div class="step-text">Durchmesser des ausgebreiteten Betons in <strong>zwei senkrechten Richtungen</strong> messen. Mittelwert bilden = Ausbreitmaß in mm.</div><div class="ergebnis-box" style="margin-top:12px;"><table class="etab"><thead><tr><th>Klasse</th><th>Ausbreitmaß</th></tr></thead><tbody><tr><td>F1</td><td>≤ 340 mm</td></tr><tr><td>F2</td><td>350–410 mm</td></tr><tr><td>F3</td><td>420–480 mm</td></tr><tr><td>F4</td><td>490–550 mm</td></tr><tr><td>F5</td><td>560–620 mm</td></tr><tr><td>F6</td><td>≥ 630 mm</td></tr></tbody></table></div></div></div></div>
+  </div>
+</div>
+
+<!-- TEMPERATUR -->
+<div class="page" id="page-temperatur">
+  <div class="al-header frisch-header">
+    <div class="al-norm">DIN EN 12350-1 · Frischbetonprüfung</div>
+    <div class="al-title">Frischbetontemperatur</div>
+    <div class="al-desc">Messung der Frischbetontemperatur — wichtig für Qualitätssicherung und Beurteilung der Verarbeitbarkeit.</div>
+    <div class="al-tags"><span class="al-tag">Frischbeton</span><span class="al-tag">Temperatur</span><span class="al-tag">5–30°C</span></div>
+  </div>
+  <div class="steps-container">
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">01</div></div><div class="step-body"><div class="step-title">Thermometer vorbereiten</div><div class="step-text">Kalibriertes Thermometer (Genauigkeit ± 0,5°C) verwenden. Messbereich -20°C bis +60°C empfohlen.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">02</div></div><div class="step-body"><div class="step-title">Thermometer einführen</div><div class="step-text">Thermometer mindestens <strong>75mm tief</strong> in den Frischbeton einführen. Rundum von Beton umgeben — kein Luftkontakt.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">03</div></div><div class="step-body"><div class="step-title">2 Minuten warten und ablesen</div><div class="step-text">Mindestens <strong>2 Minuten</strong> warten bis Anzeige stabil. Temperatur ablesen und auf 0,5°C genau notieren.</div><div class="hinweis hinweis-info" style="margin-top:10px;"><strong>Grenzwerte:</strong> Min. 5°C · Max. 30°C (nach DIN 1045-3). Zwischen 5–30°C liegt der normale Verarbeitungsbereich.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">04</div></div><div class="step-body"><div class="step-title">Protokollieren</div><div class="step-text">Temperatur, Datum, Uhrzeit, Witterungsbedingungen und Betonsorte im Protokoll festhalten.</div></div></div></div>
+  </div>
+</div>
+
+<!-- WASSEREINDRINGTIEFE -->
+<div class="page" id="page-wasser">
+  <div class="al-header fest-header">
+    <div class="al-norm">DIN EN 12390-8 · Festbetonprüfung</div>
+    <div class="al-title">Wassereindringtiefe unter Druck</div>
+    <div class="al-desc">Bestimmung der Wassereindringtiefe von Festbeton unter konstantem Wasserdruck. Wichtig für Wasserundurchlässigkeitsnachweis (WU-Beton).</div>
+    <div class="al-tags"><span class="al-tag">Festbeton</span><span class="al-tag">WU-Beton</span><span class="al-tag">0,5 MPa</span></div>
+  </div>
+  <div class="hinweis hinweis-warn"><strong>⚠ Voraussetzung:</strong> Probekörper müssen mindestens 28 Tage alt sein. Prüfung dauert 72 Stunden (3 Tage).</div>
+  <div class="steps-container">
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">01</div></div><div class="step-body"><div class="step-title">Probekörper vorbereiten</div><div class="step-text">Würfel oder Zylinder aus der Lagerung entnehmen. Prüffläche reinigen, trocknen. Seitenflächen mit Dichtmasse abdichten falls erforderlich.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">02</div></div><div class="step-body"><div class="step-title">Einspannen und Wasseranschluss</div><div class="step-text">Probekörper in Prüfgerät einspannen. Prüffläche nach unten (Wasserseite). Wasseranschluss herstellen und auf Dichtigkeit prüfen.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">03</div></div><div class="step-body"><div class="step-title">Druck aufbringen</div><div class="step-text">Wasserdruck von <strong>500 kPa (0,5 MPa = 5 bar)</strong> anlegen. Druck <strong>72 Stunden konstant halten</strong>. Druckverluste kontrollieren und ausgleichen.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">04</div></div><div class="step-body"><div class="step-title">Spalten und Messen</div><div class="step-text">Nach 72h Probekörper aus Gerät entnehmen. <strong>Sofort durch Spalten öffnen</strong> (senkrecht zur Druckfläche). Eindringtiefe messen — größte Eindringtiefe auf 1mm genau.</div></div></div></div>
+    <div class="step-card"><div class="step-header"><div class="step-num-col"><div class="step-num">05</div></div><div class="step-body"><div class="step-title">Bewerten</div><div class="step-text"><strong>WU-Beton bestanden:</strong> keine Probe überschreitet 50mm Eindringtiefe UND kein Mittelwert über 20mm.<div class="hinweis hinweis-info" style="margin-top:10px;">Diese Grenzwerte gelten nach DIN 1045-2 für WU-Beton. Die Anforderungen können je nach Planung variieren.</div></div></div></div>
+  </div>
+</div>
+
+  </div><!-- main -->
+</div><!-- content -->
+</div><!-- layout -->
+
+<script>
+function showAnleitung(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.querySelectorAll('.mbn-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const item = document.querySelector(`.sb-item[onclick="showAnleitung('${id}')"]`);
+  if(item) item.classList.add('active');
+  const mItem = document.querySelector(`.mbn-item[data-id="${id}"]`);
+  if(mItem) mItem.classList.add('active');
+  const headings = {
+    overview:'Alle Verfahren',
+    setzmas:'Setzmaß — EN 12350-2',
+    ausbreit:'Ausbreitmaß — EN 12350-5',
+    luftgehalt:'Luftgehalt — EN 12350-7',
+    rohdichte:'Rohdichte — EN 12350-6',
+    temperatur:'Temperatur — EN 12350-1',
+    wuerfelherst:'Würfelherstellung — EN 12390-2',
+    druckfest:'Druckfestigkeit — EN 12390-3',
+    wasser:'Wassereindringtiefe — EN 12390-8'
+  };
+  document.getElementById('tb-heading').textContent = headings[id] || id;
+  window.scrollTo(0,0);
+  closeSidebar();
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('mob-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mob-overlay').classList.remove('open');
+}
+function searchVerfahren(q) {
+  document.querySelectorAll('.sb-item').forEach(i=>{
+    i.style.display = i.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+function uploadPhoto(el) {
+  el.querySelector('input[type="file"]').click();
+}
+function previewPhoto(input) {
+  if(!input.files||!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const placeholder = input.closest('.step-photo-placeholder');
+    placeholder.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:0;" onclick="this.parentElement.innerHTML='<div class=photo-icon style=font-size:24px;opacity:.4>📷</div><div class=photo-lbl style=font-size:10px;color:var(--text3);text-align:center;font-family:var(--mono)>Eigenes Foto<br>hier einfügen</div>'"/>`;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+</script>
+<!-- MOBILE BOTTOM NAV -->
+<div class="mob-bottom" id="mob-bottom">
+  <button class="mbn-item active" data-id="setzmas" onclick="showAnleitung('setzmas')">
+    <span class="mbn-icon">📏</span><span class="mbn-lbl">Setzmaß</span>
+  </button>
+  <button class="mbn-item" data-id="ausbreit" onclick="showAnleitung('ausbreit')">
+    <span class="mbn-icon">⭕</span><span class="mbn-lbl">Ausbreit</span>
+  </button>
+  <button class="mbn-item" data-id="luftgehalt" onclick="showAnleitung('luftgehalt')">
+    <span class="mbn-icon">💨</span><span class="mbn-lbl">Luftgehalt</span>
+  </button>
+  <button class="mbn-item" data-id="rohdichte" onclick="showAnleitung('rohdichte')">
+    <span class="mbn-icon">⚖️</span><span class="mbn-lbl">Rohdichte</span>
+  </button>
+  <button class="mbn-item" data-id="temperatur" onclick="showAnleitung('temperatur')">
+    <span class="mbn-icon">🌡️</span><span class="mbn-lbl">Temp.</span>
+  </button>
+  <button class="mbn-item" data-id="wuerfelherst" onclick="showAnleitung('wuerfelherst')">
+    <span class="mbn-icon">🔲</span><span class="mbn-lbl">Würfel</span>
+  </button>
+  <button class="mbn-item" data-id="druckfest" onclick="showAnleitung('druckfest')">
+    <span class="mbn-icon">💪</span><span class="mbn-lbl">Druck</span>
+  </button>
+  <button class="mbn-item" data-id="wasser" onclick="showAnleitung('wasser')">
+    <span class="mbn-icon">💧</span><span class="mbn-lbl">Wasser</span>
+  </button>
+</div>
+
+</body>
+</html>

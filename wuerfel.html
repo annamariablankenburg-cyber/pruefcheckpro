@@ -1,0 +1,3040 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>WürfelManager Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.6.0/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FIREBASE KONFIGURATION
+     1. Gehe zu https://console.firebase.google.com
+     2. Neues Projekt erstellen (kostenlos)
+     3. "Web-App hinzufügen" klicken
+     4. Deine Konfigurationsdaten hier eintragen:
+     ═══════════════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js';
+  import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js';
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js';
+
+  // ▼▼▼ DEINE FIREBASE-DATEN HIER EINTRAGEN ▼▼▼
+  const firebaseConfig = {
+    apiKey: "AIzaSyD5zBXhZj0kbwhT8qXOLxOOGVM6OiHxtXA",
+    authDomain: "pruefcheckpro.firebaseapp.com",
+    projectId: "pruefcheckpro",
+    storageBucket: "pruefcheckpro.firebasestorage.app",
+    messagingSenderId: "401257250920",
+    appId: "1:401257250920:web:fd29840f77833e13847bdd"
+  };
+  // ▲▲▲ ENDE FIREBASE-KONFIGURATION ▲▲▲
+
+  const FIREBASE_CONFIGURED = firebaseConfig.apiKey !== "DEIN_API_KEY";
+
+  let app, db, auth;
+  if (FIREBASE_CONFIGURED) {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+  }
+
+  window._fb = { db, auth, FIREBASE_CONFIGURED,
+    collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, getDoc, updateDoc,
+    signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword
+  };
+  window.dispatchEvent(new Event('fb-ready'));
+</script>
+
+<style>
+:root {
+  --bg: #080c10;
+  --bg2: #0d1117;
+  --bg3: #131920;
+  --bg4: #1a2230;
+  --bg5: #1f2937;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.10);
+  --border3: rgba(255,255,255,0.16);
+  --text: #e2e8f0;
+  --text2: #7a8ba0;
+  --text3: #3d4f63;
+  --accent: #38bdf8;
+  --accent2: #0ea5e9;
+  --accent3: rgba(56,189,248,0.12);
+  --gold: #f59e0b;
+  --gold2: rgba(245,158,11,0.12);
+  --green: #34d399;
+  --green2: rgba(52,211,153,0.12);
+  --red: #f87171;
+  --red2: rgba(248,113,113,0.12);
+  --orange: #fb923c;
+  --orange2: rgba(251,146,60,0.12);
+  --font: 'Syne', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --r: 8px;
+  --r2: 12px;
+  --r3: 16px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* ── GRID BG ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  background: var(--bg4); border: 1px solid var(--border3);
+  border-radius: var(--r2); padding: 14px 20px;
+  font-size: 13px; max-width: 320px;
+  transform: translateY(80px); opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: var(--shadow);
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+#toast.ok { border-left: 3px solid var(--green); }
+#toast.err { border-left: 3px solid var(--red); }
+#toast.warn { border-left: 3px solid var(--gold); }
+
+/* ── SETUP BANNER ── */
+#setup-banner {
+  background: linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+  border-bottom: 1px solid rgba(245,158,11,0.3);
+  padding: 10px 24px;
+  font-size: 12px;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  position: relative;
+  z-index: 10;
+}
+#setup-banner a { color: var(--accent); text-decoration: underline; cursor: pointer; }
+
+/* ── LOGIN ── */
+#login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+.login-wrap {
+  width: 420px;
+  max-width: 95vw;
+}
+.login-brand {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.login-icon {
+  width: 56px; height: 56px;
+  background: var(--accent3);
+  border: 1px solid rgba(56,189,248,0.3);
+  border-radius: var(--r2);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 24px;
+}
+.login-brand-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.login-brand-sub {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.login-card {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r3);
+  padding: 32px;
+  box-shadow: var(--shadow);
+}
+.login-card h2 { font-size: 18px; margin-bottom: 6px; }
+.login-card p { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
+.fld-group { margin-bottom: 14px; }
+.fld-group label { display: block; font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; font-family: var(--mono); margin-bottom: 6px; }
+.fld-group input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 11px 14px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  transition: border-color 0.15s;
+}
+.fld-group input:focus { outline: none; border-color: var(--accent); }
+.btn-login-main {
+  width: 100%;
+  background: var(--accent);
+  color: #080c10;
+  border: none;
+  border-radius: var(--r);
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  margin-top: 4px;
+  transition: all 0.15s;
+  letter-spacing: 0.3px;
+}
+.btn-login-main:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn-login-main:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.login-err { color: var(--red); font-size: 12px; margin-top: 10px; text-align: center; font-family: var(--mono); display: none; }
+.login-mode-switch { text-align: center; margin-top: 16px; font-size: 13px; color: var(--text2); }
+.login-mode-switch a { color: var(--accent); cursor: pointer; }
+.login-demo-hint { font-size: 11px; color: var(--text3); text-align: center; margin-top: 12px; font-family: var(--mono); }
+
+/* ── APP SHELL ── */
+#app { display: none; position: relative; z-index: 1; }
+
+/* ── SIDEBAR ── */
+.layout { display: flex; min-height: calc(100vh - 0px); }
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.sidebar-brand {
+  padding: 20px 18px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-brand-logo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sidebar-brand-logo span { font-size: 18px; }
+.sidebar-brand-sub { font-size: 10px; color: var(--text3); font-family: var(--mono); letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; }
+.sidebar-nav { padding: 12px 10px; flex: 1; }
+.nav-section { margin-bottom: 20px; }
+.nav-section-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 2px; font-family: var(--mono); padding: 0 8px; margin-bottom: 6px; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--r);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text2);
+  transition: all 0.12s;
+  border: 1px solid transparent;
+  font-weight: 500;
+  position: relative;
+  text-decoration: none;
+}
+.nav-item:hover { background: var(--bg4); color: var(--text); }
+.nav-item.active { background: var(--accent3); color: var(--accent); border-color: rgba(56,189,248,0.2); }
+.nav-item-icon { font-size: 15px; width: 20px; text-align: center; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--red2);
+  color: var(--red);
+  font-size: 10px;
+  font-family: var(--mono);
+  padding: 1px 6px;
+  border-radius: 100px;
+  font-weight: 500;
+}
+.nav-badge.warn { background: var(--orange2); color: var(--orange); }
+.nav-badge.ok { background: var(--green2); color: var(--green); }
+
+/* sidebar bottom */
+.sidebar-bottom {
+  padding: 14px 10px;
+  border-top: 1px solid var(--border);
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  margin-bottom: 6px;
+}
+.user-avatar {
+  width: 30px; height: 30px;
+  background: var(--accent3);
+  border: 1px solid rgba(56,189,248,0.3);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+  font-family: var(--mono);
+}
+.user-name { font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-role { font-size: 10px; color: var(--text2); font-family: var(--mono); }
+.sidebar-actions { display: flex; gap: 6px; }
+.s-btn {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 7px;
+  font-size: 11px;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.12s;
+  text-align: center;
+}
+.s-btn:hover { color: var(--text); background: var(--bg4); }
+.s-btn.danger:hover { color: var(--red); border-color: rgba(248,113,113,0.4); }
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
+.page-heading { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+.sync-indicator {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--text3); font-family: var(--mono);
+}
+.sync-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+.sync-dot.offline { background: var(--text3); animation: none; }
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.lang-toggle {
+  display: flex;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.lang-btn {
+  padding: 5px 10px;
+  font-size: 11px;
+  font-family: var(--mono);
+  border: none;
+  background: none;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.12s;
+  font-weight: 500;
+}
+.lang-btn.active { background: var(--accent3); color: var(--accent); }
+
+/* ── CONTENT ── */
+.content-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.main {
+  flex: 1;
+  padding: 24px;
+  overflow-x: hidden;
+}
+
+/* ── PAGE / TABS ── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── SECTION HEADER ── */
+.sec-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.sec-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.sec-sub { font-size: 12px; color: var(--text2); margin-top: 2px; font-family: var(--mono); }
+
+/* ── STAT CARDS ── */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.stat-card:hover { border-color: var(--border2); }
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  opacity: 0.07;
+  transform: translate(20px,-20px);
+}
+.stat-card.blue::after { background: var(--accent); }
+.stat-card.green::after { background: var(--green); }
+.stat-card.red::after { background: var(--red); }
+.stat-card.gold::after { background: var(--gold); }
+.stat-card.orange::after { background: var(--orange); }
+.stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text2); font-family: var(--mono); margin-bottom: 10px; }
+.stat-value { font-size: 30px; font-weight: 700; font-family: var(--mono); letter-spacing: -1px; }
+.stat-value.blue { color: var(--accent); }
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+.stat-value.gold { color: var(--gold); }
+.stat-value.orange { color: var(--orange); }
+.stat-sub { font-size: 11px; color: var(--text2); margin-top: 6px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 20px;
+}
+.card-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text2);
+  font-family: var(--mono);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 9px 16px;
+  border-radius: var(--r);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #080c10; }
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:hover { background: var(--bg4); color: var(--text); border-color: var(--border3); }
+.btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+.btn-danger:hover { background: var(--red2); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-xs { padding: 4px 9px; font-size: 11px; }
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── FORM ── */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+.form-full { grid-column: 1 / -1; }
+.fg { display: flex; flex-direction: column; gap: 6px; }
+.fg label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); font-family: var(--mono); font-weight: 500; }
+.fg input, .fg select, .fg textarea {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 10px 12px;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+.fg select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a8ba0' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+.fg input:focus, .fg select:focus, .fg textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56,189,248,0.08); }
+.fg textarea { resize: vertical; min-height: 72px; }
+.required-star { color: var(--accent); }
+
+/* ── TABLE ── */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; min-width: 700px; }
+thead th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text2);
+  font-family: var(--mono);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 11px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: rgba(56,189,248,0.03); }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-family: var(--mono);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.badge-green { background: var(--green2); color: var(--green); }
+.badge-red { background: var(--red2); color: var(--red); }
+.badge-orange { background: var(--orange2); color: var(--orange); }
+.badge-blue { background: var(--accent3); color: var(--accent); }
+.badge-gray { background: var(--bg4); color: var(--text2); }
+.badge-gold { background: var(--gold2); color: var(--gold); }
+
+/* ── FILTER BAR ── */
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.filter-bar select, .filter-bar input {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 8px 12px;
+  transition: border-color 0.12s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.filter-bar select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a8ba0' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+.filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--accent); }
+
+/* ── TABLE ACTION BUTTONS ── */
+.tbl-actions { display: flex; gap: 5px; }
+.tbl-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 4px 9px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: var(--font);
+  color: var(--text2);
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.tbl-btn:hover { background: var(--bg4); color: var(--text); border-color: var(--border3); }
+.tbl-btn.check:hover { border-color: var(--green); color: var(--green); background: var(--green2); }
+.tbl-btn.arch:hover { border-color: var(--gold); color: var(--gold); background: var(--gold2); }
+.tbl-btn.del:hover { border-color: var(--red); color: var(--red); background: var(--red2); }
+
+/* ── CALENDAR ── */
+.cal-nav-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.cal-month-title { font-size: 18px; font-weight: 700; }
+.cal-nav-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  color: var(--text);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.12s;
+}
+.cal-nav-btn:hover { background: var(--bg4); border-color: var(--border3); }
+.day-labels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.day-label {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text3);
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 6px 0;
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-cell {
+  min-height: 86px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 7px;
+  cursor: pointer;
+  transition: all 0.12s;
+  position: relative;
+}
+.cal-cell:hover { border-color: var(--accent); background: var(--bg4); }
+.cal-cell.empty { background: transparent; border-color: transparent; cursor: default; pointer-events: none; }
+.cal-cell.today { border-color: rgba(56,189,248,0.5); background: var(--accent3); }
+.cal-day-num {
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--text3);
+  margin-bottom: 5px;
+}
+.cal-cell.today .cal-day-num { color: var(--accent); font-weight: 600; }
+.cal-pill {
+  display: block;
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--mono);
+}
+.cp-red { background: var(--red2); color: var(--red); }
+.cp-orange { background: var(--orange2); color: var(--orange); }
+.cp-blue { background: var(--accent3); color: var(--accent); }
+.cp-green { background: var(--green2); color: var(--green); }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r3);
+  padding: 28px;
+  width: 560px;
+  max-width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+.modal-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-title { font-size: 17px; font-weight: 700; }
+.modal-date { font-size: 12px; color: var(--text2); font-family: var(--mono); margin-top: 2px; }
+.modal-close {
+  background: none; border: none; color: var(--text2);
+  font-size: 22px; cursor: pointer; line-height: 1;
+  padding: 4px 8px; border-radius: var(--r);
+  transition: all 0.12s;
+}
+.modal-close:hover { background: var(--bg4); color: var(--text); }
+.modal-item {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.mi-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.mi-werk { font-weight: 700; font-size: 14px; }
+.mi-beton { font-family: var(--mono); font-size: 12px; color: var(--gold); }
+.mi-details {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text2);
+  font-family: var(--mono);
+}
+.mi-actions { margin-top: 10px; }
+
+/* ── LAGER VISUAL ── */
+.lager-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+.lager-tile {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 14px 10px;
+  text-align: center;
+  transition: all 0.15s;
+  cursor: default;
+}
+.lager-tile:hover { border-color: var(--border3); }
+.lt-werk { font-size: 10px; color: var(--text2); font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.lt-count { font-size: 28px; font-weight: 700; font-family: var(--mono); letter-spacing: -1px; }
+.lt-label { font-size: 9px; color: var(--text3); font-family: var(--mono); margin-top: 4px; }
+.lt-0 .lt-count { color: var(--text3); }
+.lt-low .lt-count { color: var(--orange); }
+.lt-mid .lt-count { color: var(--gold); }
+.lt-high .lt-count { color: var(--green); }
+
+/* ── EXPORT ── */
+.export-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 20px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.export-box .fg { min-width: 160px; }
+
+/* ── CHART ── */
+.chart-wrap { position: relative; height: 260px; }
+
+/* ── ARCHIVE NOTICE ── */
+.archive-notice {
+  background: var(--gold2);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: var(--r);
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--gold);
+  font-family: var(--mono);
+  margin-bottom: 16px;
+}
+
+/* ── DASHBOARD TODAY ITEMS ── */
+.today-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.today-item.overdue { border-left: 3px solid var(--red); }
+.today-item.today { border-left: 3px solid var(--orange); }
+.ti-left { flex: 1; min-width: 150px; }
+.ti-werk { font-weight: 700; font-size: 13px; }
+.ti-meta { font-size: 11px; color: var(--text2); font-family: var(--mono); margin-top: 2px; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 3px; }
+
+/* ── MOBILE SIDEBAR TOGGLE ── */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 6px;
+}
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 40;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -240px;
+    top: 0;
+    z-index: 50;
+    height: 100vh;
+    transition: left 0.25s ease;
+  }
+  .sidebar.open { left: 0; }
+  .sidebar-overlay.open { display: block; }
+  .mobile-menu-btn { display: flex; }
+  .main { padding: 16px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .cal-cell { min-height: 60px; }
+  .cal-pill { display: none; }
+  .cal-cell.has-items::after {
+    content: '●';
+    font-size: 8px;
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    color: var(--accent);
+  }
+}
+
+/* ── LOADING STATE ── */
+.loading-overlay {
+  position: fixed; inset: 0; background: var(--bg); z-index: 9000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+}
+.loading-spinner {
+  width: 40px; height: 40px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 13px; color: var(--text2); font-family: var(--mono); }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text3);
+}
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-title { font-size: 15px; color: var(--text2); font-weight: 600; margin-bottom: 6px; }
+.empty-sub { font-size: 13px; }
+
+/* progress bar */
+.progress-bar-wrap { background: var(--bg3); border-radius: 100px; height: 6px; overflow: hidden; }
+.progress-bar { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--accent), var(--green)); transition: width 0.5s ease; }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Verbinde mit Cloud…</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" style="display:none;">
+  <div class="login-wrap">
+    <div class="login-brand">
+      <div class="login-icon">▣</div>
+      <div class="login-brand-name">WürfelManager Pro</div>
+      <div class="login-brand-sub">Baustoffprüfung · Betonwürfel</div>
+    </div>
+    <div class="login-card">
+      <h2 id="login-title">Anmelden</h2>
+      <p id="login-subtitle">Zugang zum Prüfmanagementsystem</p>
+      <div class="fld-group">
+        <label>E-Mail</label>
+        <input type="email" id="login-email" placeholder="name@firma.de" autocomplete="email"/>
+      </div>
+      <div class="fld-group">
+        <label>Passwort</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <div class="fld-group" id="reg-name-group" style="display:none;">
+        <label>Name / Kürzel</label>
+        <input type="text" id="login-name" placeholder="z.B. Max M." />
+      </div>
+      <button class="btn-login-main" id="login-btn" onclick="doLogin()">Anmelden</button>
+      <div class="login-err" id="login-err"></div>
+      <div class="login-mode-switch">
+        <span id="login-mode-text">Noch kein Konto?</span>
+        <a onclick="toggleLoginMode()"> <span id="login-mode-link">Registrieren</span></a>
+      </div>
+      <div class="login-demo-hint" id="demo-hint">Ohne Firebase: Offline-Modus mit lokalem Speicher</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- SETUP BANNER -->
+  <div id="setup-banner" style="display:none;">
+    ⚠ Firebase nicht konfiguriert — Daten werden nur lokal gespeichert.
+    <a onclick="showFirebaseSetup()">Anleitung anzeigen</a>
+    <span style="margin-left:auto;cursor:pointer;opacity:0.6;" onclick="this.parentElement.style.display='none'">✕</span>
+  </div>
+
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-logo"><span>▣</span> WürfelManager</div>
+        <div class="sidebar-brand-sub">Pro v2.0</div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-label" data-de="Übersicht" data-en="Overview">Übersicht</div>
+          <div class="nav-item active" onclick="showPage('dashboard')">
+            <span class="nav-item-icon">⬡</span>
+            <span data-de="Dashboard" data-en="Dashboard">Dashboard</span>
+            <span class="nav-badge warn" id="nb-today">0</span>
+          </div>
+          <div class="nav-item" onclick="showPage('lager')">
+            <span class="nav-item-icon">◫</span>
+            <span data-de="Lager" data-en="Warehouse">Lager</span>
+            <span class="nav-badge ok" id="nb-lager">0</span>
+          </div>
+          <div class="nav-item" onclick="showPage('kalender')">
+            <span class="nav-item-icon">◷</span>
+            <span data-de="Kalender" data-en="Calendar">Kalender</span>
+          </div>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-label" data-de="Verwaltung" data-en="Management">Verwaltung</div>
+          <div class="nav-item" onclick="showPage('eingabe')">
+            <span class="nav-item-icon">⊕</span>
+            <span data-de="Würfel erfassen" data-en="Add cube">Würfel erfassen</span>
+          </div>
+          <div class="nav-item" onclick="showPage('uebersicht')">
+            <span class="nav-item-icon">≡</span>
+            <span data-de="Alle Würfel" data-en="All cubes">Alle Würfel</span>
+          </div>
+          <div class="nav-item" onclick="showPage('archiv')">
+            <span class="nav-item-icon">⊟</span>
+            <span data-de="Archiv" data-en="Archive">Archiv</span>
+          </div>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-label" data-de="Analyse" data-en="Analysis">Analyse</div>
+          <div class="nav-item" onclick="showPage('statistik')">
+            <span class="nav-item-icon">◈</span>
+            <span data-de="Statistik" data-en="Statistics">Statistik</span>
+          </div>
+          <div class="nav-item" onclick="showPage('export')">
+            <span class="nav-item-icon">↗</span>
+            <span data-de="Export" data-en="Export">Export</span>
+          </div>
+          <div class="nav-item" onclick="showPage('pruefbericht')">
+            <span class="nav-item-icon">📋</span>
+            <span data-de="Prüfbericht" data-en="Test report">Prüfbericht</span>
+          </div>
+          <div class="nav-item" onclick="showPage('erinnerungen')">
+            <span class="nav-item-icon">🔔</span>
+            <span data-de="Erinnerungen" data-en="Reminders">Erinnerungen</span>
+          </div>
+        </div>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="user-info">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <div>
+            <div class="user-name" id="user-name-display">—</div>
+            <div class="user-role" id="user-role-display">—</div>
+          </div>
+        </div>
+        <div class="sidebar-actions">
+          <button class="s-btn" onclick="showPage('settings')" data-de="⚙ Einst." data-en="⚙ Settings">⚙ Einst.</button>
+          <button class="s-btn danger" onclick="doLogout()" data-de="Abmelden" data-en="Logout">Abmelden</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- CONTENT -->
+    <div class="content-area">
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+          <div>
+            <div class="page-heading" id="topbar-heading">Dashboard</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="sync-indicator">
+            <div class="sync-dot" id="sync-dot"></div>
+            <span id="sync-text">Cloud</span>
+          </div>
+          <div class="lang-toggle">
+            <button class="lang-btn active" id="lang-de" onclick="setLang('de')">DE</button>
+            <button class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="main">
+
+        <!-- ── DASHBOARD ── -->
+        <div class="page active" id="page-dashboard">
+          <div class="sec-header">
+            <div>
+              <div class="sec-title" data-de="Dashboard" data-en="Dashboard">Dashboard</div>
+              <div class="sec-sub" id="dash-date">—</div>
+            </div>
+            <button class="btn btn-primary" onclick="showPage('eingabe')">
+              <span>+</span> <span data-de="Würfel erfassen" data-en="Add cube">Würfel erfassen</span>
+            </button>
+          </div>
+          <div class="stats-row" id="dash-stats"></div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-title">
+                <span data-de="Heute fällig" data-en="Due today">Heute fällig</span>
+                <span class="badge badge-orange" id="badge-today-count">0</span>
+              </div>
+              <div id="dash-today-list"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">
+                <span data-de="Überfällig" data-en="Overdue">Überfällig</span>
+                <span class="badge badge-red" id="badge-overdue-count">0</span>
+              </div>
+              <div id="dash-overdue-list"></div>
+            </div>
+          </div>
+          <div style="margin-top:16px;" class="card">
+            <div class="card-title" data-de="Nächste 7 Tage" data-en="Next 7 days">Nächste 7 Tage</div>
+            <div id="dash-week"></div>
+          </div>
+        </div>
+
+        <!-- ── EINGABE ── -->
+        <div class="page" id="page-eingabe">
+          <div class="sec-header">
+            <div>
+              <div class="sec-title" data-de="Würfel erfassen" data-en="Add cube">Würfel erfassen</div>
+              <div class="sec-sub" data-de="Neuen Prüfwürfel anlegen" data-en="Register new test cube">Neuen Prüfwürfel anlegen</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="form-grid">
+              <div class="fg">
+                <label><span data-de="Werk" data-en="Plant">Werk</span> <span class="required-star">*</span></label>
+                <select id="inp-werk">
+                  <option value="">— <span data-de="Werk wählen" data-en="Select plant">Werk wählen</span> —</option>
+                  <option>Werk 1</option><option>Werk 2</option><option>Werk 3</option>
+                  <option>Werk 5</option><option>Werk 11</option><option>Werk 12</option>
+                  <option>Werk 21</option><option>Werk 22</option><option>Werk 23</option>
+                  <option>Werk 24</option><option>Werk 25</option><option>Werk 26</option>
+                  <option>Werk 27</option><option>Werk 28</option><option>ÜK2</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label><span data-de="Erstellungsdatum" data-en="Creation date">Erstellungsdatum</span> <span class="required-star">*</span></label>
+                <input type="date" id="inp-datum"/>
+              </div>
+              <div class="fg">
+                <label><span data-de="Prüfung nach" data-en="Test after">Prüfung nach</span> <span class="required-star">*</span></label>
+                <select id="inp-tage">
+                  <option value="">— <span data-de="Tage" data-en="Days">Tage</span> —</option>
+                  <option value="2">2 <span data-de="Tage" data-en="days">Tage</span></option>
+                  <option value="7">7 <span data-de="Tage" data-en="days">Tage</span></option>
+                  <option value="28">28 <span data-de="Tage" data-en="days">Tage</span></option>
+                  <option value="56">56 <span data-de="Tage" data-en="days">Tage</span></option>
+                </select>
+              </div>
+              <div class="fg">
+                <label><span data-de="Betonsorte" data-en="Concrete type">Betonsorte</span> <span class="required-star">*</span></label>
+                <input type="text" id="inp-beton" placeholder="z.B. C30/37, 25M61U, 30M63FC …" list="beton-vorschlaege"/>
+                <datalist id="beton-vorschlaege" id="beton-suggestions">
+                  <option value="C20/25"></option><option value="C25/30"></option>
+                  <option value="C30/37"></option><option value="C35/45"></option>
+                  <option value="C40/50"></option><option value="C45/55"></option>
+                  <option value="C50/60"></option>
+                </datalist>
+              </div>
+              <div class="fg">
+                <label data-de="Würfelnummer" data-en="Cube number">Würfelnummer</label>
+                <input type="text" id="inp-wuerfelNr" placeholder="z.B. W-2024-001"/>
+              </div>
+              <div class="fg">
+                <label data-de="Lieferscheinnummer" data-en="Delivery note no.">Lieferscheinnummer</label>
+                <input type="text" id="inp-lieferschein" placeholder="z.B. LS-48291"/>
+              </div>
+              <div class="fg">
+                <label data-de="Baustelle" data-en="Construction site">Baustelle</label>
+                <input type="text" id="inp-baustelle" placeholder="z.B. Brücke A8, Abschnitt 3" list="baustelle-vorschlaege"/>
+                <datalist id="baustelle-vorschlaege"></datalist>
+              </div>
+              <div class="fg">
+                <label data-de="Anzahl Würfel" data-en="Number of cubes">Anzahl Würfel</label>
+                <input type="number" id="inp-anzahl" value="1" min="1" max="20"/>
+              </div>
+              <div class="fg form-full">
+                <label data-de="Bemerkung" data-en="Notes">Bemerkung</label>
+                <textarea id="inp-bemerkung" placeholder="Optionale Notizen …" rows="2"></textarea>
+              </div>
+            </div>
+            <div style="margin-top:20px;" class="btn-group">
+              <button class="btn btn-primary" onclick="addWuerfel()">
+                <span>+</span> <span data-de="Würfel speichern" data-en="Save cube">Würfel speichern</span>
+              </button>
+              <button class="btn btn-ghost" onclick="resetForm()" data-de="Zurücksetzen" data-en="Reset">Zurücksetzen</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ÜBERSICHT ── -->
+        <div class="page" id="page-uebersicht">
+          <div class="sec-header">
+            <div>
+              <div class="sec-title" data-de="Alle Würfel" data-en="All cubes">Alle Würfel</div>
+              <div class="sec-sub" id="uebersicht-count">—</div>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <select id="filter-werk" onchange="renderUebersicht()">
+              <option value="" data-de="Alle Werke" data-en="All plants">Alle Werke</option>
+              <option>Werk 1</option><option>Werk 2</option><option>Werk 3</option>
+              <option>Werk 5</option><option>Werk 11</option><option>Werk 12</option>
+              <option>Werk 21</option><option>Werk 22</option><option>Werk 23</option>
+              <option>Werk 24</option><option>Werk 25</option><option>Werk 26</option>
+              <option>Werk 27</option><option>Werk 28</option><option>ÜK2</option>
+            </select>
+            <select id="filter-status" onchange="renderUebersicht()">
+              <option value="" data-de="Alle Status" data-en="All statuses">Alle Status</option>
+              <option value="offen" data-de="Offen" data-en="Open">Offen</option>
+              <option value="faellig" data-de="Heute fällig" data-en="Due today">Heute fällig</option>
+              <option value="ueberfaellig" data-de="Überfällig" data-en="Overdue">Überfällig</option>
+              <option value="geprueft" data-de="Geprüft" data-en="Tested">Geprüft</option>
+            </select>
+            <input type="text" id="filter-search" placeholder="Suche / Search …" oninput="renderUebersicht()" style="min-width:180px;"/>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-de="Werk" data-en="Plant">Werk</th>
+                    <th data-de="Würfel-Nr." data-en="Cube no.">Würfel-Nr.</th>
+                    <th data-de="Betonsorte" data-en="Concrete">Betonsorte</th>
+                    <th data-de="Erstellt" data-en="Created">Erstellt</th>
+                    <th data-de="Prüfdatum" data-en="Test date">Prüfdatum</th>
+                    <th data-de="Verbleibend" data-en="Remaining">Verbleibend</th>
+                    <th data-de="Baustelle" data-en="Site">Baustelle</th>
+                    <th data-de="LS-Nr." data-en="DN no.">LS-Nr.</th>
+                    <th data-de="Status" data-en="Status">Status</th>
+                    <th data-de="Aktionen" data-en="Actions">Aktionen</th>
+                  </tr>
+                </thead>
+                <tbody id="uebersicht-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── LAGER ── -->
+        <div class="page" id="page-lager">
+          <div class="sec-header">
+            <div>
+              <div class="sec-title" data-de="Online-Lager" data-en="Online Warehouse">Online-Lager</div>
+              <div class="sec-sub" data-de="Echtzeit-Bestand aller Werke" data-en="Real-time stock of all plants">Echtzeit-Bestand aller Werke</div>
+            </div>
+          </div>
+          <div class="stats-row" id="lager-stats"></div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title" data-de="Ausstehende Prüfungen je Werk" data-en="Pending tests by plant">Ausstehende Prüfungen je Werk</div>
+            <div class="lager-grid" id="lager-tiles"></div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <div class="chart-wrap" style="height:200px;">
+              <canvas id="chart-lager"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title" data-de="Lager-Tabelle" data-en="Warehouse table">Lager-Tabelle</div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-de="Werk" data-en="Plant">Werk</th>
+                    <th data-de="Gesamt" data-en="Total">Gesamt</th>
+                    <th data-de="Offen" data-en="Open">Offen</th>
+                    <th data-de="Fällig ≤7d" data-en="Due ≤7d">Fällig ≤7d</th>
+                    <th data-de="Überfällig" data-en="Overdue">Überfällig</th>
+                    <th data-de="Geprüft" data-en="Tested">Geprüft</th>
+                    <th data-de="Fortschritt" data-en="Progress">Fortschritt</th>
+                  </tr>
+                </thead>
+                <tbody id="lager-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── KALENDER ── -->
+        <div class="page" id="page-kalender">
+          <div class="sec-header">
+            <div>
+              <div class="sec-title" data-de="Prüfkalender" data-en="Test calendar">Prüfkalender</div>
+              <div class="sec-sub" data-de="Monatliche Prüftermin-Übersicht" data-en="Monthly test schedule overview">Monatliche Prüftermin-Übersicht</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="cal-nav-bar">
+              <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+              <div class="cal-month-title" id="cal-title"></div>
+              <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+            </div>
+            <div class="day-labels">
+              <div class="day-label" data-de="Mo" data-en="Mon">Mo</div>
+              <div class="day-label" data-de="Di" data-en="Tue">Di</div>
+              <div class="day-label" data-de="Mi" data-en="Wed">Mi</div>
+              <div class="day-label" data-de="Do" data-en="Thu">Do</div>
+              <div class="day-label" data-de="Fr" data-en="Fri">Fr</div>
+              <div class="day-label" data-de="Sa" data-en="Sat">Sa</div>
+              <div class="day-label" data-de="So" data-en="Sun">So</div>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+            <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;align-items:center;">
+              <span style="font-size:11px;color:var(--text2);" data-de="Legende:" data-en="Legend:">Legende:</span>
+              <span class="badge badge-red" data-de="Überfällig" data-en="Overdue">Überfällig</span>
+              <span class="badge badge-orange" data-de="Heute" data-en="Today">Heute</span>
+              <span class="badge badge-blue" data-de="Geplant" data-en="Planned">Geplant</span>
+              <span class="badge badge-green" data-de="Geprüft" data-en="Tested">Geprüft</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── STATISTIK ── -->
+        <div class="page" id="page-statistik">
+          <div class="sec-header">
+            <div>
+              <div class="sec-title" data-de="Statistik" data-en="Statistics">Statistik</div>
+              <div class="sec-sub" data-de="Diagramme & Auswertungen" data-en="Charts & analysis">Diagramme & Auswertungen</div>
+            </div>
+          </div>
+          <div class="stats-row" id="stat-summary"></div>
+          <div class="grid-2" style="margin-bottom:16px;">
+            <div class="card">
+              <div class="card-title" data-de="Würfel je Werk" data-en="Cubes per plant">Würfel je Werk</div>
+              <div class="chart-wrap"><canvas id="chart-werk"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-title" data-de="Status-Verteilung" data-en="Status distribution">Status-Verteilung</div>
+              <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-title" data-de="Prüftage-Verteilung" data-en="Test day distribution">Prüftage-Verteilung</div>
+              <div class="chart-wrap"><canvas id="chart-tage"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-title" data-de="Eingaben pro Monat" data-en="Entries per month">Eingaben pro Monat</div>
+              <div class="chart-wrap"><canvas id="chart-monat"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── EXPORT ── -->
+        <div class="page" id="page-export">
+          <div class="sec-header">
+            <div>
+              <div class="sec-title" data-de="Export" data-en="Export">Export</div>
+              <div class="sec-sub" data-de="PDF & CSV/Excel Export" data-en="PDF & CSV/Excel export">PDF & CSV/Excel Export</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title" data-de="Export-Filter" data-en="Export filter">Export-Filter</div>
+            <div class="export-box">
+              <div class="fg">
+                <label data-de="Zeitraum" data-en="Period">Zeitraum</label>
+                <select id="exp-zeitraum">
+                  <option value="alle" data-de="Alle Daten" data-en="All data">Alle Daten</option>
+                  <option value="monat" data-de="Aktueller Monat" data-en="Current month">Aktueller Monat</option>
+                  <option value="letztermonat" data-de="Letzter Monat" data-en="Last month">Letzter Monat</option>
+                  <option value="jahr" data-de="Aktuelles Jahr" data-en="Current year">Aktuelles Jahr</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label data-de="Werk" data-en="Plant">Werk</label>
+                <select id="exp-werk">
+                  <option value="alle" data-de="Alle Werke" data-en="All plants">Alle Werke</option>
+                  <option>Werk 1</option><option>Werk 2</option><option>Werk 3</option>
+                  <option>Werk 5</option><option>Werk 11</option><option>Werk 12</option>
+                  <option>Werk 21</option><option>Werk 22</option><option>Werk 23</option>
+                  <option>Werk 24</option><option>Werk 25</option><option>Werk 26</option>
+                  <option>Werk 27</option><option>Werk 28</option><option>ÜK2</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label data-de="Status" data-en="Status">Status</label>
+                <select id="exp-status">
+                  <option value="alle" data-de="Alle" data-en="All">Alle</option>
+                  <option value="offen" data-de="Offen" data-en="Open">Offen</option>
+                  <option value="geprueft" data-de="Geprüft" data-en="Tested">Geprüft</option>
+                </select>
+              </div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" onclick="exportPDF()">
+                ↓ <span data-de="PDF exportieren" data-en="Export PDF">PDF exportieren</span>
+              </button>
+              <button class="btn btn-ghost" onclick="exportCSV()">
+                ↓ <span data-de="CSV / Excel exportieren" data-en="Export CSV / Excel">CSV / Excel exportieren</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ARCHIV ── -->
+        <div class="page" id="page-archiv">
+          <div class="sec-header">
+            <div>
+              <div class="sec-title" data-de="Archiv" data-en="Archive">Archiv</div>
+              <div class="sec-sub" data-de="Archivierte Würfel" data-en="Archived cubes">Archivierte Würfel</div>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="clearArchive()" data-de="Archiv leeren" data-en="Clear archive">Archiv leeren</button>
+          </div>
+          <div class="archive-notice" data-de="Archivierte Würfel können jederzeit wiederhergestellt werden." data-en="Archived cubes can be restored at any time.">Archivierte Würfel können jederzeit wiederhergestellt werden.</div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-de="Werk" data-en="Plant">Werk</th>
+                    <th data-de="Würfel-Nr." data-en="Cube no.">Würfel-Nr.</th>
+                    <th data-de="Betonsorte" data-en="Concrete">Betonsorte</th>
+                    <th data-de="Erstellt" data-en="Created">Erstellt</th>
+                    <th data-de="Prüfdatum" data-en="Test date">Prüfdatum</th>
+                    <th data-de="Baustelle" data-en="Site">Baustelle</th>
+                    <th data-de="Archiviert am" data-en="Archived on">Archiviert am</th>
+                    <th data-de="Aktion" data-en="Action">Aktion</th>
+                  </tr>
+                </thead>
+                <tbody id="archiv-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SETTINGS ── -->
+        <div class="page" id="page-settings">
+          <div class="sec-header">
+            <div>
+              <div class="sec-title" data-de="Einstellungen" data-en="Settings">Einstellungen</div>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title" data-de="Firebase-Setup" data-en="Firebase setup">Firebase-Setup</div>
+            <div id="firebase-setup-info"></div>
+          </div>
+          <div class="card">
+            <div class="card-title" data-de="Benutzerverwaltung" data-en="User management">Benutzerverwaltung</div>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-de="Neue Benutzer können sich über die Login-Seite mit 'Registrieren' selbst anlegen." data-en="New users can register themselves via the login page.">Neue Benutzer können sich über die Login-Seite mit 'Registrieren' selbst anlegen.</p>
+            <p style="font-size:12px;color:var(--text3);font-family:var(--mono);" data-de="Für erweiterte Benutzerrechte: Firebase Authentication Console" data-en="For advanced permissions: Firebase Authentication Console">Für erweiterte Benutzerrechte: Firebase Authentication Console</p>
+          </div>
+        </div>
+
+        <!-- ── PRÜFBERICHT ── -->
+        <div class="page" id="page-pruefbericht">
+          <div class="sec-header">
+            <div>
+              <div class="sec-title">Prüfbericht</div>
+              <div class="sec-sub">Druckfestigkeit Soll / Ist · DIN EN 12390</div>
+            </div>
+          </div>
+          <div class="stats-row" id="pb-stats"></div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title">Prüfbericht PDF exportieren</div>
+            <div class="export-box">
+              <div class="fg">
+                <label>Firmenname</label>
+                <input type="text" id="pb-firma" placeholder="z.B. Müller Baustoffe GmbH" style="min-width:200px;"/>
+              </div>
+              <div class="fg">
+                <label>Werk</label>
+                <select id="pb-werk">
+                  <option value="alle">Alle Werke</option>
+                  <option>Werk 1</option><option>Werk 2</option><option>Werk 3</option>
+                  <option>Werk 5</option><option>Werk 11</option><option>Werk 12</option>
+                  <option>Werk 21</option><option>Werk 22</option><option>Werk 23</option>
+                  <option>Werk 24</option><option>Werk 25</option><option>Werk 26</option>
+                  <option>Werk 27</option><option>Werk 28</option><option>ÜK2</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label>Baustelle</label>
+                <select id="pb-baustelle"><option value="alle">Alle Baustellen</option></select>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="exportPruefbericht()">📋 Prüfbericht PDF erstellen</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Ergebnisse — Soll / Ist Vergleich</div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Werk</th><th>Nr.</th><th>Betonsorte</th><th>Baustelle</th>
+                    <th>Soll (N/mm²)</th><th>Ist (N/mm²)</th><th>%</th><th>Ergebnis</th><th>Aktion</th>
+                  </tr>
+                </thead>
+                <tbody id="pb-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ERINNERUNGEN ── -->
+        <div class="page" id="page-erinnerungen">
+          <div class="sec-header">
+            <div>
+              <div class="sec-title">Erinnerungen & Push</div>
+              <div class="sec-sub">Browser-Benachrichtigungen für fällige Prüfungen</div>
+            </div>
+          </div>
+          <div class="stats-row" id="erin-stats"></div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title">Push-Benachrichtigungen</div>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+              <div>
+                <div style="font-size:13px;margin-bottom:4px;">Status: <span id="push-status" style="color:var(--red);font-family:var(--mono);">✘ Deaktiviert</span></div>
+                <div style="font-size:12px;color:var(--text2);">Du erhältst Benachrichtigungen bei überfälligen und heute fälligen Würfeln.</div>
+              </div>
+              <div class="btn-group">
+                <button class="btn btn-primary" id="btn-push-enable" onclick="requestPushPermission()">🔔 Benachrichtigungen aktivieren</button>
+                <button class="btn btn-ghost" id="btn-push-disable" onclick="disablePush()" style="display:none;">Deaktivieren</button>
+                <button class="btn btn-ghost" onclick="sendTestPush()">Test senden</button>
+                <button class="btn btn-ghost" onclick="checkPushNow()">Jetzt prüfen</button>
+              </div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;font-size:12px;color:var(--text2);font-family:var(--mono);">
+              💡 Tipp: Öffne die App morgens einmal im Browser — Push-Benachrichtigungen erscheinen dann automatisch bei fälligen Würfeln. Auf dem Handy: App zum Startbildschirm hinzufügen für beste Erfahrung.
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Anstehende Prüfungen</div>
+            <div id="erin-list"></div>
+          </div>
+        </div>
+
+      </div><!-- main -->
+    </div><!-- content-area -->
+  </div><!-- layout -->
+</div><!-- app -->
+
+<!-- KALENDER MODAL -->
+<div class="modal-overlay" id="cal-modal" onclick="closeCalModalOutside(event)">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="cal-modal-title">—</div>
+        <div class="modal-date" id="cal-modal-date">—</div>
+      </div>
+      <button class="modal-close" onclick="closeCalModal()">×</button>
+    </div>
+    <div id="cal-modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  GLOBALS
+// ═══════════════════════════════════════════════════════════════════
+const WERKE = ['Werk 1','Werk 2','Werk 3','Werk 5','Werk 11','Werk 12',
+  'Werk 21','Werk 22','Werk 23','Werk 24','Werk 25','Werk 26','Werk 27','Werk 28','ÜK2'];
+
+const MONATE_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const MONATE_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+let LANG = 'de';
+let calYear, calMonth;
+let currentUser = null;
+let wuerfelData = [];   // live array from Firestore or localStorage
+let archivData = [];
+let unsubscribeWuerfel = null;
+let fbReady = false;
+let chartInstances = {};
+
+// ═══════════════════════════════════════════════════════════════════
+//  FIREBASE INIT
+// ═══════════════════════════════════════════════════════════════════
+window.addEventListener('fb-ready', () => {
+  fbReady = true;
+  const fb = window._fb;
+  if (!fb.FIREBASE_CONFIGURED) {
+    document.getElementById('loading-overlay').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('setup-banner').style.display = 'flex';
+    document.getElementById('demo-hint').style.display = 'block';
+    initOfflineMode();
+    return;
+  }
+  fb.onAuthStateChanged(fb.auth, user => {
+    document.getElementById('loading-overlay').style.display = 'none';
+    if (user) {
+      currentUser = { uid: user.uid, email: user.email, name: user.displayName || user.email.split('@')[0] };
+      showApp();
+    } else {
+      document.getElementById('login-screen').style.display = 'flex';
+    }
+  });
+});
+
+// Fallback if firebase module fails to load
+setTimeout(() => {
+  if (!fbReady) {
+    document.getElementById('loading-text').textContent = 'Offline-Modus';
+    document.getElementById('loading-overlay').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    initOfflineMode();
+    window._fb = { FIREBASE_CONFIGURED: false };
+  }
+}, 4000);
+
+// ═══════════════════════════════════════════════════════════════════
+//  OFFLINE MODE (localStorage fallback)
+// ═══════════════════════════════════════════════════════════════════
+function initOfflineMode() {
+  document.getElementById('sync-dot').classList.add('offline');
+  document.getElementById('sync-text').textContent = 'Lokal';
+  loadFromLocalStorage();
+}
+
+function loadFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem('wm_pro_v2');
+    if (raw) {
+      const d = JSON.parse(raw);
+      wuerfelData = d.wuerfel || [];
+      archivData = d.archiv || [];
+    }
+  } catch(e) {}
+}
+
+function saveToLocalStorage() {
+  try {
+    localStorage.setItem('wm_pro_v2', JSON.stringify({ wuerfel: wuerfelData, archiv: archivData }));
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ═══════════════════════════════════════════════════════════════════
+let loginMode = 'login';
+
+function toggleLoginMode() {
+  loginMode = loginMode === 'login' ? 'register' : 'login';
+  const isReg = loginMode === 'register';
+  document.getElementById('login-title').textContent = isReg ? (LANG==='de'?'Registrieren':'Register') : (LANG==='de'?'Anmelden':'Sign in');
+  document.getElementById('login-subtitle').textContent = isReg ? (LANG==='de'?'Neues Konto erstellen':'Create new account') : (LANG==='de'?'Zugang zum Prüfsystem':'Access the testing system');
+  document.getElementById('login-btn').textContent = isReg ? (LANG==='de'?'Registrieren':'Register') : (LANG==='de'?'Anmelden':'Sign in');
+  document.getElementById('reg-name-group').style.display = isReg ? 'block' : 'none';
+  document.getElementById('login-mode-text').textContent = isReg ? (LANG==='de'?'Bereits registriert?':'Already registered?') : (LANG==='de'?'Noch kein Konto?':'No account yet?');
+  document.getElementById('login-mode-link').textContent = isReg ? (LANG==='de'?'Anmelden':'Sign in') : (LANG==='de'?'Registrieren':'Register');
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-err');
+  const btn = document.getElementById('login-btn');
+
+  const fb = window._fb;
+  if (!fb || !fb.FIREBASE_CONFIGURED) {
+    // offline login — any credentials work
+    currentUser = { uid: 'local', email: email || 'local@offline.de', name: email ? email.split('@')[0] : 'Offline-User' };
+    document.getElementById('login-screen').style.display = 'none';
+    showApp();
+    return;
+  }
+
+  btn.disabled = true;
+  errEl.style.display = 'none';
+
+  try {
+    if (loginMode === 'register') {
+      await fb.createUserWithEmailAndPassword(fb.auth, email, pass);
+    } else {
+      await fb.signInWithEmailAndPassword(fb.auth, email, pass);
+    }
+  } catch(e) {
+    errEl.style.display = 'block';
+    const msgs = {
+      'auth/user-not-found': 'Benutzer nicht gefunden.',
+      'auth/wrong-password': 'Falsches Passwort.',
+      'auth/email-already-in-use': 'E-Mail bereits registriert.',
+      'auth/invalid-email': 'Ungültige E-Mail-Adresse.',
+      'auth/weak-password': 'Passwort zu schwach (min. 6 Zeichen).',
+      'auth/too-many-requests': 'Zu viele Versuche. Bitte warten.',
+    };
+    errEl.textContent = msgs[e.code] || e.message;
+    btn.disabled = false;
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+});
+
+async function doLogout() {
+  const fb = window._fb;
+  if (fb && fb.FIREBASE_CONFIGURED && fb.auth) {
+    await fb.signOut(fb.auth);
+  }
+  currentUser = null;
+  if (unsubscribeWuerfel) unsubscribeWuerfel();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  APP INIT
+// ═══════════════════════════════════════════════════════════════════
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  const name = currentUser.name || currentUser.email || 'User';
+  const initials = name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('user-avatar').textContent = initials;
+  document.getElementById('user-name-display').textContent = name;
+  document.getElementById('user-role-display').textContent = currentUser.email || 'offline';
+
+  const today = new Date();
+  calYear = today.getFullYear();
+  calMonth = today.getMonth();
+  document.getElementById('inp-datum').value = today.toISOString().split('T')[0];
+
+  const fb = window._fb;
+  if (fb && fb.FIREBASE_CONFIGURED) {
+    document.getElementById('setup-banner').style.display = 'none';
+    subscribeToFirestore();
+  } else {
+    document.getElementById('setup-banner').style.display = 'flex';
+    renderAll();
+  }
+
+  updateBaustelle();
+  setLang(LANG);
+  initPush();
+}
+
+function subscribeToFirestore() {
+  const fb = window._fb;
+  const { db, collection, onSnapshot, query, orderBy } = fb;
+
+  // Subscribe to wuerfel
+  const qW = query(collection(db, 'wuerfel'), orderBy('pruefDatum', 'asc'));
+  unsubscribeWuerfel = onSnapshot(qW, snap => {
+    wuerfelData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderAll();
+    toast(LANG==='de'?'Cloud synchronisiert':'Cloud synced', 'ok');
+  }, err => {
+    console.error(err);
+    toast('Firebase Fehler: ' + err.message, 'err');
+    document.getElementById('sync-dot').classList.add('offline');
+  });
+
+  // Subscribe to archiv
+  const qA = query(collection(db, 'archiv'), orderBy('archiviertAm', 'desc'));
+  onSnapshot(qA, snap => {
+    archivData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderArchiv();
+  });
+}
+
+function renderAll() {
+  updateNavBadges();
+  renderDashboard();
+  renderUebersicht();
+  renderLager();
+  renderKalender();
+  renderStatistik();
+  renderArchiv();
+  renderPruefberichtPage();
+  renderErinnerungen();
+  updateBaustelle();
+  updateFirebaseSetupInfo();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  LANGUAGE
+// ═══════════════════════════════════════════════════════════════════
+function setLang(l) {
+  LANG = l;
+  document.getElementById('lang-de').classList.toggle('active', l === 'de');
+  document.getElementById('lang-en').classList.toggle('active', l === 'en');
+  document.querySelectorAll('[data-de]').forEach(el => {
+    if (!['INPUT','SELECT','TEXTAREA'].includes(el.tagName)) {
+      el.textContent = el.getAttribute('data-' + l);
+    }
+  });
+  // Re-render pages that have translated content
+  renderDashboard();
+  renderKalender();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════════════
+const PAGE_HEADINGS = {
+  dashboard: { de: 'Dashboard', en: 'Dashboard' },
+  eingabe: { de: 'Würfel erfassen', en: 'Add cube' },
+  uebersicht: { de: 'Alle Würfel', en: 'All cubes' },
+  lager: { de: 'Online-Lager', en: 'Warehouse' },
+  kalender: { de: 'Prüfkalender', en: 'Test Calendar' },
+  statistik: { de: 'Statistik', en: 'Statistics' },
+  export: { de: 'Export', en: 'Export' },
+  archiv: { de: 'Archiv', en: 'Archive' },
+  settings: { de: 'Einstellungen', en: 'Settings' },
+  pruefbericht: { de: 'Prüfbericht', en: 'Test Report' },
+  erinnerungen: { de: 'Erinnerungen', en: 'Reminders' },
+};
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  const nav = document.querySelector(`.nav-item[onclick="showPage('${id}')"]`);
+  if (nav) nav.classList.add('active');
+  const h = PAGE_HEADINGS[id];
+  document.getElementById('topbar-heading').textContent = h ? h[LANG] : id;
+  closeSidebar();
+
+  if (id === 'uebersicht') renderUebersicht();
+  if (id === 'lager') renderLager();
+  if (id === 'kalender') renderKalender();
+  if (id === 'statistik') { setTimeout(renderStatistik, 50); }
+  if (id === 'archiv') renderArchiv();
+  if (id === 'settings') updateFirebaseSetupInfo();
+  if (id === 'pruefbericht') renderPruefberichtPage();
+  if (id === 'erinnerungen') renderErinnerungen();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function fmtDate(s) {
+  if (!s) return '—';
+  const d = new Date(s + 'T00:00:00');
+  return d.toLocaleDateString('de-DE');
+}
+
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + parseInt(days));
+  return d.toISOString().split('T')[0];
+}
+
+function daysUntil(dateStr) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr + 'T00:00:00');
+  return Math.round((d - today) / 86400000);
+}
+
+function getStatus(w) {
+  if (w.geprueft) return 'geprueft';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const pd = new Date(w.pruefDatum + 'T00:00:00');
+  if (pd < today) return 'ueberfaellig';
+  if (pd.toDateString() === today.toDateString()) return 'faellig';
+  return 'offen';
+}
+
+function statusBadge(w) {
+  const s = getStatus(w);
+  const labels = {
+    geprueft: { de: 'Geprüft', en: 'Tested' },
+    ueberfaellig: { de: 'Überfällig', en: 'Overdue' },
+    faellig: { de: 'Heute fällig', en: 'Due today' },
+    offen: { de: 'Offen', en: 'Open' }
+  };
+  const cls = { geprueft: 'badge-green', ueberfaellig: 'badge-red', faellig: 'badge-orange', offen: 'badge-blue' };
+  return `<span class="badge ${cls[s]}">${labels[s][LANG]}</span>`;
+}
+
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(el._to);
+  el._to = setTimeout(() => { el.className = type; }, 3000);
+}
+
+function updateNavBadges() {
+  const active = wuerfelData.filter(w => !w.archiviert);
+  const today = active.filter(w => getStatus(w) === 'faellig').length;
+  const overdue = active.filter(w => getStatus(w) === 'ueberfaellig').length;
+  const nb = document.getElementById('nb-today');
+  nb.textContent = today + overdue;
+  nb.className = 'nav-badge' + (overdue > 0 ? '' : ' warn');
+  if (overdue === 0 && today === 0) nb.style.display = 'none';
+  else nb.style.display = 'inline';
+  const lagerOpen = active.filter(w => !w.geprueft).length;
+  document.getElementById('nb-lager').textContent = lagerOpen;
+}
+
+function updateBaustelle() {
+  const sites = [...new Set(wuerfelData.map(w => w.baustelle).filter(Boolean))];
+  const dl = document.getElementById('baustelle-vorschlaege');
+  if (dl) dl.innerHTML = sites.map(s => `<option value="${s}"></option>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ADD WÜRFEL
+// ═══════════════════════════════════════════════════════════════════
+async function addWuerfel() {
+  const werk = document.getElementById('inp-werk').value;
+  const datum = document.getElementById('inp-datum').value;
+  const tage = document.getElementById('inp-tage').value;
+  const beton = document.getElementById('inp-beton').value.trim();
+
+  if (!werk || !datum || !tage || !beton) {
+    toast(LANG==='de'?'Bitte Pflichtfelder ausfüllen (*)':'Please fill required fields (*)', 'err');
+    return;
+  }
+
+  const anzahl = Math.max(1, Math.min(20, parseInt(document.getElementById('inp-anzahl').value) || 1));
+  const pruefDatum = addDays(datum, tage);
+  const baseData = {
+    werk, datum, tage: parseInt(tage), pruefDatum, beton,
+    lieferschein: document.getElementById('inp-lieferschein').value.trim(),
+    baustelle: document.getElementById('inp-baustelle').value.trim(),
+    bemerkung: document.getElementById('inp-bemerkung').value.trim(),
+    geprueft: false, geprueftAm: null,
+    erfasst: new Date().toISOString(),
+    erfasstVon: currentUser?.email || 'offline',
+    archiviert: false
+  };
+
+  const fb = window._fb;
+  const saved = [];
+
+  for (let i = 0; i < anzahl; i++) {
+    const wNr = document.getElementById('inp-wuerfelNr').value.trim();
+    const w = {
+      ...baseData,
+      wuerfelNr: anzahl > 1 && wNr ? `${wNr}_${i+1}` : wNr
+    };
+
+    if (fb && fb.FIREBASE_CONFIGURED) {
+      const ref = fb.doc(fb.collection(fb.db, 'wuerfel'));
+      await fb.setDoc(ref, { ...w, id: ref.id });
+    } else {
+      w.id = Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2,6);
+      wuerfelData.push(w);
+      saveToLocalStorage();
+    }
+    saved.push(w);
+  }
+
+  if (!fb || !fb.FIREBASE_CONFIGURED) renderAll();
+
+  toast(`${anzahl} ${LANG==='de'?'Würfel gespeichert — Prüfdatum:':'cube(s) saved — Test date:'} ${fmtDate(pruefDatum)}`, 'ok');
+  updateBaustelle();
+}
+
+function resetForm() {
+  document.getElementById('inp-werk').value = '';
+  document.getElementById('inp-datum').value = new Date().toISOString().split('T')[0];
+  document.getElementById('inp-tage').value = '';
+  document.getElementById('inp-beton').value = '';
+  document.getElementById('inp-wuerfelNr').value = '';
+  document.getElementById('inp-lieferschein').value = '';
+  document.getElementById('inp-baustelle').value = '';
+  document.getElementById('inp-anzahl').value = '1';
+  document.getElementById('inp-bemerkung').value = '';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  DRUCKFESTIGKEIT MODAL
+// ═══════════════════════════════════════════════════════════════════
+
+// Festigkeitsklassen Sollwerte (charakteristische Druckfestigkeit fck,cyl in N/mm²)
+const FESTIGKEIT_SOLL = {
+  'C8/10':8,'C12/15':12,'C16/20':16,'C20/25':20,'C25/30':25,
+  'C30/37':30,'C35/45':35,'C40/50':40,'C45/55':45,'C50/60':50,
+  'C55/67':55,'C60/75':60,'C70/85':70,'C80/95':80,'C90/105':90
+};
+
+function getSollwert(beton) {
+  if (!beton) return null;
+  const b = beton.toUpperCase().trim();
+  for (const [key, val] of Object.entries(FESTIGKEIT_SOLL)) {
+    if (b.includes(key.replace('C','C').split('/')[0]) || b.startsWith(key)) return val;
+  }
+  // Try to extract number e.g. "C30" → 30
+  const m = b.match(/C\s*(\d+)/);
+  if (m) return parseInt(m[1]);
+  return null;
+}
+
+function openDruckModal(id) {
+  const w = wuerfelData.find(x => x.id === id);
+  if (!w) return;
+  const soll = getSollwert(w.beton);
+  const modal = document.getElementById('druck-modal');
+  document.getElementById('dm-titel').textContent = `${w.werk} — ${w.beton}`;
+  document.getElementById('dm-meta').textContent = `${w.wuerfelNr||'—'} · ${w.baustelle||'—'} · ${w.tage}d-Prüfung`;
+  document.getElementById('dm-soll').textContent = soll ? `${soll} N/mm²` : '— (nicht ermittelbar)';
+  document.getElementById('dm-ist').value = w.druckfestigkeit || '';
+  document.getElementById('dm-pruefkraft').value = w.pruefkraft || '';
+  document.getElementById('dm-bruchbild').value = w.bruchbild || '';
+  document.getElementById('dm-notiz').value = w.pruefNotiz || '';
+  document.getElementById('dm-id').value = id;
+  document.getElementById('dm-soll-raw').value = soll || '';
+  updateDruckErgebnis();
+  modal.classList.add('open');
+}
+
+function updateDruckErgebnis() {
+  const ist = parseFloat(document.getElementById('dm-ist').value);
+  const soll = parseFloat(document.getElementById('dm-soll-raw').value);
+  const el = document.getElementById('dm-ergebnis');
+  if (!ist) { el.innerHTML = ''; return; }
+  if (!soll) {
+    el.innerHTML = `<span class="badge badge-blue">${ist} N/mm²</span>`;
+    return;
+  }
+  const bestanden = ist >= soll;
+  const diff = (ist - soll).toFixed(1);
+  const pct = Math.round(ist / soll * 100);
+  el.innerHTML = bestanden
+    ? `<span class="badge badge-green">✔ BESTANDEN — ${ist} N/mm² (${pct}% — +${diff} N/mm²)</span>`
+    : `<span class="badge badge-red">✘ NICHT BESTANDEN — ${ist} N/mm² (${pct}% — ${diff} N/mm²)</span>`;
+}
+
+async function saveDruckfestigkeit() {
+  const id = document.getElementById('dm-id').value;
+  const ist = parseFloat(document.getElementById('dm-ist').value);
+  const soll = parseFloat(document.getElementById('dm-soll-raw').value);
+  if (!ist || isNaN(ist)) { toast(LANG==='de'?'Bitte Ist-Wert eingeben':'Please enter actual value', 'err'); return; }
+
+  const bestanden = soll ? ist >= soll : null;
+  const geprueftAm = new Date().toISOString().split('T')[0];
+  const updates = {
+    geprueft: true, geprueftAm,
+    druckfestigkeit: ist,
+    druckfestigkeitSoll: soll || null,
+    druckBestanden: bestanden,
+    pruefkraft: document.getElementById('dm-pruefkraft').value || '',
+    bruchbild: document.getElementById('dm-bruchbild').value || '',
+    pruefNotiz: document.getElementById('dm-notiz').value || ''
+  };
+
+  const fb = window._fb;
+  if (fb && fb.FIREBASE_CONFIGURED) {
+    await fb.updateDoc(fb.doc(fb.db, 'wuerfel', id), updates);
+  } else {
+    const w = wuerfelData.find(x => x.id === id);
+    if (w) Object.assign(w, updates);
+    saveToLocalStorage();
+    renderAll();
+  }
+
+  closeDruckModal();
+  const msg = bestanden === true ? '✔ Bestanden' : bestanden === false ? '✘ Nicht bestanden' : '✔ Gespeichert';
+  toast(msg, bestanden === false ? 'warn' : 'ok');
+}
+
+function closeDruckModal() { document.getElementById('druck-modal').classList.remove('open'); }
+function closeDruckModalOutside(e) { if (e.target.id === 'druck-modal') closeDruckModal(); }
+
+// ═══════════════════════════════════════════════════════════════════
+//  ACTIONS
+// ═══════════════════════════════════════════════════════════════════
+async function markGeprueft(id) {
+  // Open the Druckfestigkeit modal instead of just marking
+  openDruckModal(id);
+}
+
+async function deleteWuerfel(id) {
+  if (!confirm(LANG==='de'?'Würfel wirklich löschen?':'Really delete this cube?')) return;
+  const fb = window._fb;
+  if (fb && fb.FIREBASE_CONFIGURED) {
+    await fb.deleteDoc(fb.doc(fb.db, 'wuerfel', id));
+  } else {
+    wuerfelData = wuerfelData.filter(x => x.id !== id);
+    saveToLocalStorage();
+    renderAll();
+  }
+  toast(LANG==='de'?'Würfel gelöscht':'Cube deleted', 'ok');
+}
+
+async function archiveWuerfel(id) {
+  const fb = window._fb;
+  const archiviertAm = new Date().toISOString().split('T')[0];
+  const w = wuerfelData.find(x => x.id === id);
+  if (!w) return;
+
+  if (fb && fb.FIREBASE_CONFIGURED) {
+    // Move to archiv collection
+    const archRef = fb.doc(fb.collection(fb.db, 'archiv'));
+    await fb.setDoc(archRef, { ...w, archiviert: true, archiviertAm });
+    await fb.deleteDoc(fb.doc(fb.db, 'wuerfel', id));
+  } else {
+    wuerfelData = wuerfelData.filter(x => x.id !== id);
+    archivData.push({ ...w, archiviert: true, archiviertAm });
+    saveToLocalStorage();
+    renderAll();
+  }
+  toast(LANG==='de'?'Würfel archiviert':'Cube archived', 'ok');
+}
+
+async function restoreWuerfel(id) {
+  const fb = window._fb;
+  const w = archivData.find(x => x.id === id);
+  if (!w) return;
+  const { archiviert, archiviertAm, ...restored } = w;
+  restored.archiviert = false;
+
+  if (fb && fb.FIREBASE_CONFIGURED) {
+    const ref = fb.doc(fb.collection(fb.db, 'wuerfel'));
+    await fb.setDoc(ref, { ...restored, id: ref.id });
+    await fb.deleteDoc(fb.doc(fb.db, 'archiv', id));
+  } else {
+    archivData = archivData.filter(x => x.id !== id);
+    wuerfelData.push({ ...restored, id: Date.now() + '_r' });
+    saveToLocalStorage();
+    renderAll();
+  }
+  toast(LANG==='de'?'Würfel wiederhergestellt':'Cube restored', 'ok');
+}
+
+async function clearArchive() {
+  if (!confirm(LANG==='de'?'Alle archivierten Würfel endgültig löschen?':'Permanently delete all archived cubes?')) return;
+  const fb = window._fb;
+  if (fb && fb.FIREBASE_CONFIGURED) {
+    for (const w of archivData) {
+      await fb.deleteDoc(fb.doc(fb.db, 'archiv', w.id));
+    }
+  } else {
+    archivData = [];
+    saveToLocalStorage();
+    renderArchiv();
+  }
+  toast(LANG==='de'?'Archiv geleert':'Archive cleared', 'ok');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════════════
+function renderDashboard() {
+  const ws = wuerfelData.filter(w => !w.archiviert);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const total = ws.length;
+  const geprueft = ws.filter(w => w.geprueft).length;
+  const faellig = ws.filter(w => getStatus(w) === 'faellig').length;
+  const ueberfaellig = ws.filter(w => getStatus(w) === 'ueberfaellig').length;
+
+  document.getElementById('dash-date').textContent = today.toLocaleDateString(LANG==='de'?'de-DE':'en-GB',
+    { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  document.getElementById('badge-today-count').textContent = faellig;
+  document.getElementById('badge-overdue-count').textContent = ueberfaellig;
+
+  const pct = total > 0 ? Math.round(geprueft / total * 100) : 0;
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card blue">
+      <div class="stat-label">${LANG==='de'?'Gesamt':'Total'}</div>
+      <div class="stat-value blue">${total}</div>
+      <div class="stat-sub">${LANG==='de'?'Würfel im System':'cubes in system'}</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">${LANG==='de'?'Geprüft':'Tested'}</div>
+      <div class="stat-value green">${geprueft}</div>
+      <div class="stat-sub">${pct}% ${LANG==='de'?'abgeschlossen':'completed'}</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-label">${LANG==='de'?'Heute fällig':'Due today'}</div>
+      <div class="stat-value orange">${faellig}</div>
+      <div class="stat-sub">${LANG==='de'?'sofort prüfen':'check now'}</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">${LANG==='de'?'Überfällig':'Overdue'}</div>
+      <div class="stat-value red">${ueberfaellig}</div>
+      <div class="stat-sub">${LANG==='de'?'Frist überschritten':'deadline passed'}</div>
+    </div>
+  `;
+
+  // Today list
+  const todayList = ws.filter(w => getStatus(w) === 'faellig');
+  const todayEl = document.getElementById('dash-today-list');
+  todayEl.innerHTML = todayList.length === 0
+    ? `<div class="empty-state" style="padding:20px;"><div class="empty-title">${LANG==='de'?'Keine Prüfungen heute':'No tests today'}</div></div>`
+    : todayList.map(w => `
+      <div class="today-item today">
+        <div class="ti-left">
+          <div class="ti-werk">${w.werk} <span style="color:var(--gold);font-family:var(--mono);font-size:11px;">${w.beton}</span></div>
+          <div class="ti-meta">${w.baustelle||'—'} · ${LANG==='de'?'LS:':'DN:'} ${w.lieferschein||'—'}</div>
+        </div>
+        <button class="tbl-btn check" onclick="markGeprueft('${w.id}')">${LANG==='de'?'✔ geprüft':'✔ tested'}</button>
+      </div>`).join('');
+
+  // Overdue list
+  const overdueList = ws.filter(w => getStatus(w) === 'ueberfaellig');
+  const overdueEl = document.getElementById('dash-overdue-list');
+  overdueEl.innerHTML = overdueList.length === 0
+    ? `<div class="empty-state" style="padding:20px;"><div class="empty-title" style="color:var(--green);">${LANG==='de'?'Alles im Zeitplan ✓':'All on schedule ✓'}</div></div>`
+    : overdueList.slice(0,6).map(w => {
+        const d = Math.abs(daysUntil(w.pruefDatum));
+        return `<div class="today-item overdue">
+          <div class="ti-left">
+            <div class="ti-werk">${w.werk} <span style="color:var(--gold);font-family:var(--mono);font-size:11px;">${w.beton}</span></div>
+            <div class="ti-meta" style="color:var(--red);">${d} ${LANG==='de'?'Tage überfällig':'days overdue'} · ${w.baustelle||'—'}</div>
+          </div>
+          <button class="tbl-btn check" onclick="markGeprueft('${w.id}')">${LANG==='de'?'✔ geprüft':'✔ tested'}</button>
+        </div>`;
+      }).join('') + (overdueList.length > 6 ? `<div style="font-size:12px;color:var(--text3);padding:8px 0;">+ ${overdueList.length-6} ${LANG==='de'?'weitere':'more'}</div>` : '');
+
+  // Next 7 days
+  const weekEl = document.getElementById('dash-week');
+  const days = [];
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(today); d.setDate(d.getDate() + i);
+    const ds = d.toISOString().split('T')[0];
+    const cnt = ws.filter(w => !w.geprueft && w.pruefDatum === ds).length;
+    days.push({ date: ds, cnt, label: d.toLocaleDateString(LANG==='de'?'de-DE':'en-GB', { weekday:'short', day:'numeric', month:'short' }) });
+  }
+  const max = Math.max(...days.map(d=>d.cnt), 1);
+  weekEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;">` +
+    days.map(d => `
+      <div style="text-align:center;">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:6px;font-family:var(--mono);">${d.label}</div>
+        <div style="height:50px;background:var(--bg3);border-radius:var(--r);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;">
+          <div style="width:100%;background:${d.cnt>0?'var(--accent)':'transparent'};height:${Math.max(d.cnt/max*100,0)}%;border-radius:var(--r);transition:height 0.4s;"></div>
+        </div>
+        <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:${d.cnt>0?'var(--accent)':'var(--text3)'};margin-top:4px;">${d.cnt}</div>
+      </div>`).join('') + '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ÜBERSICHT
+// ═══════════════════════════════════════════════════════════════════
+function renderUebersicht() {
+  let ws = wuerfelData.filter(w => !w.archiviert);
+  const werk = document.getElementById('filter-werk')?.value;
+  const status = document.getElementById('filter-status')?.value;
+  const search = document.getElementById('filter-search')?.value?.toLowerCase() || '';
+
+  if (werk) ws = ws.filter(w => w.werk === werk);
+  if (status) ws = ws.filter(w => getStatus(w) === status);
+  if (search) ws = ws.filter(w =>
+    [w.werk, w.beton, w.wuerfelNr, w.baustelle, w.lieferschein, w.bemerkung].some(v => (v||'').toLowerCase().includes(search))
+  );
+
+  ws.sort((a,b) => new Date(a.pruefDatum) - new Date(b.pruefDatum));
+  document.getElementById('uebersicht-count').textContent = `${ws.length} ${LANG==='de'?'Würfel':'cubes'}`;
+
+  const tbody = document.getElementById('uebersicht-body');
+  if (!ws.length) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text3);">${LANG==='de'?'Keine Würfel gefunden.':'No cubes found.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = ws.map(w => {
+    const du = daysUntil(w.pruefDatum);
+    const duStr = w.geprueft ? '—' : du === 0 ? (LANG==='de'?'Heute':'Today') : du > 0 ? `${du}d` : `<span style="color:var(--red);">${Math.abs(du)}d ${LANG==='de'?'über':'over'}</span>`;
+    return `<tr>
+      <td><span class="badge badge-gray">${w.werk}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;">${w.wuerfelNr||'—'}</td>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--gold);">${w.beton}</td>
+      <td style="color:var(--text2);">${fmtDate(w.datum)}</td>
+      <td>${fmtDate(w.pruefDatum)}</td>
+      <td style="font-family:var(--mono);font-size:12px;">${duStr}</td>
+      <td style="color:var(--text2);font-size:12px;">${w.baustelle||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2);">${w.lieferschein||'—'}</td>
+      <td>${statusBadge(w)}</td>
+      <td><div class="tbl-actions">
+        ${!w.geprueft ? `<button class="tbl-btn check" onclick="markGeprueft('${w.id}')">✔</button>` : ''}
+        <button class="tbl-btn arch" onclick="archiveWuerfel('${w.id}')">📦</button>
+        <button class="tbl-btn del" onclick="deleteWuerfel('${w.id}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  LAGER
+// ═══════════════════════════════════════════════════════════════════
+function renderLager() {
+  const ws = wuerfelData.filter(w => !w.archiviert);
+  const total = ws.length;
+  const geprueft = ws.filter(w => w.geprueft).length;
+  const offen = ws.filter(w => !w.geprueft).length;
+  const ueber = ws.filter(w => getStatus(w) === 'ueberfaellig').length;
+
+  document.getElementById('lager-stats').innerHTML = `
+    <div class="stat-card blue"><div class="stat-label">${LANG==='de'?'Im Lager':'In warehouse'}</div><div class="stat-value blue">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">${LANG==='de'?'Offen':'Open'}</div><div class="stat-value">${offen}</div></div>
+    <div class="stat-card green"><div class="stat-label">${LANG==='de'?'Geprüft':'Tested'}</div><div class="stat-value green">${geprueft}</div></div>
+    <div class="stat-card red"><div class="stat-label">${LANG==='de'?'Überfällig':'Overdue'}</div><div class="stat-value red">${ueber}</div></div>
+  `;
+
+  // Tiles
+  const tiles = document.getElementById('lager-tiles');
+  tiles.innerHTML = WERKE.map(w => {
+    const cnt = ws.filter(x => x.werk === w && !x.geprueft).length;
+    const cls = cnt === 0 ? 'lt-0' : cnt <= 2 ? 'lt-low' : cnt <= 5 ? 'lt-mid' : 'lt-high';
+    return `<div class="lager-tile ${cls}">
+      <div class="lt-werk">${w}</div>
+      <div class="lt-count">${cnt}</div>
+      <div class="lt-label">${LANG==='de'?'offen':'open'}</div>
+    </div>`;
+  }).join('');
+
+  // Lager chart (horizontal bar)
+  if (chartInstances.lager) { try { chartInstances.lager.destroy(); } catch(e){} }
+  const lagerWerke = WERKE.filter(w => ws.some(x => x.werk === w));
+  const lagerData = lagerWerke.map(w => ws.filter(x => x.werk === w && !x.geprueft).length);
+  chartInstances.lager = new Chart(document.getElementById('chart-lager'), {
+    type: 'bar',
+    data: { labels: lagerWerke, datasets: [{
+      data: lagerData,
+      backgroundColor: lagerData.map(v => v === 0 ? 'rgba(56,189,248,0.15)' : v <= 3 ? 'rgba(251,146,60,0.7)' : 'rgba(56,189,248,0.7)'),
+      borderRadius: 4, borderSkipped: false
+    }]},
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#7a8ba0', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#7a8ba0', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Table
+  const tbody = document.getElementById('lager-table-body');
+  tbody.innerHTML = WERKE.map(w => {
+    const ww = ws.filter(x => x.werk === w);
+    if (!ww.length) return '';
+    const g = ww.filter(x => x.geprueft).length;
+    const o = ww.filter(x => !x.geprueft).length;
+    const f7 = ww.filter(x => { const d = daysUntil(x.pruefDatum); return !x.geprueft && d >= 0 && d <= 7; }).length;
+    const ue = ww.filter(x => getStatus(x) === 'ueberfaellig').length;
+    const pct = ww.length > 0 ? Math.round(g / ww.length * 100) : 0;
+    return `<tr>
+      <td><span class="badge badge-gray">${w}</span></td>
+      <td style="font-family:var(--mono);">${ww.length}</td>
+      <td style="font-family:var(--mono);">${o}</td>
+      <td style="font-family:var(--mono);color:${f7>0?'var(--orange)':'inherit'};">${f7}</td>
+      <td style="font-family:var(--mono);color:${ue>0?'var(--red)':'inherit'};">${ue}</td>
+      <td style="font-family:var(--mono);color:var(--green);">${g}</td>
+      <td style="min-width:120px;"><div style="display:flex;align-items:center;gap:8px;"><div class="progress-bar-wrap" style="flex:1;"><div class="progress-bar" style="width:${pct}%"></div></div><span style="font-size:11px;font-family:var(--mono);color:var(--text2);width:34px;">${pct}%</span></div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  KALENDER
+// ═══════════════════════════════════════════════════════════════════
+function changeMonth(d) {
+  calMonth += d;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderKalender();
+}
+
+function renderKalender() {
+  const months = LANG === 'de' ? MONATE_DE : MONATE_EN;
+  document.getElementById('cal-title').textContent = months[calMonth] + ' ' + calYear;
+
+  const ws = wuerfelData.filter(w => !w.archiviert);
+  const first = new Date(calYear, calMonth, 1);
+  const last = new Date(calYear, calMonth + 1, 0);
+  let startDow = first.getDay(); if (startDow === 0) startDow = 7; startDow--;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const grid = document.getElementById('cal-grid');
+  let html = '';
+
+  for (let i = 0; i < startDow; i++) html += '<div class="cal-cell empty"></div>';
+
+  for (let d = 1; d <= last.getDate(); d++) {
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayW = ws.filter(w => w.pruefDatum === ds);
+    const isToday = ds === todayStr;
+    const dayDate = new Date(ds + 'T00:00:00');
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    const overdue = dayW.filter(w => !w.geprueft && dayDate < today);
+    const dueToday = dayW.filter(w => !w.geprueft && dayDate.toDateString() === today.toDateString());
+    const planned = dayW.filter(w => !w.geprueft && dayDate > today);
+    const done = dayW.filter(w => w.geprueft);
+
+    let pills = '';
+    if (overdue.length) pills += `<span class="cal-pill cp-red">${overdue.length} ${LANG==='de'?'über':'over'}</span>`;
+    if (dueToday.length) pills += `<span class="cal-pill cp-orange">${dueToday.length} ${LANG==='de'?'heute':'today'}</span>`;
+    if (planned.length) pills += `<span class="cal-pill cp-blue">${planned.length} ${LANG==='de'?'geplant':'planned'}</span>`;
+    if (done.length && !overdue.length && !dueToday.length && !planned.length)
+      pills += `<span class="cal-pill cp-green">${done.length} ✔</span>`;
+
+    const hasItems = dayW.length > 0;
+    html += `<div class="cal-cell${isToday?' today':''}${hasItems?' has-items':''}" onclick="openCalModal('${ds}')">
+      <div class="cal-day-num">${d}</div>
+      ${pills}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function openCalModal(ds) {
+  const ws = wuerfelData.filter(w => !w.archiviert && w.pruefDatum === ds);
+  const d = new Date(ds + 'T00:00:00');
+  const months = LANG === 'de' ? MONATE_DE : MONATE_EN;
+  document.getElementById('cal-modal-title').textContent = d.toLocaleDateString(LANG==='de'?'de-DE':'en-GB', { weekday:'long' });
+  document.getElementById('cal-modal-date').textContent = `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}`;
+
+  const body = document.getElementById('cal-modal-body');
+  if (!ws.length) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-icon">◷</div><div class="empty-title">${LANG==='de'?'Keine Prüfungen':'No tests'}</div></div>`;
+  } else {
+    body.innerHTML = ws.map(w => `
+      <div class="modal-item">
+        <div class="mi-head">
+          <div>
+            <span class="mi-werk">${w.werk}</span>
+            <span class="mi-beton" style="margin-left:10px;">${w.beton}</span>
+          </div>
+          ${statusBadge(w)}
+        </div>
+        <div class="mi-details">
+          ${w.baustelle ? `<span>🏗 ${w.baustelle}</span>` : ''}
+          ${w.wuerfelNr ? `<span>#${w.wuerfelNr}</span>` : ''}
+          ${w.lieferschein ? `<span>${LANG==='de'?'LS:':'DN:'} ${w.lieferschein}</span>` : ''}
+          <span>${w.tage}${LANG==='de'?'d-Prüfung':'d test'}</span>
+        </div>
+        ${!w.geprueft ? `<div class="mi-actions"><button class="tbl-btn check" onclick="markGeprueft('${w.id}');renderKalender();openCalModal('${ds}');">✔ ${LANG==='de'?'Als geprüft markieren':'Mark as tested'}</button></div>` : ''}
+      </div>`).join('');
+  }
+  document.getElementById('cal-modal').classList.add('open');
+}
+
+function closeCalModalOutside(e) { if (e.target.id === 'cal-modal') closeCalModal(); }
+function closeCalModal() { document.getElementById('cal-modal').classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════════════════
+//  STATISTIK
+// ═══════════════════════════════════════════════════════════════════
+function renderStatistik() {
+  const ws = wuerfelData.filter(w => !w.archiviert);
+  Object.values(chartInstances).forEach(c => { if (c && c !== chartInstances.lager) try { c.destroy(); } catch(e){} });
+
+  const total = ws.length;
+  const geprueft = ws.filter(w=>w.geprueft).length;
+  const ueber = ws.filter(w=>getStatus(w)==='ueberfaellig').length;
+  const faellig = ws.filter(w=>getStatus(w)==='faellig').length;
+
+  document.getElementById('stat-summary').innerHTML = `
+    <div class="stat-card blue"><div class="stat-label">${LANG==='de'?'Gesamt':'Total'}</div><div class="stat-value blue">${total}</div></div>
+    <div class="stat-card green"><div class="stat-label">${LANG==='de'?'Prüfquote':'Test rate'}</div><div class="stat-value green">${total>0?Math.round(geprueft/total*100):0}%</div></div>
+    <div class="stat-card red"><div class="stat-label">${LANG==='de'?'Überfällig':'Overdue'}</div><div class="stat-value red">${ueber}</div></div>
+    <div class="stat-card gold"><div class="stat-label">${LANG==='de'?'Heute':'Today'}</div><div class="stat-value gold">${faellig}</div></div>
+  `;
+
+  const cfg = { responsive: true, maintainAspectRatio: false };
+  const tickCfg = { color: '#7a8ba0', font: { size: 11 } };
+  const gridCfg = { color: 'rgba(255,255,255,0.04)' };
+
+  // Werk chart
+  const werkLabels = WERKE.filter(w => ws.some(x => x.werk === w));
+  const werkData = werkLabels.map(w => ws.filter(x => x.werk === w).length);
+  chartInstances.werk = new Chart(document.getElementById('chart-werk'), {
+    type: 'bar',
+    data: { labels: werkLabels, datasets: [{ data: werkData, backgroundColor: 'rgba(56,189,248,0.65)', borderRadius: 4, hoverBackgroundColor: 'rgba(56,189,248,0.9)' }]},
+    options: { ...cfg, plugins: { legend: { display: false } }, scales: { x: { ticks: tickCfg, grid: gridCfg }, y: { ticks: tickCfg, grid: gridCfg } } }
+  });
+
+  // Status doughnut
+  const sLabels = [LANG==='de'?'Offen':'Open', LANG==='de'?'Heute fällig':'Due today', LANG==='de'?'Überfällig':'Overdue', LANG==='de'?'Geprüft':'Tested'];
+  const sData = [
+    ws.filter(w=>getStatus(w)==='offen').length,
+    ws.filter(w=>getStatus(w)==='faellig').length,
+    ws.filter(w=>getStatus(w)==='ueberfaellig').length,
+    ws.filter(w=>getStatus(w)==='geprueft').length
+  ];
+  chartInstances.status = new Chart(document.getElementById('chart-status'), {
+    type: 'doughnut',
+    data: { labels: sLabels, datasets: [{ data: sData, backgroundColor: ['rgba(56,189,248,0.8)','rgba(251,146,60,0.8)','rgba(248,113,113,0.8)','rgba(52,211,153,0.8)'], borderWidth: 0, hoverOffset: 8 }]},
+    options: { ...cfg, plugins: { legend: { labels: { color: '#7a8ba0', font: { size: 12 }, padding: 12 } } }, cutout: '60%' }
+  });
+
+  // Prüftage pie
+  const tLabels = ['2d','7d','28d','56d'];
+  const tData = [2,7,28,56].map(t => ws.filter(w=>w.tage===t).length);
+  chartInstances.tage = new Chart(document.getElementById('chart-tage'), {
+    type: 'pie',
+    data: { labels: tLabels, datasets: [{ data: tData, backgroundColor: ['rgba(56,189,248,0.8)','rgba(52,211,153,0.8)','rgba(245,158,11,0.8)','rgba(248,113,113,0.8)'], borderWidth: 0, hoverOffset: 8 }]},
+    options: { ...cfg, plugins: { legend: { labels: { color: '#7a8ba0', font: { size: 12 }, padding: 12 } } } }
+  });
+
+  // Monthly
+  const monatMap = {};
+  ws.forEach(w => { const m = (w.datum||'').slice(0,7); if(m) monatMap[m] = (monatMap[m]||0)+1; });
+  const monatKeys = Object.keys(monatMap).sort().slice(-12);
+  const mths = LANG === 'de' ? MONATE_DE : MONATE_EN;
+  const monatLabels = monatKeys.map(k => { const [y,m] = k.split('-'); return mths[parseInt(m)-1]?.slice(0,3)+' '+y.slice(2); });
+  chartInstances.monat = new Chart(document.getElementById('chart-monat'), {
+    type: 'bar',
+    data: { labels: monatLabels, datasets: [{ data: monatKeys.map(k=>monatMap[k]), backgroundColor: 'rgba(52,211,153,0.65)', borderRadius: 4 }]},
+    options: { ...cfg, plugins: { legend: { display: false } }, scales: { x: { ticks: tickCfg, grid: gridCfg }, y: { ticks: tickCfg, grid: gridCfg } } }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ARCHIV
+// ═══════════════════════════════════════════════════════════════════
+function renderArchiv() {
+  const tbody = document.getElementById('archiv-body');
+  if (!tbody) return;
+  if (!archivData.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);">${LANG==='de'?'Keine archivierten Würfel.':'No archived cubes.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = archivData.map(w => `<tr>
+    <td><span class="badge badge-gray">${w.werk}</span></td>
+    <td style="font-family:var(--mono);font-size:11px;">${w.wuerfelNr||'—'}</td>
+    <td style="font-family:var(--mono);font-size:12px;color:var(--gold);">${w.beton}</td>
+    <td style="color:var(--text2);">${fmtDate(w.datum)}</td>
+    <td>${fmtDate(w.pruefDatum)}</td>
+    <td style="color:var(--text2);font-size:12px;">${w.baustelle||'—'}</td>
+    <td style="color:var(--text2);font-family:var(--mono);font-size:12px;">${fmtDate(w.archiviertAm)}</td>
+    <td><button class="tbl-btn" onclick="restoreWuerfel('${w.id}')">↩ ${LANG==='de'?'Wiederherstellen':'Restore'}</button></td>
+  </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════════════════════════
+function getExportData() {
+  let ws = wuerfelData.filter(w => !w.archiviert);
+  const zeitraum = document.getElementById('exp-zeitraum').value;
+  const werk = document.getElementById('exp-werk').value;
+  const status = document.getElementById('exp-status').value;
+  const now = new Date();
+
+  if (zeitraum === 'monat') {
+    const m = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    ws = ws.filter(w => (w.datum||'').startsWith(m));
+  } else if (zeitraum === 'letztermonat') {
+    const lm = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const m = `${lm.getFullYear()}-${String(lm.getMonth()+1).padStart(2,'0')}`;
+    ws = ws.filter(w => (w.datum||'').startsWith(m));
+  } else if (zeitraum === 'jahr') {
+    ws = ws.filter(w => (w.datum||'').startsWith(String(now.getFullYear())));
+  }
+  if (werk !== 'alle') ws = ws.filter(w => w.werk === werk);
+  if (status !== 'alle') ws = ws.filter(w => w.geprueft ? status === 'geprueft' : status === 'offen');
+  return ws;
+}
+
+function exportCSV() {
+  const ws = getExportData();
+  if (!ws.length) { toast(LANG==='de'?'Keine Daten für diesen Filter.':'No data for this filter.', 'warn'); return; }
+
+  const headers = LANG === 'de'
+    ? ['Werk','Würfelnummer','Betonsorte','Erstellt','Prüfdatum','Prüftage','Baustelle','Lieferschein','Status','Geprüft am','Bemerkung','Erfasst von']
+    : ['Plant','Cube no.','Concrete','Created','Test date','Test days','Site','Delivery note','Status','Tested on','Notes','Recorded by'];
+
+  const rows = ws.map(w => [
+    w.werk, w.wuerfelNr||'', w.beton, fmtDate(w.datum), fmtDate(w.pruefDatum),
+    w.tage, w.baustelle||'', w.lieferschein||'',
+    w.geprueft?(LANG==='de'?'Geprüft':'Tested'):(LANG==='de'?'Offen':'Open'),
+    w.geprueftAm ? fmtDate(w.geprueftAm) : '',
+    w.bemerkung||'', w.erfasstVon||''
+  ]);
+
+  const csv = '\uFEFF' + [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `wuerfel_export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  toast(`${ws.length} ${LANG==='de'?'Würfel als CSV exportiert':'cubes exported as CSV'}`, 'ok');
+}
+
+function exportPDF() {
+  const ws = getExportData();
+  if (!ws.length) { toast(LANG==='de'?'Keine Daten für diesen Filter.':'No data for this filter.', 'warn'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+  // Background
+  doc.setFillColor(8, 12, 16);
+  doc.rect(0, 0, 297, 210, 'F');
+
+  // Header bar
+  doc.setFillColor(13, 17, 23);
+  doc.rect(0, 0, 297, 28, 'F');
+
+  // Logo/Title
+  doc.setTextColor(56, 189, 248);
+  doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+  doc.text('▣ WürfelManager Pro', 14, 13);
+
+  doc.setTextColor(122, 139, 160);
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+  doc.text(LANG==='de'?'Baustoffprüfung — Prüfbericht':'Construction material testing — Inspection report', 14, 20);
+
+  doc.setTextColor(245, 158, 11);
+  doc.setFontSize(9);
+  doc.text(`${LANG==='de'?'Export:':'Export:'} ${new Date().toLocaleDateString('de-DE')}   |   ${LANG==='de'?'Würfel:':'Cubes:'} ${ws.length}`, 200, 13, { align: 'right' });
+
+  const cols = LANG === 'de'
+    ? ['Werk','Würfel-Nr.','Betonsorte','Erstellt','Prüfdatum','Tage','Baustelle','LS-Nr.','Status']
+    : ['Plant','Cube no.','Concrete','Created','Test date','Days','Site','DN no.','Status'];
+
+  const rows = ws.map(w => [
+    w.werk, w.wuerfelNr||'—', w.beton, fmtDate(w.datum), fmtDate(w.pruefDatum),
+    w.tage+'d', w.baustelle||'—', w.lieferschein||'—',
+    w.geprueft?(LANG==='de'?'Geprüft':'Tested') : getStatus(w)==='ueberfaellig'?(LANG==='de'?'Überfällig':'Overdue'):(LANG==='de'?'Offen':'Open')
+  ]);
+
+  doc.autoTable({
+    head: [cols],
+    body: rows,
+    startY: 32,
+    styles: { fontSize: 8, cellPadding: 3.5, textColor: [200, 210, 220], fillColor: [13, 17, 23], lineColor: [30, 40, 50], lineWidth: 0.3 },
+    headStyles: { fillColor: [20, 28, 38], textColor: [56, 189, 248], fontStyle: 'bold', fontSize: 8 },
+    alternateRowStyles: { fillColor: [16, 22, 30] },
+    willDrawCell: (data) => {
+      if (data.section === 'body' && data.column.index === 8) {
+        const val = data.cell.raw;
+        if (val === 'Geprüft' || val === 'Tested') doc.setTextColor(52, 211, 153);
+        else if (val === 'Überfällig' || val === 'Overdue') doc.setTextColor(248, 113, 113);
+        else doc.setTextColor(200, 210, 220);
+      }
+    },
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === 2) {
+        data.cell.styles.textColor = [245, 158, 11];
+        data.cell.styles.fontStyle = 'normal';
+      }
+    },
+    columnStyles: { 0:{cellWidth:22}, 1:{cellWidth:24}, 5:{cellWidth:12}, 8:{cellWidth:20} }
+  });
+
+  // Footer
+  const finalY = doc.lastAutoTable.finalY || 180;
+  doc.setTextColor(50, 65, 80);
+  doc.setFontSize(8);
+  doc.text('WürfelManager Pro — Baustoffprüfung', 14, 205);
+  doc.text(`${LANG==='de'?'Seite':'Page'} 1`, 283, 205, { align: 'right' });
+
+  doc.save(`wuerfel_report_${new Date().toISOString().split('T')[0]}.pdf`);
+  toast(`PDF ${LANG==='de'?'erstellt':'created'} (${ws.length} ${LANG==='de'?'Würfel':'cubes'})`, 'ok');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  FIREBASE SETUP INFO
+// ═══════════════════════════════════════════════════════════════════
+function updateFirebaseSetupInfo() {
+  const el = document.getElementById('firebase-setup-info');
+  if (!el) return;
+  const fb = window._fb;
+  if (fb && fb.FIREBASE_CONFIGURED) {
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:var(--green);font-size:13px;"><span>✔</span> ${LANG==='de'?'Firebase ist verbunden. Echtzeit-Synchronisation aktiv.':'Firebase connected. Real-time sync active.'}</div>`;
+  } else {
+    el.innerHTML = `
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;">${LANG==='de'?'So verbindest du Firebase für Cloud-Sync:':'How to connect Firebase for cloud sync:'}</p>
+      <ol style="font-size:13px;color:var(--text2);line-height:2;padding-left:18px;font-family:var(--mono);">
+        <li>${LANG==='de'?'Gehe zu':'Go to'} <a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent);">console.firebase.google.com</a></li>
+        <li>${LANG==='de'?'Neues Projekt erstellen (kostenlos)':'Create new project (free)'}</li>
+        <li>${LANG==='de'?'In der Konsole: &quot;Web-App hinzufügen&quot; klicken':'In console: click &quot;Add web app&quot;'}</li>
+        <li>${LANG==='de'?'Firebase Authentication aktivieren → E-Mail/Passwort':'Enable Firebase Authentication → Email/Password'}</li>
+        <li>${LANG==='de'?'Firestore Database erstellen (Test-Modus)':'Create Firestore Database (test mode)'}</li>
+        <li>${LANG==='de'?'Konfigurationsdaten in die HTML-Datei eintragen':'Enter configuration data into the HTML file'}</li>
+      </ol>
+      <div style="margin-top:14px;background:var(--bg3);border-radius:var(--r);padding:12px;font-family:var(--mono);font-size:11px;color:var(--text2);">
+        <span style="color:var(--accent);">// firebase config — ganz oben in der HTML-Datei:</span><br>
+        <span style="color:var(--gold);">apiKey:</span> "DEIN_API_KEY",<br>
+        <span style="color:var(--gold);">authDomain:</span> "...",<br>
+        <span style="color:var(--gold);">projectId:</span> "...",<br>
+        ...
+      </div>`;
+  }
+}
+
+function showFirebaseSetup() { showPage('settings'); }
+
+// ═══════════════════════════════════════════════════════════════════
+//  PROFESSIONELLER PRÜFBERICHT PDF
+// ═══════════════════════════════════════════════════════════════════
+function exportPruefbericht() {
+  const ws = wuerfelData.filter(w => !w.archiviert && w.geprueft && w.druckfestigkeit);
+  const filterWerk = document.getElementById('pb-werk')?.value || 'alle';
+  const filterSite = document.getElementById('pb-baustelle')?.value || 'alle';
+  let filtered = ws;
+  if (filterWerk !== 'alle') filtered = filtered.filter(w => w.werk === filterWerk);
+  if (filterSite !== 'alle') filtered = filtered.filter(w => w.baustelle === filterSite);
+
+  if (!filtered.length) {
+    toast(LANG==='de'?'Keine geprüften Würfel mit Druckfestigkeit gefunden.':'No tested cubes with pressure data found.', 'warn');
+    return;
+  }
+
+  const firmenname = document.getElementById('pb-firma')?.value || 'Baustoffprüfung';
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, H = 297;
+
+  // BG
+  doc.setFillColor(8,12,16); doc.rect(0,0,W,H,'F');
+
+  // Header Bar
+  doc.setFillColor(13,17,23); doc.rect(0,0,W,36,'F');
+  doc.setDrawColor(56,189,248); doc.setLineWidth(0.5); doc.line(0,36,W,36);
+
+  // Logo box
+  doc.setFillColor(20,35,50); doc.roundedRect(14,8,20,20,2,2,'F');
+  doc.setTextColor(56,189,248); doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.text('▣', 24, 22, { align:'center' });
+
+  // Title
+  doc.setTextColor(226,232,240); doc.setFontSize(14); doc.setFont('helvetica','bold');
+  doc.text('PRÜFBERICHT', 40, 17);
+  doc.setTextColor(56,189,248); doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('Betondruckfestigkeit gemäß DIN EN 12390', 40, 24);
+  doc.setTextColor(122,139,160); doc.setFontSize(8);
+  doc.text(firmenname, 40, 30);
+
+  // Report info right side
+  const reportNr = 'BP-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*9000)+1000);
+  doc.setTextColor(245,158,11); doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text(reportNr, W-14, 15, { align:'right' });
+  doc.setTextColor(122,139,160); doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text(`Datum: ${new Date().toLocaleDateString('de-DE')}`, W-14, 22, { align:'right' });
+  doc.text(`Würfel: ${filtered.length}`, W-14, 28, { align:'right' });
+
+  // Summary stats box
+  const bestanden = filtered.filter(w => w.druckBestanden === true).length;
+  const nichtBestanden = filtered.filter(w => w.druckBestanden === false).length;
+  const unbewertet = filtered.filter(w => w.druckBestanden === null || w.druckBestanden === undefined).length;
+  const avgFest = filtered.reduce((s,w) => s + (w.druckfestigkeit||0), 0) / filtered.length;
+  const maxFest = Math.max(...filtered.map(w => w.druckfestigkeit||0));
+  const minFest = Math.min(...filtered.map(w => w.druckfestigkeit||0));
+
+  doc.setFillColor(15,22,32); doc.roundedRect(14,42,W-28,26,3,3,'F');
+  doc.setDrawColor(30,45,60); doc.setLineWidth(0.3); doc.roundedRect(14,42,W-28,26,3,3,'S');
+
+  const cols = [
+    { label: 'Geprüft gesamt', value: filtered.length, color: [56,189,248] },
+    { label: 'Bestanden', value: bestanden, color: [52,211,153] },
+    { label: 'Nicht bestanden', value: nichtBestanden, color: [248,113,113] },
+    { label: 'Ø Festigkeit', value: avgFest.toFixed(1)+' N/mm²', color: [245,158,11] },
+    { label: 'Max', value: maxFest.toFixed(1)+' N/mm²', color: [52,211,153] },
+    { label: 'Min', value: minFest.toFixed(1)+' N/mm²', color: [251,146,60] },
+  ];
+  const cw = (W-28) / cols.length;
+  cols.forEach((c,i) => {
+    const x = 14 + i * cw + cw/2;
+    doc.setTextColor(...c.color); doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.text(String(c.value), x, 56, { align:'center' });
+    doc.setTextColor(122,139,160); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.text(c.label, x, 62, { align:'center' });
+  });
+
+  // Table
+  const rows = filtered.map(w => {
+    const ist = w.druckfestigkeit || 0;
+    const soll = w.druckfestigkeitSoll;
+    const pct = soll ? Math.round(ist/soll*100) + '%' : '—';
+    const result = w.druckBestanden === true ? '✔ Bestanden' : w.druckBestanden === false ? '✘ Nicht best.' : '—';
+    return [
+      w.werk,
+      w.wuerfelNr || '—',
+      w.beton,
+      w.baustelle || '—',
+      fmtDate(w.datum),
+      fmtDate(w.geprueftAm),
+      w.tage + 'd',
+      soll ? soll+' N/mm²' : '—',
+      ist+' N/mm²',
+      pct,
+      result
+    ];
+  });
+
+  doc.autoTable({
+    head: [['Werk','Nr.','Beton','Baustelle','Hergest.','Geprüft am','Tage','Soll','Ist','%','Ergebnis']],
+    body: rows,
+    startY: 74,
+    styles: { fontSize: 7.5, cellPadding: 2.5, textColor:[200,210,220], fillColor:[13,17,23], lineColor:[25,38,52], lineWidth:0.3 },
+    headStyles: { fillColor:[20,30,45], textColor:[56,189,248], fontStyle:'bold', fontSize:7.5 },
+    alternateRowStyles: { fillColor:[16,22,30] },
+    willDrawCell: (data) => {
+      if (data.section === 'body' && data.column.index === 10) {
+        const v = data.cell.raw;
+        if (v.includes('✔')) doc.setTextColor(52,211,153);
+        else if (v.includes('✘')) doc.setTextColor(248,113,113);
+      }
+      if (data.section === 'body' && data.column.index === 8) {
+        doc.setTextColor(245,158,11);
+      }
+    },
+    columnStyles: { 0:{cellWidth:16}, 1:{cellWidth:18}, 6:{cellWidth:10}, 9:{cellWidth:10}, 10:{cellWidth:22} }
+  });
+
+  // Signature section
+  const sigY = Math.min(doc.lastAutoTable.finalY + 16, H - 50);
+  doc.setDrawColor(30,45,60); doc.setLineWidth(0.3);
+
+  // Norm reference
+  doc.setFillColor(15,22,32); doc.roundedRect(14, sigY, W-28, 18, 2,2,'F');
+  doc.setTextColor(56,189,248); doc.setFontSize(8); doc.setFont('helvetica','bold');
+  doc.text('Normgrundlage:', 18, sigY+7);
+  doc.setTextColor(122,139,160); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+  doc.text('DIN EN 12390-1 · DIN EN 12390-2 · DIN EN 12390-3 · DIN EN 206', 18, sigY+13);
+
+  // Sig lines
+  const sigLineY = sigY + 30;
+  doc.setDrawColor(40,60,80); doc.setLineWidth(0.4);
+  doc.line(14, sigLineY, 80, sigLineY);
+  doc.line(90, sigLineY, 156, sigLineY);
+  doc.line(166, sigLineY, W-14, sigLineY);
+  doc.setTextColor(80,100,120); doc.setFontSize(7);
+  doc.text('Datum, Ort', 14, sigLineY+5);
+  doc.text('Prüfer (Name, Unterschrift)', 90, sigLineY+5);
+  doc.text('Stempel', 166, sigLineY+5);
+
+  // Footer
+  doc.setTextColor(40,60,80); doc.setFontSize(7);
+  doc.text('WürfelManager Pro — Baustoffprüfung', 14, H-8);
+  doc.text(reportNr, W-14, H-8, { align:'right' });
+
+  doc.save(`pruefbericht_${reportNr}_${new Date().toISOString().split('T')[0]}.pdf`);
+  toast(`Prüfbericht ${reportNr} erstellt (${filtered.length} Würfel)`, 'ok');
+}
+
+function renderPruefberichtPage() {
+  const ws = wuerfelData.filter(w => !w.archiviert && w.geprueft && w.druckfestigkeit);
+  const sites = [...new Set(ws.map(w => w.baustelle).filter(Boolean))];
+  const bestanden = ws.filter(w => w.druckBestanden === true).length;
+  const nicht = ws.filter(w => w.druckBestanden === false).length;
+
+  document.getElementById('pb-stats').innerHTML = `
+    <div class="stat-card blue"><div class="stat-label">Mit Druckwert</div><div class="stat-value blue">${ws.length}</div></div>
+    <div class="stat-card green"><div class="stat-label">Bestanden</div><div class="stat-value green">${bestanden}</div></div>
+    <div class="stat-card red"><div class="stat-label">Nicht bestanden</div><div class="stat-value red">${nicht}</div></div>
+    <div class="stat-card gold"><div class="stat-label">Ø Festigkeit</div><div class="stat-value gold">${ws.length ? (ws.reduce((s,w)=>s+(w.druckfestigkeit||0),0)/ws.length).toFixed(1) : '—'}</div><div class="stat-sub">N/mm²</div></div>
+  `;
+
+  // Baustelle dropdown
+  const sel = document.getElementById('pb-baustelle');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = `<option value="alle">Alle Baustellen</option>` + sites.map(s=>`<option value="${s}">${s}</option>`).join('');
+    if (cur) sel.value = cur;
+  }
+
+  // Results table
+  const tbody = document.getElementById('pb-table-body');
+  if (!tbody) return;
+  if (!ws.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);">Noch keine Druckfestigkeitswerte eingetragen.<br><span style="font-size:11px;">Würfel abhaken → Druckfestigkeit eingeben</span></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = ws.map(w => {
+    const pct = w.druckfestigkeitSoll ? Math.round(w.druckfestigkeit/w.druckfestigkeitSoll*100) : null;
+    const res = w.druckBestanden === true
+      ? '<span class="badge badge-green">✔ Bestanden</span>'
+      : w.druckBestanden === false
+      ? '<span class="badge badge-red">✘ Nicht best.</span>'
+      : '<span class="badge badge-gray">—</span>';
+    return `<tr>
+      <td><span class="badge badge-gray">${w.werk}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;">${w.wuerfelNr||'—'}</td>
+      <td style="font-family:var(--mono);color:var(--gold);font-size:12px;">${w.beton}</td>
+      <td style="color:var(--text2);font-size:12px;">${w.baustelle||'—'}</td>
+      <td style="font-family:var(--mono);color:var(--text2);">${w.druckfestigkeitSoll ? w.druckfestigkeitSoll+' N/mm²' : '—'}</td>
+      <td style="font-family:var(--mono);color:var(--accent);font-weight:700;">${w.druckfestigkeit} N/mm²</td>
+      <td style="font-family:var(--mono);font-size:12px;color:${pct>=100?'var(--green)':pct>=80?'var(--orange)':'var(--red)'};">${pct !== null ? pct+'%' : '—'}</td>
+      <td>${res}</td>
+      <td><button class="tbl-btn" onclick="openDruckModal('${w.id}')">✎ Bearbeiten</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  PUSH / BROWSER BENACHRICHTIGUNGEN
+// ═══════════════════════════════════════════════════════════════════
+let pushEnabled = false;
+let pushCheckInterval = null;
+
+async function requestPushPermission() {
+  if (!('Notification' in window)) {
+    toast('Browser unterstützt keine Benachrichtigungen', 'warn'); return;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    pushEnabled = true;
+    localStorage.setItem('wm_push', '1');
+    document.getElementById('push-status').textContent = '✔ Aktiviert';
+    document.getElementById('push-status').style.color = 'var(--green)';
+    document.getElementById('btn-push-enable').style.display = 'none';
+    document.getElementById('btn-push-disable').style.display = 'inline-flex';
+    toast('Push-Benachrichtigungen aktiviert! 🔔', 'ok');
+    startPushCheck();
+  } else {
+    toast('Benachrichtigungen wurden abgelehnt', 'warn');
+  }
+}
+
+function disablePush() {
+  pushEnabled = false;
+  localStorage.removeItem('wm_push');
+  if (pushCheckInterval) clearInterval(pushCheckInterval);
+  document.getElementById('push-status').textContent = '✘ Deaktiviert';
+  document.getElementById('push-status').style.color = 'var(--red)';
+  document.getElementById('btn-push-enable').style.display = 'inline-flex';
+  document.getElementById('btn-push-disable').style.display = 'none';
+  toast('Push-Benachrichtigungen deaktiviert', 'ok');
+}
+
+function startPushCheck() {
+  if (pushCheckInterval) clearInterval(pushCheckInterval);
+  checkPushNow();
+  // Check every hour
+  pushCheckInterval = setInterval(checkPushNow, 60 * 60 * 1000);
+}
+
+function checkPushNow() {
+  if (!pushEnabled || Notification.permission !== 'granted') return;
+  const ws = wuerfelData.filter(w => !w.archiviert && !w.geprueft);
+  const today = ws.filter(w => getStatus(w) === 'faellig');
+  const overdue = ws.filter(w => getStatus(w) === 'ueberfaellig');
+
+  if (overdue.length > 0) {
+    sendPush(
+      `⚠️ ${overdue.length} überfällige Prüfung${overdue.length>1?'en':''}`,
+      overdue.slice(0,3).map(w => `${w.werk} · ${w.beton}`).join('\n'),
+      'err'
+    );
+  } else if (today.length > 0) {
+    sendPush(
+      `🔔 ${today.length} Prüfung${today.length>1?'en':''} heute fällig`,
+      today.slice(0,3).map(w => `${w.werk} · ${w.beton}`).join('\n'),
+      'warn'
+    );
+  }
+
+  // Also check tomorrow
+  const tomorrow = ws.filter(w => daysUntil(w.pruefDatum) === 1);
+  if (tomorrow.length > 0) {
+    setTimeout(() => {
+      sendPush(
+        `📅 ${tomorrow.length} Prüfung${tomorrow.length>1?'en':''} morgen fällig`,
+        tomorrow.slice(0,3).map(w => `${w.werk} · ${w.beton}`).join('\n'),
+        'ok'
+      );
+    }, 3000);
+  }
+}
+
+function sendPush(title, body, type) {
+  if (Notification.permission !== 'granted') return;
+  const n = new Notification(title, {
+    body,
+    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="12" fill="%230d1117"/><text y=".9em" font-size="80" x="10">▣</text></svg>',
+    badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="12" fill="%2338bdf8"/></svg>',
+    tag: 'wuerfelmanager-' + type,
+    renotify: true
+  });
+  n.onclick = () => { window.focus(); showPage('dashboard'); n.close(); };
+}
+
+function sendTestPush() {
+  if (Notification.permission !== 'granted') {
+    toast('Bitte erst Benachrichtigungen aktivieren', 'warn'); return;
+  }
+  sendPush('🔔 Test-Benachrichtigung', 'WürfelManager Pro funktioniert korrekt!', 'ok');
+  toast('Test-Benachrichtigung gesendet!', 'ok');
+}
+
+function initPush() {
+  const saved = localStorage.getItem('wm_push');
+  if (saved && Notification.permission === 'granted') {
+    pushEnabled = true;
+    startPushCheck();
+    if (document.getElementById('push-status')) {
+      document.getElementById('push-status').textContent = '✔ Aktiviert';
+      document.getElementById('push-status').style.color = 'var(--green)';
+      document.getElementById('btn-push-enable').style.display = 'none';
+      document.getElementById('btn-push-disable').style.display = 'inline-flex';
+    }
+  }
+}
+
+function renderErinnerungen() {
+  const ws = wuerfelData.filter(w => !w.archiviert && !w.geprueft);
+  const today = ws.filter(w => getStatus(w) === 'faellig');
+  const overdue = ws.filter(w => getStatus(w) === 'ueberfaellig');
+  const tomorrow = ws.filter(w => daysUntil(w.pruefDatum) === 1);
+  const week = ws.filter(w => { const d = daysUntil(w.pruefDatum); return d >= 2 && d <= 7; });
+
+  const statsEl = document.getElementById('erin-stats');
+  if (statsEl) statsEl.innerHTML = `
+    <div class="stat-card red"><div class="stat-label">Überfällig</div><div class="stat-value red">${overdue.length}</div></div>
+    <div class="stat-card orange"><div class="stat-label">Heute</div><div class="stat-value orange">${today.length}</div></div>
+    <div class="stat-card gold"><div class="stat-label">Morgen</div><div class="stat-value gold">${tomorrow.length}</div></div>
+    <div class="stat-card blue"><div class="stat-label">Diese Woche</div><div class="stat-value blue">${week.length}</div></div>
+  `;
+
+  const listEl = document.getElementById('erin-list');
+  if (!listEl) return;
+  const all = [
+    ...overdue.map(w=>({...w, _cat:'overdue'})),
+    ...today.map(w=>({...w, _cat:'today'})),
+    ...tomorrow.map(w=>({...w, _cat:'tomorrow'})),
+    ...week.map(w=>({...w, _cat:'week'}))
+  ];
+  if (!all.length) {
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-title" style="color:var(--green);">Alles im Zeitplan!</div><div class="empty-sub">Keine anstehenden Prüfungen.</div></div>`;
+    return;
+  }
+  const catLabel = { overdue:'Überfällig', today:'Heute', tomorrow:'Morgen', week:'Diese Woche' };
+  const catCls = { overdue:'badge-red', today:'badge-orange', tomorrow:'badge-gold', week:'badge-blue' };
+  listEl.innerHTML = all.map(w => `
+    <div class="today-item ${w._cat === 'overdue' ? 'overdue' : w._cat === 'today' ? 'today' : ''}">
+      <div class="ti-left">
+        <div class="ti-werk">${w.werk} <span style="color:var(--gold);font-family:var(--mono);font-size:11px;">${w.beton}</span></div>
+        <div class="ti-meta">${w.baustelle||'—'} · #${w.wuerfelNr||'—'} · Prüfdatum: ${fmtDate(w.pruefDatum)}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span class="badge ${catCls[w._cat]}">${catLabel[w._cat]}</span>
+        <button class="tbl-btn check" onclick="markGeprueft('${w.id}')">✔ Prüfen</button>
+      </div>
+    </div>`).join('');
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════
+     DRUCKFESTIGKEIT MODAL
+═══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="druck-modal" onclick="closeDruckModalOutside(event)">
+  <div class="modal" style="width:560px;">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="dm-titel">Druckfestigkeit eintragen</div>
+        <div class="modal-date" id="dm-meta">—</div>
+      </div>
+      <button class="modal-close" onclick="closeDruckModal()">×</button>
+    </div>
+    <input type="hidden" id="dm-id"/>
+    <input type="hidden" id="dm-soll-raw"/>
+
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:11px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;">Sollwert (fck)</div>
+        <div style="font-family:var(--mono);font-weight:700;color:var(--accent);" id="dm-soll">—</div>
+      </div>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:16px;">
+      <div class="fg">
+        <label>Ist-Wert (N/mm²) *</label>
+        <input type="number" id="dm-ist" placeholder="z.B. 38.5" step="0.1" min="0" oninput="updateDruckErgebnis()" style="font-size:18px;font-family:var(--mono);font-weight:700;"/>
+      </div>
+      <div class="fg">
+        <label>Prüfkraft (kN)</label>
+        <input type="number" id="dm-pruefkraft" placeholder="z.B. 855" step="0.1" min="0"/>
+      </div>
+      <div class="fg">
+        <label>Bruchbild</label>
+        <select id="dm-bruchbild">
+          <option value="">— wählen —</option>
+          <option value="Typ 1 — befriedigend">Typ 1 — befriedigend</option>
+          <option value="Typ 2 — befriedigend">Typ 2 — befriedigend</option>
+          <option value="Typ 3 — befriedigend">Typ 3 — befriedigend</option>
+          <option value="Typ 4 — unbefriedigend">Typ 4 — unbefriedigend</option>
+          <option value="Typ 5 — unbefriedigend">Typ 5 — unbefriedigend</option>
+          <option value="Typ 6 — unbefriedigend">Typ 6 — unbefriedigend</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Notiz</label>
+        <input type="text" id="dm-notiz" placeholder="Optionale Bemerkung"/>
+      </div>
+    </div>
+
+    <div id="dm-ergebnis" style="margin-bottom:16px;min-height:28px;"></div>
+
+    <div style="background:var(--bg3);border:1px solid rgba(56,189,248,0.15);border-radius:var(--r);padding:10px 14px;margin-bottom:16px;font-size:11px;color:var(--text2);font-family:var(--mono);">
+      Norm: DIN EN 12390-3 · Prüfung an erhärtetem Beton · Druckfestigkeit von Probekörpern
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="saveDruckfestigkeit()">✔ Speichern & als geprüft markieren</button>
+      <button class="btn btn-ghost" onclick="closeDruckModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

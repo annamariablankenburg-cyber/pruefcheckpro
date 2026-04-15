@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BetonCheck — Geotechnik</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#04070d;--bg2:#080d0a;--bg3:#0d1510;--bg4:#111e14;--border:rgba(52,211,153,0.08);--border2:rgba(52,211,153,0.2);--text:#e8fff4;--text2:#6b9e87;--text3:#2a4a35;--accent:#34d399;--gold:#f59e0b;--green:#34d399;--red:#f87171;--blue:#38bdf8;--font:"DM Sans",sans-serif;--display:"Syne",sans-serif;--mono:"JetBrains Mono",monospace;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;}
+body::after{content:"";position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(52,211,153,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(52,211,153,0.02) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;}
+.layout{display:flex;min-height:100vh;position:relative;z-index:1;}
+.sidebar{width:265px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);height:100vh;position:sticky;top:0;overflow-y:auto;display:flex;flex-direction:column;}
+.sb-logo{font-family:var(--display);font-size:14px;font-weight:800;color:var(--accent);display:flex;align-items:center;gap:8px;padding:16px 14px 8px;}
+.sb-sub{font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;padding:0 14px 12px;border-bottom:1px solid var(--border);}
+.sb-tabs{display:flex;padding:8px 10px;gap:4px;border-bottom:1px solid var(--border);}
+.sbt{flex:1;padding:7px 3px;border-radius:7px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:var(--font);transition:all 0.15s;background:none;color:var(--text2);text-align:center;}
+.sbt.active{background:rgba(52,211,153,0.12);color:var(--accent);}
+.sb-nav{padding:10px 8px;flex:1;}
+.sb-sec{margin-bottom:14px;}
+.sb-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:2px;font-family:var(--mono);padding:0 8px;margin-bottom:4px;}
+.sb-item{padding:8px 9px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--text2);transition:all 0.12s;border:1px solid transparent;display:flex;align-items:center;gap:8px;font-weight:500;}
+.sb-item:hover{background:var(--bg4);color:var(--text);}
+.sb-item.active{background:rgba(52,211,153,0.1);color:var(--accent);border-color:rgba(52,211,153,0.2);}
+.content{flex:1;min-width:0;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 26px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.tb-left{display:flex;align-items:center;gap:9px;}
+.mob-btn{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px;}
+.tb-h{font-family:var(--display);font-size:14px;font-weight:700;}
+.btn-print{padding:6px 13px;border-radius:7px;border:1px solid var(--border2);background:none;color:var(--text2);font-family:var(--font);font-size:12px;cursor:pointer;}
+.btn-print:hover{background:var(--bg3);color:var(--text);}
+.main{padding:28px 34px;max-width:880px;}
+.page{display:none;}.page.active{display:block;}
+.hb{background:linear-gradient(135deg,rgba(52,211,153,0.07),rgba(5,150,105,0.03));border:1px solid var(--border2);border-radius:14px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden;}
+.hb::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--gold));}
+.hb-norm{font-family:var(--mono);font-size:10px;color:var(--accent);margin-bottom:5px;letter-spacing:1px;}
+.hb-title{font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;}
+.hb-desc{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px;}
+.hb-tags{display:flex;gap:7px;flex-wrap:wrap;}
+.hb-tag{font-size:10px;font-family:var(--mono);padding:3px 8px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:17px;margin-bottom:15px;}
+.card-t{font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:11px;}
+.gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;}
+.gi{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px;}
+.gi-ico{font-size:17px;flex-shrink:0;}
+.gi-n{font-size:12px;font-weight:500;}
+.gi-s{font-size:10px;color:var(--text2);font-family:var(--mono);margin-top:1px;}
+.steps{display:flex;flex-direction:column;margin-bottom:16px;}
+.stp{background:var(--bg2);border:1px solid var(--border);overflow:hidden;}
+.stp:first-child{border-radius:11px 11px 0 0;}.stp:last-child{border-radius:0 0 11px 11px;}.stp+.stp{border-top:none;}.stp:hover{background:var(--bg3);}
+.stp-in{display:flex;align-items:stretch;}
+.stp-nc{background:rgba(52,211,153,0.06);border-right:1px solid var(--border);padding:15px 13px;min-width:52px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;}
+.stp-n{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--accent);line-height:1;}
+.stp-nl{font-size:7px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;}
+.stp-b{flex:1;padding:13px 17px;}
+.stp-t{font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:5px;}
+.stp-tx{font-size:13px;color:var(--text2);line-height:1.7;}
+.stp-tx strong{color:var(--text);}
+.stp-img{width:100%;border-radius:8px;margin-top:10px;overflow:hidden;background:var(--bg3);border:1px solid var(--border);display:flex;}
+.stp-svg{flex:1;display:flex;align-items:center;justify-content:center;padding:11px;min-height:130px;}
+.stp-ph{width:130px;flex-shrink:0;background:var(--bg4);border-left:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:11px;gap:5px;cursor:pointer;}
+.stp-ph:hover{background:rgba(52,211,153,0.05);}
+.ph-i{font-size:18px;opacity:0.35;}
+.ph-l{font-size:9px;color:var(--text3);text-align:center;font-family:var(--mono);}
+.h{border-radius:8px;padding:11px 15px;margin:10px 0;font-size:12px;line-height:1.7;}
+.h-i{background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.15);color:var(--text2);}
+.h-i strong{color:var(--accent);}
+.h-w{background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.18);color:var(--text2);}
+.h-w strong{color:var(--gold);}
+.h-d{background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.18);color:var(--text2);}
+.h-d strong{color:var(--red);}
+.tbl-box{border-radius:9px;overflow:hidden;border:1px solid var(--border);margin-bottom:15px;}
+.et{width:100%;border-collapse:collapse;font-size:12px;}
+.et th{padding:8px 12px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-family:var(--mono);border-bottom:1px solid var(--border);background:var(--bg3);}
+.et td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text2);}
+.et tr:last-child td{border-bottom:none;}
+.et tr:hover td{background:rgba(52,211,153,0.03);}
+.et td:first-child{font-family:var(--mono);color:var(--accent);font-weight:500;}
+.kurz{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:15px;margin-top:16px;}
+.kurz-t{font-family:var(--display);font-size:12px;font-weight:700;color:var(--accent);margin-bottom:9px;}
+.ks-list{display:flex;flex-direction:column;gap:5px;}
+.ks{display:flex;gap:8px;align-items:flex-start;font-size:11px;color:var(--text2);}
+.ks-n{background:var(--accent);color:#04070d;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;font-family:var(--mono);margin-top:2px;}
+.rc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:15px;}
+.rc-card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:20px;}
+.rc-title{font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:4px;}
+.rc-desc{font-size:12px;color:var(--text2);margin-bottom:14px;}
+.rc-ig{margin-bottom:10px;}
+.rc-lbl{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);margin-bottom:3px;display:block;}
+.rc-inp{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;}
+.rc-inp:focus{outline:none;border-color:var(--accent);}
+.rc-res{background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.15);border-radius:8px;padding:11px 14px;margin-top:11px;font-family:var(--mono);font-size:15px;font-weight:700;color:var(--accent);text-align:center;}
+.rc-res.ok{color:var(--green);}
+.rc-res.warn{background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.2);color:var(--gold);}
+.rc-res.bad{background:rgba(248,113,113,0.06);border-color:rgba(248,113,113,0.2);color:var(--red);}
+.qz-wrap{max-width:600px;margin:0 auto;}
+.qz-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.qz-num{font-family:var(--mono);font-size:12px;color:var(--text2);}
+.qz-score{background:rgba(52,211,153,0.1);color:var(--accent);font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:100px;}
+.qz-pb-w{height:4px;background:var(--bg3);border-radius:100px;overflow:hidden;margin-bottom:24px;}
+.qz-pb{height:100%;background:linear-gradient(90deg,var(--accent),var(--blue));border-radius:100px;transition:width 0.4s;}
+.qz-q{font-family:var(--display);font-size:17px;font-weight:700;line-height:1.4;margin-bottom:20px;}
+.qz-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.qz-opt{padding:12px 15px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);cursor:pointer;font-size:13px;transition:all 0.15s;text-align:left;color:var(--text);font-family:var(--font);}
+.qz-opt:hover:not(:disabled){border-color:rgba(52,211,153,0.3);background:var(--bg3);}
+.qz-opt.correct{background:rgba(52,211,153,0.1);border-color:rgba(52,211,153,0.4);color:var(--accent);}
+.qz-opt.wrong{background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.4);color:var(--red);}
+.qz-opt:disabled{cursor:default;}
+.qz-expl{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:13px 15px;font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:14px;display:none;}
+.qz-expl.show{display:block;}
+.qz-next{background:var(--accent);color:#04070d;padding:10px 22px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:var(--font);display:none;}
+.qz-next.show{display:inline-flex;}
+.fc-filter{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+.fc-fb{padding:5px 12px;border-radius:100px;font-size:10px;font-family:var(--mono);cursor:pointer;border:1px solid var(--border2);background:none;color:var(--text2);transition:all 0.12s;}
+.fc-fb:hover,.fc-fb.active{background:rgba(52,211,153,0.1);color:var(--accent);border-color:rgba(52,211,153,0.25);}
+.fc-area{display:flex;flex-direction:column;align-items:center;}
+.fc-stat{font-family:var(--mono);font-size:12px;color:var(--text2);margin-bottom:18px;}
+.flashcard{width:100%;max-width:520px;height:250px;cursor:pointer;perspective:1000px;margin-bottom:22px;}
+.fc-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.5s cubic-bezier(0.4,0,0.2,1);}
+.flashcard.flipped .fc-inner{transform:rotateY(180deg);}
+.fc-front,.fc-back{position:absolute;inset:0;backface-visibility:hidden;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px;text-align:center;}
+.fc-front{background:var(--bg2);border:1px solid var(--border2);}
+.fc-back{background:var(--bg3);border:1px solid rgba(52,211,153,0.3);transform:rotateY(180deg);}
+.fc-cat{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:11px;}
+.fc-q{font-family:var(--display);font-size:17px;font-weight:700;line-height:1.4;}
+.fc-a{font-size:13px;color:var(--text2);line-height:1.65;}
+.fc-hint{font-size:10px;color:var(--text3);margin-top:12px;font-family:var(--mono);}
+.fc-btns{display:flex;gap:9px;justify-content:center;margin-bottom:16px;}
+.fc-btn{padding:9px 20px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:var(--font);transition:all 0.15s;}
+.fc-wrong{background:rgba(248,113,113,0.1);color:var(--red);border:1px solid rgba(248,113,113,0.3);}
+.fc-right{background:rgba(52,211,153,0.1);color:var(--green);border:1px solid rgba(52,211,153,0.3);}
+.fc-next-btn{background:var(--accent);color:#04070d;}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;}
+.mob-overlay.open{display:block;}
+.mob-bottom{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--bg2);border-top:1px solid var(--border2);padding:5px 2px;overflow-x:auto;}
+.mbn{display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border-radius:7px;cursor:pointer;border:none;background:none;color:var(--text2);font-family:var(--font);}
+.mbn.active{background:rgba(52,211,153,0.12);color:var(--accent);}
+.mbn-i{font-size:16px;line-height:1;}
+.mbn-l{font-size:8px;font-family:var(--mono);white-space:nowrap;}
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-265px;top:0;height:100vh;z-index:300;transition:left 0.25s ease;box-shadow:6px 0 30px rgba(0,0,0,0.6);}
+  .sidebar.open{left:0;}
+  .mob-btn{display:flex!important;align-items:center;}
+  .main{padding:16px 14px 85px;}
+  .topbar{padding:0 13px;}
+  .tb-h{font-size:12px;}
+  .mob-bottom{display:flex!important;}
+}
+</style>
+</head>
+<body>
+<div class="mob-overlay" id="mob-overlay" onclick="closeSB()"></div>
+<div class="layout">
+<div class="sidebar" id="sidebar">
+  <div class="sb-logo">&#127757; BetonCheck Geo</div>
+  <div class="sb-sub">Geotechnik &middot; Baustoffpr&uuml;fung</div>
+  <div class="sb-tabs">
+    <button class="sbt active" onclick="switchTab('a',this)">&#128214; Anleit.</button>
+    <button class="sbt" onclick="switchTab('n',this)">&#128218; Normen</button>
+    <button class="sbt" onclick="switchTab('z',this)">&#127891; Azubi</button>
+  </div>
+  <div class="sb-nav">
+    <div id="nav-a">
+      <div class="sb-sec"><div class="sb-lbl">Verdichtung</div>
+        <div class="sb-item active" onclick="show('proctor')">&#128309; Proctorversuch</div>
+        <div class="sb-item" onclick="show('platte')">&#11035; Plattendruckversuch</div>
+        <div class="sb-item" onclick="show('dpr')">&#128202; Verdichtungsgrad Dpr</div>
+        <div class="sb-item" onclick="show('wassergehalt')">&#128167; Wassergehalt (Darr)</div>
+      </div>
+      <div class="sb-sec"><div class="sb-lbl">Kornanalyse</div>
+        <div class="sb-item" onclick="show('siebung')">&#9638; Siebanalyse</div>
+        <div class="sb-item" onclick="show('atterberg')">&#128207; Atterbergsche Grenzen</div>
+        <div class="sb-item" onclick="show('schlaemm')">&#127754; Schl&auml;mmanalyse</div>
+      </div>
+      <div class="sb-sec"><div class="sb-lbl">Tragf&auml;higkeit</div>
+        <div class="sb-item" onclick="show('cbr')">&#128170; CBR-Versuch</div>
+        <div class="sb-item" onclick="show('rammson')">&#128296; Rammsondierung DPL</div>
+      </div>
+    </div>
+    <div id="nav-n" style="display:none">
+      <div class="sb-sec"><div class="sb-lbl">Klassifikation</div>
+        <div class="sb-item" onclick="show('n18196')">&#128216; DIN 18196 Bodenklassen</div>
+        <div class="sb-item" onclick="show('n18300')">&#128216; DIN 18300 Erdarbeiten</div>
+      </div>
+      <div class="sb-sec"><div class="sb-lbl">Pr&uuml;fnormen</div>
+        <div class="sb-item" onclick="show('n18127')">&#128208; DIN 18127 Proctor</div>
+        <div class="sb-item" onclick="show('n18134')">&#128208; DIN 18134 Platte</div>
+        <div class="sb-item" onclick="show('n18123')">&#128208; DIN 18123 Siebung</div>
+        <div class="sb-item" onclick="show('n18122')">&#128208; DIN 18122 Atterberg</div>
+      </div>
+    </div>
+    <div id="nav-z" style="display:none">
+      <div class="sb-sec"><div class="sb-lbl">Lernmodule</div>
+        <div class="sb-item" onclick="show('karten')">&#127183; Lernkarten</div>
+        <div class="sb-item" onclick="show('quiz')">&#129504; Quiz</div>
+        <div class="sb-item" onclick="show('rechner')">&#129518; Rechner</div>
+        <div class="sb-item" onclick="show('tabellen')">&#128202; Tabellen</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="content">
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-btn" style="display:none" onclick="toggleSB()">&#9776;</button>
+      <div class="tb-h" id="tb-h">Proctorversuch &mdash; DIN 18127</div>
+    </div>
+    <button class="btn-print" onclick="window.print()">&#128424; Drucken</button>
+  </div>
+  <div class="main">
+<!-- PROCTOR -->
+<div class="page active" id="page-proctor">
+  <div class="hb"><div class="hb-norm">DIN 18127 &middot; Verdichtung</div>
+    <div class="hb-title">Proctorversuch</div>
+    <div class="hb-desc">Bestimmung der optimalen Verdichtungsfeuchte (wPr) und der Proctordichte (rPr) eines Bodens. Grundlage fuer alle Verdichtungskontrollen auf der Baustelle.</div>
+    <div class="hb-tags"><span class="hb-tag">DIN 18127</span><span class="hb-tag">wPr</span><span class="hb-tag">rPr</span><span class="hb-tag">Verdichtung</span></div>
+  </div>
+  <div class="card"><div class="card-t">&#128295; Benoet. Geraete</div>
+    <div class="gg">
+      <div class="gi"><div class="gi-ico">&#9879;</div><div><div class="gi-n">Proctorzylinder</div><div class="gi-s">Diam 100 oder 150mm</div></div></div>
+      <div class="gi"><div class="gi-ico">&#128296;</div><div><div class="gi-n">Proctor-Hammer</div><div class="gi-s">2,5 kg, Fallhoehe 300mm</div></div></div>
+      <div class="gi"><div class="gi-ico">&#9878;</div><div><div class="gi-n">Waage</div><div class="gi-s">Genauigkeit 1g</div></div></div>
+      <div class="gi"><div class="gi-ico">&#127777;</div><div><div class="gi-n">Trockenschrank</div><div class="gi-s">105 &plusmn; 5&deg;C</div></div></div>
+      <div class="gi"><div class="gi-ico">&#129524;</div><div><div class="gi-n">Schuessel + Spatel</div><div class="gi-s">zum Mischen</div></div></div>
+    </div>
+  </div>
+  <div class="h h-i"><strong>Ziel:</strong> Die Proctor-Kurve (rd ueber w) zeigt das Maximum der Trockendichte bei optimaler Feuchte. Dieses Maximum = Proctordichte rPr bei Proctorfeuchte wPr.</div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div><div class="stp-nl">Vorber.</div></div>
+      <div class="stp-b"><div class="stp-t">Boden aufbereiten und portionieren</div>
+        <div class="stp-tx">Boden auf &lt;20mm zerkleinern. <strong>Mind. 5 Proben</strong> &agrave; ca. 2,5 kg vorbereiten. Wassergehalt von ca. <strong>4&ndash;6% unter bis 4&ndash;6% ueber</strong> der erwarteten Proctorfeuchte variieren. Proben mind. 1h durchfeuchten.</div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div><div class="stp-nl">Einbau</div></div>
+      <div class="stp-b"><div class="stp-t">In 3 Lagen einbauen und verdichten</div>
+        <div class="stp-tx">Proctorzylinder (Diam 100mm) in <strong>3 gleichen Lagen</strong> befuellen. Je Lage <strong>25 Schlaege</strong> gleichmaessig verteilen. Aufsatz entfernen, Oberflaeche buerdig abstreichen.</div>
+        <div class="stp-img"><div class="stp-svg">
+          <svg width="170" height="130" viewBox="0 0 170 130">
+            <rect x="55" y="20" width="60" height="90" rx="3" fill="#0d1510" stroke="#34d399" stroke-width="1.5"/>
+            <rect x="60" y="25" width="50" height="25" rx="2" fill="#1a3020" stroke="#34d399" stroke-width="0.8"/>
+            <rect x="60" y="55" width="50" height="25" rx="2" fill="#1f3a25" stroke="#34d399" stroke-width="0.8"/>
+            <rect x="60" y="85" width="50" height="20" rx="2" fill="#243f2a" stroke="#34d399" stroke-width="0.8"/>
+            <text x="85" y="40" fill="#34d399" font-size="9" text-anchor="middle" font-family="monospace">Lage 3</text>
+            <text x="85" y="70" fill="#34d399" font-size="9" text-anchor="middle" font-family="monospace">Lage 2</text>
+            <text x="85" y="97" fill="#34d399" font-size="9" text-anchor="middle" font-family="monospace">Lage 1</text>
+            <line x1="85" y1="5" x2="85" y2="20" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#ga)"/>
+            <text x="91" y="14" fill="#f59e0b" font-size="9" font-family="monospace">25x</text>
+            <defs><marker id="ga" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f59e0b"/></marker></defs>
+          </svg>
+        </div><div class="stp-ph" onclick="upl(this)"><div class="ph-i">&#128247;</div><div class="ph-l">Eigenes Foto einfuegen</div><input type="file" accept="image/*" style="display:none" onchange="prv(this)"/></div></div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div><div class="stp-nl">Wiegen</div></div>
+      <div class="stp-b"><div class="stp-t">Zylinder + Boden wiegen, Wassergehalt bestimmen</div>
+        <div class="stp-tx">Zylinder mit Boden wiegen. Rohdichte r = m_Boden / V. Probe entnehmen (ca. 100g), wiegen, bei 105&deg;C 24h trocknen, nochmals wiegen &rarr; Wassergehalt w.</div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">04</div><div class="stp-nl">Wiederh.</div></div>
+      <div class="stp-b"><div class="stp-t">Alle 5 Wasserstufenproben pruefen</div>
+        <div class="stp-tx">Schritte 2&ndash;3 fuer alle <strong>5 Wassergehaltsstufen</strong> wiederholen. Jede Probe nur einmal verwenden!</div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">05</div><div class="stp-nl">Auswert.</div></div>
+      <div class="stp-b"><div class="stp-t">Trockendichte berechnen und Proctor-Kurve zeichnen</div>
+        <div class="stp-tx"><strong>rd = r / (1 + w)</strong> fuer alle 5 Punkte berechnen. Kurve zeichnen &rarr; Maximum = <strong>rPr</strong> und <strong>wPr</strong>.</div>
+        <div class="h h-i"><strong>Beispiel:</strong> r = 1,92 g/cm3, w = 10% &rarr; rd = 1,92/1,10 = 1,745 g/cm3</div>
+      </div></div></div>
+  </div>
+  <div class="h h-w"><strong>Wichtig:</strong> Jede Probe darf nur einmal verwendet werden! Kein Wiedereinbau des verdichteten Bodens.</div>
+  <div class="kurz"><div class="kurz-t">Kurzanleitung Proctorversuch</div><div class="ks-list">
+    <div class="ks"><div class="ks-n">1</div><div>5 Proben mit verschiedenen Wassergehalten vorbereiten (Stufung ~2%)</div></div>
+    <div class="ks"><div class="ks-n">2</div><div>Je Probe: 3 Lagen, je 25 Hammerschlaege</div></div>
+    <div class="ks"><div class="ks-n">3</div><div>Rohdichte r und Wassergehalt w bestimmen</div></div>
+    <div class="ks"><div class="ks-n">4</div><div>rd = r / (1+w) berechnen</div></div>
+    <div class="ks"><div class="ks-n">5</div><div>Proctor-Kurve zeichnen &rarr; Maximum = rPr und wPr</div></div>
+  </div></div>
+</div>
+
+<!-- PLATTENDRUCKVERSUCH -->
+<div class="page" id="page-platte">
+  <div class="hb"><div class="hb-norm">DIN 18134 &middot; Tragfaehigkeit</div>
+    <div class="hb-title">Plattendruckversuch (Ev1 / Ev2)</div>
+    <div class="hb-desc">Bestimmung der Verformungsmoduln Ev1 und Ev2 sowie des Verhaeltnisses Ev2/Ev1 zur Beurteilung der Tragfaehigkeit und Verdichtungsqualitaet von Bodenschichten am Bauwerk.</div>
+    <div class="hb-tags"><span class="hb-tag">DIN 18134</span><span class="hb-tag">Ev1</span><span class="hb-tag">Ev2</span><span class="hb-tag">Ev2/Ev1 &le; 2,2</span></div>
+  </div>
+  <div class="card"><div class="card-t">&#128295; Geraete</div>
+    <div class="gg">
+      <div class="gi"><div class="gi-ico">&#11044;</div><div><div class="gi-n">Lastplatte</div><div class="gi-s">Diam 300 oder 600mm</div></div></div>
+      <div class="gi"><div class="gi-ico">&#128295;</div><div><div class="gi-n">Hydraulikpresse</div><div class="gi-s">mit Manometer</div></div></div>
+      <div class="gi"><div class="gi-ico">&#128225;</div><div><div class="gi-n">3 Messuhren</div><div class="gi-s">Genauigkeit 0,01mm</div></div></div>
+      <div class="gi"><div class="gi-ico">&#128665;</div><div><div class="gi-n">Gegenlastfahrzeug</div><div class="gi-s">mind. 100 kN Achslast</div></div></div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div><div class="stp-nl">Vorber.</div></div>
+      <div class="stp-b"><div class="stp-t">Messstelle vorbereiten</div>
+        <div class="stp-tx">Pruefflaeche ebnen. Ausgleichssand (0,063&ndash;2mm) duenn aufstreuen (max. 5mm). Lastplatte (Diam 300mm) mittig aufstellen. Messbruecke aufbauen, <strong>3 Messuhren</strong> gleichmaessig an der Platte befestigen.</div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div><div class="stp-nl">Vorlast</div></div>
+      <div class="stp-b"><div class="stp-t">Vorlastung 0,01 MN/m2, 60 Sek. halten, Nullen</div>
+        <div class="stp-tx">Vorlast von <strong>0,01 MN/m&sup2;</strong> aufbringen, 60 Sekunden halten. Messuhren auf Null setzen.</div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div><div class="stp-nl">Ev1</div></div>
+      <div class="stp-b"><div class="stp-t">1. Belastungszyklus (Ev1)</div>
+        <div class="stp-tx">Last stufenweise bis <strong>0,5 MN/m&sup2;</strong> steigern. Je Stufe 60 Sek. halten, Setzung ablesen. Alle Werte protokollieren.</div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">04</div><div class="stp-nl">Entl.</div></div>
+      <div class="stp-b"><div class="stp-t">Vollstaendig entlasten, 60 Sek. warten</div>
+        <div class="stp-tx">Last auf Vorlastniveau (0,01 MN/m&sup2;) zuruecknehmen. 60 Sekunden warten.</div>
+      </div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">05</div><div class="stp-nl">Ev2</div></div>
+      <div class="stp-b"><div class="stp-t">2. Belastungszyklus (Ev2) und Auswertung</div>
+        <div class="stp-tx">Wie Schritt 3, nochmals bis 0,5 MN/m&sup2;. Ev1 und Ev2 aus Spannungs-Setzungs-Diagramm berechnen.<br><strong>Formel: Ev = 1,5 &times; r &times; &Delta;&sigma; / &Delta;s</strong></div>
+      </div></div></div>
+  </div>
+  <div class="tbl-box"><table class="et"><thead><tr><th>Schicht</th><th>Min. Ev2 (MN/m2)</th><th>Max. Ev2/Ev1</th></tr></thead><tbody>
+    <tr><td>Planum</td><td>45</td><td>2,2</td></tr>
+    <tr><td>Frostschutz</td><td>80</td><td>2,2</td></tr>
+    <tr><td>Schottertragschicht</td><td>120</td><td>2,2</td></tr>
+    <tr><td>Industrieboden</td><td>80&ndash;150</td><td>2,5</td></tr>
+  </tbody></table></div>
+  <div class="kurz"><div class="kurz-t">Kurzanleitung</div><div class="ks-list">
+    <div class="ks"><div class="ks-n">1</div><div>Flaeche ebnen, Ausgleichssand, Platte aufstellen</div></div>
+    <div class="ks"><div class="ks-n">2</div><div>Messbruecke + 3 Messuhren montieren</div></div>
+    <div class="ks"><div class="ks-n">3</div><div>Vorlast 0,01 MN/m2 &rarr; Nullen</div></div>
+    <div class="ks"><div class="ks-n">4</div><div>1. Zyklus bis 0,5 MN/m2 &rarr; Ev1</div></div>
+    <div class="ks"><div class="ks-n">5</div><div>Entlasten &rarr; 2. Zyklus &rarr; Ev2</div></div>
+    <div class="ks"><div class="ks-n">6</div><div>Ev2/Ev1 &le; 2,2 pruefen</div></div>
+  </div></div>
+</div>
+
+<!-- WASSERGEHALT -->
+<div class="page" id="page-wassergehalt">
+  <div class="hb"><div class="hb-norm">DIN 18121 &middot; Basisbestimmung</div>
+    <div class="hb-title">Wassergehalt &mdash; Darrverfahren</div>
+    <div class="hb-desc">Bestimmung des Wassergehalts w von Bodenproben durch Trocknen bei 105&deg;C. Grundlage fast aller geotechnischen Pruefungen.</div>
+    <div class="hb-tags"><span class="hb-tag">DIN 18121</span><span class="hb-tag">Wassergehalt w</span><span class="hb-tag">105&deg;C</span></div>
+  </div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Behaelter leer wiegen &rarr; m1</div><div class="stp-tx">Trockenen Waegebehaelter wiegen. Masse <strong>m1</strong> notieren.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">Feuchte Probe einwiegen &rarr; m2</div><div class="stp-tx">Feuchte Bodenprobe (mind. 30g) in Behaelter geben, wiegen &rarr; <strong>m2</strong>.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">24h bei 105 &plusmn; 5&deg;C trocknen</div><div class="stp-tx">Behaelter (ohne Deckel) in Trockenschrank. Mind. <strong>24 Stunden</strong> bei 105&deg;C bis Massekonstanz.</div><div class="h h-w" style="margin-top:8px;"><strong>Ausnahme:</strong> Organische Boeden und Gips nur bei 60&deg;C trocknen.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">04</div></div><div class="stp-b"><div class="stp-t">Abkuehlen (Exsikkator) und wiegen &rarr; m3</div><div class="stp-tx">Im Exsikkator abkuehlen, dann wiegen &rarr; <strong>m3</strong>.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">05</div></div><div class="stp-b"><div class="stp-t">Wassergehalt berechnen</div><div class="stp-tx"><strong>w = (m2 &minus; m3) / (m3 &minus; m1) &times; 100 [%]</strong></div><div class="h h-i" style="margin-top:8px;"><strong>Beispiel:</strong> m1=20g, m2=145g, m3=132g &rarr; w = 13/112&times;100 = 11,6%</div></div></div></div>
+  </div>
+  <div class="kurz"><div class="kurz-t">Kurzanleitung</div><div class="ks-list">
+    <div class="ks"><div class="ks-n">1</div><div>Behaelter wiegen &rarr; m1</div></div>
+    <div class="ks"><div class="ks-n">2</div><div>Feuchte Probe einwiegen &rarr; m2</div></div>
+    <div class="ks"><div class="ks-n">3</div><div>24h bei 105&deg;C trocknen</div></div>
+    <div class="ks"><div class="ks-n">4</div><div>Im Exsikkator abkuehlen &rarr; m3</div></div>
+    <div class="ks"><div class="ks-n">5</div><div>w = (m2-m3)/(m3-m1) &times; 100%</div></div>
+  </div></div>
+</div>
+
+<!-- VERDICHTUNGSGRAD -->
+<div class="page" id="page-dpr">
+  <div class="hb"><div class="hb-norm">Verdichtungskontrolle</div>
+    <div class="hb-title">Verdichtungsgrad Dpr</div>
+    <div class="hb-desc">Vergleich der auf der Baustelle erreichten Trockendichte mit der im Labor ermittelten Proctordichte. Ergebnis: Verdichtungsgrad Dpr in %.</div>
+    <div class="hb-tags"><span class="hb-tag">Dpr (%)</span><span class="hb-tag">rd Baustelle</span><span class="hb-tag">rPr Proctor</span></div>
+  </div>
+  <div class="h h-i"><strong>Formel:</strong> Dpr (%) = rd,Baustelle / rPr &times; 100</div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Proctordichte rPr aus Labor</div><div class="stp-tx">Proctorversuch im Labor &rarr; Proctordichte rPr und optimale Feuchte wPr aus der Proctor-Kurve ablesen.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">Trockendichte auf Baustelle messen</div><div class="stp-tx">Methoden: Isotopensonde (schnell), Sandersatzverfahren (DIN 18125-2), Stechzylinder. Rohdichte r und Wassergehalt w messen &rarr; rd = r/(1+w).</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">Dpr berechnen und bewerten</div><div class="stp-tx"><strong>Dpr = rd,Baustelle / rPr &times; 100</strong></div>
+      <div class="tbl-box" style="margin-top:10px;"><table class="et"><thead><tr><th>Bereich</th><th>Min. Dpr</th></tr></thead><tbody>
+        <tr><td>Unterbau Strasse</td><td>&ge; 97 %</td></tr>
+        <tr><td>Aufschuttungen</td><td>&ge; 95 %</td></tr>
+        <tr><td>Leitungsgraben</td><td>&ge; 97 %</td></tr>
+        <tr><td>Fundamente</td><td>&ge; 98 %</td></tr>
+      </tbody></table></div>
+    </div></div></div>
+  </div>
+</div>
+
+<!-- SIEBANALYSE -->
+<div class="page" id="page-siebung">
+  <div class="hb"><div class="hb-norm">DIN 18123 &middot; Korngroesse</div>
+    <div class="hb-title">Siebanalyse &mdash; Korngroessenverteilung</div>
+    <div class="hb-desc">Bestimmung der Korngroessenverteilung durch Nass- und Trockensiebung. Ergebnis: Koeurnungslinie als Grundlage der Bodenklassifikation.</div>
+    <div class="hb-tags"><span class="hb-tag">DIN 18123</span><span class="hb-tag">Koernungslinie</span><span class="hb-tag">Nasssiebung</span></div>
+  </div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Probe trocknen, Gesamtmasse md bestimmen</div><div class="stp-tx">Probe bei 105&deg;C trocknen. Gesamtmasse <strong>md</strong> wiegen (je nach Korn 100g bis 40 kg).</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">Nasssiebung ueber 0,063mm Sieb</div><div class="stp-tx">Probe mit Wasser waschen, Rueckstand auf 0,063mm-Sieb sammeln und bei 105&deg;C trocknen. Feinanteil (Schluff+Ton) geht durchs Sieb.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">Trockensiebung 10 Minuten</div><div class="stp-tx">Getrockneten Rueckstand auf Siebsatz aufgeben. <strong>10 Minuten sieben</strong>. Rueckstand je Sieb wiegen &rarr; Masse Ri.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">04</div></div><div class="stp-b"><div class="stp-t">Siebdurchgang berechnen, Koernungslinie zeichnen</div><div class="stp-tx"><strong>Di (%) = 100 &times; (md &minus; &Sigma;Ri) / md</strong><br>Halblogarithmisches Diagramm: Siebdurchgang (%) ueber Korngr&ouml;&szlig;e (log-Achse).</div></div></div></div>
+  </div>
+  <div class="kurz"><div class="kurz-t">Kurzanleitung</div><div class="ks-list">
+    <div class="ks"><div class="ks-n">1</div><div>Trocknen, Gesamtmasse md bestimmen</div></div>
+    <div class="ks"><div class="ks-n">2</div><div>Nasssiebung ueber 0,063mm</div></div>
+    <div class="ks"><div class="ks-n">3</div><div>10min Trockensiebung, Rueckstand wiegen</div></div>
+    <div class="ks"><div class="ks-n">4</div><div>Di berechnen, Koernungslinie zeichnen</div></div>
+  </div></div>
+</div>
+
+<!-- ATTERBERG -->
+<div class="page" id="page-atterberg">
+  <div class="hb"><div class="hb-norm">DIN 18122 &middot; Plastizitaet</div>
+    <div class="hb-title">Atterbergsche Grenzen</div>
+    <div class="hb-desc">Bestimmung der Fliessgrenze (wL) und Ausrollgrenze (wP) sowie der Plastizitaetszahl (IP) von feinkoernigen Boeden.</div>
+    <div class="hb-tags"><span class="hb-tag">DIN 18122</span><span class="hb-tag">Fliessgrenze wL</span><span class="hb-tag">Ausrollgrenze wP</span><span class="hb-tag">IP</span></div>
+  </div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Fliessgrenze wL &mdash; Casagrande-Geraet</div><div class="stp-tx">Boden auf &lt;0,4mm sieben. In Casagrande-Schale geben, Rille ziehen. <strong>Anzahl Schlaege bis Rille auf 12mm schliesst</strong> bestimmen. Bei 25 Schlaegen = Fliessgrenze. Wassergehalt bestimmen.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">Ausrollgrenze wP &mdash; Ausrollversuch</div><div class="stp-tx">Boden zu Rollen von ca. <strong>3mm Durchmesser</strong> ausrollen. Wenn die Rollen bei 3mm zerbr&ouml;ckeln = Ausrollgrenze wP. Wassergehalt bestimmen.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">Plastizitaetszahl IP berechnen</div><div class="stp-tx"><strong>IP = wL &minus; wP</strong><br>IP &lt; 7: wenig plastisch &bull; IP 7&ndash;17: mittelpplastisch &bull; IP &gt; 17: sehr plastisch</div></div></div></div>
+  </div>
+</div>
+
+<!-- SCHLAEMMANALYSE -->
+<div class="page" id="page-schlaemm">
+  <div class="hb"><div class="hb-norm">DIN 18123 &middot; Feinanteil</div>
+    <div class="hb-title">Schlm&auml;mmanalyse</div>
+    <div class="hb-desc">Bestimmung der Korngroessenverteilung des Feinanteils (&lt;0,063mm) durch Auswertung der Sinkgeschwindigkeit nach Stokes. Ergaenzt die Siebanalyse fuer Schluff und Ton.</div>
+    <div class="hb-tags"><span class="hb-tag">DIN 18123</span><span class="hb-tag">Feinkorn</span><span class="hb-tag">Araeometer</span></div>
+  </div>
+  <div class="h h-i"><strong>Grundlage:</strong> Das Stokessche Gesetz beschreibt die Sinkgeschwindigkeit von Koernern in Wasser. Je kleiner das Korn, desto langsamer sinkt es.</div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Feinanteil in 1000ml Messzylinder auffangen</div><div class="stp-tx">Getrocknete Probe ueber 0,063mm Sieb waschen. Feinanteil in 1000ml Messzylinder, mit Wasser auf 1000ml auffullen, Dispergiermittel zugeben.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">Umschuetteln, Stoppuhr starten, Temperatur messen</div><div class="stp-tx">Zylinder 1 Minute umschuetteln. Stellen und <strong>Stoppuhr starten</strong>. Temperatur messen (beeinflusst Viskositaet).</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">Araeometer-Messungen zu festgelegten Zeiten</div><div class="stp-tx">Araeometer zu Zeiten 0,5/1/2/5/15/30/60/120/1440 min einsetzen, Dichte ablesen. Aus Dichte + Zeit &rarr; Korndurchmesser nach Stokes berechnen.</div></div></div></div>
+  </div>
+</div>
+
+<!-- CBR -->
+<div class="page" id="page-cbr">
+  <div class="hb"><div class="hb-norm">DIN EN 13286-47 &middot; Tragfaehigkeit</div>
+    <div class="hb-title">CBR-Versuch (California Bearing Ratio)</div>
+    <div class="hb-desc">Bestimmung der Tragfaehigkeit von Boeden durch Eindringwiderstand eines Stempels. Wichtig fuer die Dimensionierung von Strassenkonstruktionen.</div>
+    <div class="hb-tags"><span class="hb-tag">CBR %</span><span class="hb-tag">Tragfaehigkeit</span><span class="hb-tag">1,27 mm/min</span></div>
+  </div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Probe herstellen (auf wPr, 5 Lagen &agrave; 56 Schlaege)</div><div class="stp-tx">Boden auf wPr einstellen. In CBR-Zylinder (Diam 152mm) in <strong>5 Lagen &agrave; 56 Schlaege</strong> einbauen. Buerdig abstreichen.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">Optional: 4 Tage waessern</div><div class="stp-tx">Bei Bedarf Probe 4 Tage wässern &rarr; simuliert unguenstigste Bedingung. Aufquellen messen.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">Eindringversuch 1,27 mm/min</div><div class="stp-tx">Stempel (Diam 49,65mm) mit <strong>1,27 mm/min</strong> eindr&uuml;cken. Kraft bei <strong>2,5mm und 5,0mm</strong> ablesen.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">04</div></div><div class="stp-b"><div class="stp-t">CBR-Wert berechnen</div><div class="stp-tx"><strong>CBR = Messkraft / Standardkraft &times; 100 [%]</strong><br>Standard bei 2,5mm: 13,2 kN &bull; bei 5,0mm: 20,0 kN</div><div class="h h-i" style="margin-top:8px;"><strong>Richtwerte:</strong> &lt;3%: schlecht &bull; 3&ndash;7%: mittel &bull; 7&ndash;20%: gut &bull; &gt;20%: sehr gut</div></div></div></div>
+  </div>
+</div>
+
+<!-- RAMMSONDIERUNG -->
+<div class="page" id="page-rammson">
+  <div class="hb"><div class="hb-norm">DIN EN ISO 22476-2 &middot; Baugrunderkung</div>
+    <div class="hb-title">Leichte Rammsondierung (DPL)</div>
+    <div class="hb-desc">Einfaches Feldverfahren zur Abschaetzung der Lagerungsdichte oder Konsistenz von Boeden durch Zaehlen der Schlagzahl N10 pro 10cm Eindringtiefe.</div>
+    <div class="hb-tags"><span class="hb-tag">DPL</span><span class="hb-tag">Schlagzahl N10</span><span class="hb-tag">10kg Hammer</span></div>
+  </div>
+  <div class="steps">
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">01</div></div><div class="stp-b"><div class="stp-t">Geraet aufbauen und pruefen</div><div class="stp-tx">Sondierspitze (60&deg;-Kegel, 10cm&sup2;) aufschrauben. Fallgewicht (10kg) und Fallhöhe (500mm) kontrollieren. Geraet senkrecht aufstellen.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">02</div></div><div class="stp-b"><div class="stp-t">Sondieren: Schlagzahl N10 je 10cm zaehlen</div><div class="stp-tx">Fallgewicht auf 500mm Hoehe anheben und fallen lassen. <strong>Schlagzahl N10 je 10cm</strong> zaehlen und aufzeichnen.</div><div class="h h-w" style="margin-top:8px;"><strong>Abbruch:</strong> N10 &gt; 50 auf 10cm &rarr; undurchdringlich.</div></div></div></div>
+    <div class="stp"><div class="stp-in"><div class="stp-nc"><div class="stp-n">03</div></div><div class="stp-b"><div class="stp-t">Sondierdiagramm erstellen und auswerten</div><div class="stp-tx">N10 ueber Tiefe darstellen. Korrelation mit Lagerungsdichte/Konsistenz nach Erfahrungswerten.</div></div></div></div>
+  </div>
+</div>
+<!-- NORMEN -->
+<div class="page" id="page-n18196">
+  <div class="hb"><div class="hb-norm">DIN 18196:2011</div><div class="hb-title">Bodenklassifikation fuer bautechnische Zwecke</div>
+    <div class="hb-desc">Klassifikation von Boeden nach Zusammensetzung und bodenmechanischen Eigenschaften.</div></div>
+  <div class="tbl-box"><table class="et"><thead><tr><th>Gruppe</th><th>Bezeichnung</th><th>Merkmal</th><th>Bewertung</th></tr></thead><tbody>
+    <tr><td>GW</td><td>Kies, weitgestuft</td><td>Cu&gt;6, Cc 1&ndash;3</td><td>Sehr gut</td></tr>
+    <tr><td>SE</td><td>Sand, enggestuft</td><td>Cu&lt;6</td><td>Mittel</td></tr>
+    <tr><td>SU</td><td>Schluffiger Sand</td><td>Schluff 5&ndash;15%</td><td>Frostempfindlich!</td></tr>
+    <tr><td>ML</td><td>Schluff, leicht plast.</td><td>IP &lt; 7</td><td>Wenig tragfaehig</td></tr>
+    <tr><td>CL</td><td>Ton, leicht plast.</td><td>IP 7&ndash;17</td><td>Setzungsempfindlich</td></tr>
+    <tr><td>CH</td><td>Ton, sehr plast.</td><td>IP &gt; 17</td><td>Schlecht</td></tr>
+  </tbody></table></div>
+</div>
+<div class="page" id="page-n18300">
+  <div class="hb"><div class="hb-norm">DIN 18300 (VOB/C)</div><div class="hb-title">Erdarbeiten &mdash; Bodenklassen 1&ndash;7</div></div>
+  <div class="tbl-box"><table class="et"><thead><tr><th>Klasse</th><th>Bezeichnung</th><th>Beschreibung</th></tr></thead><tbody>
+    <tr><td>1</td><td>Oberboden</td><td>Mutterboden, locker, humos</td></tr>
+    <tr><td>2</td><td>Fliessende Boeden</td><td>Brueiige Konsistenz</td></tr>
+    <tr><td>3</td><td>Leicht loesbar</td><td>Sand, Kies, weicher Schluff</td></tr>
+    <tr><td>4</td><td>Mittelschwer loesbar</td><td>Steifer Ton, Mergel</td></tr>
+    <tr><td>5</td><td>Schwer loesbar</td><td>Harter Ton, weicher Fels</td></tr>
+    <tr><td>6</td><td>Leicht loesb. Fels</td><td>Verwitterter Fels</td></tr>
+    <tr><td>7</td><td>Schwer loesb. Fels</td><td>Harter Fels, Sprengung</td></tr>
+  </tbody></table></div>
+</div>
+<div class="page" id="page-n18127">
+  <div class="hb"><div class="hb-norm">DIN 18127:2012</div><div class="hb-title">Proctorversuch &mdash; Normkennwerte</div></div>
+  <div class="tbl-box"><table class="et"><thead><tr><th>Parameter</th><th>Normal-Proctor</th><th>Modifizierter Proctor</th></tr></thead><tbody>
+    <tr><td>Zylinder Diam</td><td>100 mm</td><td>150 mm</td></tr>
+    <tr><td>Hammer</td><td>2,5 kg</td><td>4,5 kg</td></tr>
+    <tr><td>Fallhoehe</td><td>300 mm</td><td>450 mm</td></tr>
+    <tr><td>Schlaege/Lage</td><td>25</td><td>55</td></tr>
+    <tr><td>Lagen</td><td>3</td><td>5</td></tr>
+  </tbody></table></div>
+</div>
+<div class="page" id="page-n18134">
+  <div class="hb"><div class="hb-norm">DIN 18134:2012</div><div class="hb-title">Plattendruckversuch &mdash; Anforderungswerte</div></div>
+  <div class="tbl-box"><table class="et"><thead><tr><th>Schicht</th><th>Ev2 (MN/m2)</th><th>Ev2/Ev1</th></tr></thead><tbody>
+    <tr><td>Planum</td><td>&ge; 45</td><td>&le; 2,2</td></tr>
+    <tr><td>Frostschutzschicht</td><td>&ge; 80</td><td>&le; 2,2</td></tr>
+    <tr><td>Schottertragschicht</td><td>&ge; 120</td><td>&le; 2,2</td></tr>
+  </tbody></table></div>
+</div>
+<div class="page" id="page-n18123">
+  <div class="hb"><div class="hb-norm">DIN 18123</div><div class="hb-title">Bestimmung der Korngroessenverteilung</div>
+    <div class="hb-desc">Norm fuer Sieb- und Schlaemmanalyse. Regelt Siebgroessen, Probenmengen und Auswertung der Koernungslinie.</div></div>
+</div>
+<div class="page" id="page-n18122">
+  <div class="hb"><div class="hb-norm">DIN 18122</div><div class="hb-title">Atterbergsche Grenzen</div>
+    <div class="hb-desc">Norm zur Bestimmung von Fliessgrenze wL und Ausrollgrenze wP an feinkoernigen Boeden.</div></div>
+</div>
+
+<!-- LERNKARTEN -->
+<div class="page" id="page-karten">
+  <div style="margin-bottom:18px;"><div style="font-family:var(--display);font-size:22px;font-weight:800;margin-bottom:5px;">Lernkarten Geotechnik &#127183;</div><div style="font-size:13px;color:var(--text2);">Klicke auf die Karte zum Umdrehen.</div></div>
+  <div class="fc-filter">
+    <button class="fc-fb active" onclick="filterFC('alle',this)">Alle</button>
+    <button class="fc-fb" onclick="filterFC('grundlagen',this)">Grundlagen</button>
+    <button class="fc-fb" onclick="filterFC('formeln',this)">Formeln</button>
+    <button class="fc-fb" onclick="filterFC('normen',this)">Normen</button>
+    <button class="fc-fb" onclick="filterFC('praxis',this)">Praxis</button>
+  </div>
+  <div class="fc-area">
+    <div class="fc-stat" id="fc-stat">Karte 1 von 20</div>
+    <div class="flashcard" id="flashcard" onclick="flipFC()">
+      <div class="fc-inner">
+        <div class="fc-front"><div class="fc-cat" id="fc-cat">GRUNDLAGEN</div><div class="fc-q" id="fc-q">Was ist die Proctordichte rPr?</div><div class="fc-hint">Klicke zum Aufdecken</div></div>
+        <div class="fc-back"><div class="fc-cat">ANTWORT</div><div class="fc-a" id="fc-a">Die maximale Trockendichte, die ein Boden bei optimaler Einbaufeuchte (wPr) und definierter Verdichtungsenergie erreicht.</div></div>
+      </div>
+    </div>
+    <div class="fc-btns">
+      <button class="fc-btn fc-wrong" onclick="rateFC(false)">&#10007; Nochmal</button>
+      <button class="fc-btn fc-next-btn" onclick="nextFC()">Weiter &rarr;</button>
+      <button class="fc-btn fc-right" onclick="rateFC(true)">&#10003; Gewusst</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="page" id="page-quiz">
+  <div style="margin-bottom:18px;"><div style="font-family:var(--display);font-size:22px;font-weight:800;margin-bottom:5px;">Quiz Geotechnik &#129504;</div></div>
+  <div class="qz-wrap" id="qz-area">
+    <div class="qz-hd"><div class="qz-num" id="qz-num">Frage 1 / 15</div><div class="qz-score" id="qz-score">0 richtig</div></div>
+    <div class="qz-pb-w"><div class="qz-pb" id="qz-pb" style="width:7%"></div></div>
+    <div class="qz-q" id="qz-q"></div>
+    <div class="qz-opts" id="qz-opts"></div>
+    <div class="qz-expl" id="qz-expl"></div>
+    <button class="qz-next" id="qz-next" onclick="nextQZ()">Naechste Frage &rarr;</button>
+  </div>
+  <div id="qz-result" style="display:none;text-align:center;padding:32px 0;">
+    <div style="font-size:52px;margin-bottom:14px;" id="qz-ico"></div>
+    <div style="font-family:var(--display);font-size:24px;font-weight:800;margin-bottom:8px;" id="qz-rtitle"></div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:22px;" id="qz-rsub"></div>
+    <button class="fc-btn fc-next-btn" onclick="restartQZ()">Quiz wiederholen</button>
+  </div>
+</div>
+
+<!-- RECHNER -->
+<div class="page" id="page-rechner">
+  <div style="margin-bottom:18px;"><div style="font-family:var(--display);font-size:22px;font-weight:800;margin-bottom:5px;">Rechner Geotechnik &#129518;</div></div>
+  <div class="rc-grid">
+    <div class="rc-card">
+      <div class="rc-title">Wassergehalt w</div>
+      <div class="rc-desc">Behaelterwiegen &mdash; DIN 18121</div>
+      <div class="rc-ig"><label class="rc-lbl">m1 &mdash; Behaelter leer (g)</label><input class="rc-inp" type="number" id="wg-m1" placeholder="z.B. 20" oninput="cWG()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">m2 &mdash; feucht + Behaelter (g)</label><input class="rc-inp" type="number" id="wg-m2" placeholder="z.B. 145" oninput="cWG()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">m3 &mdash; trocken + Behaelter (g)</label><input class="rc-inp" type="number" id="wg-m3" placeholder="z.B. 132" oninput="cWG()"/></div>
+      <div class="rc-res" id="wg-res">w = &mdash; %</div>
+    </div>
+    <div class="rc-card">
+      <div class="rc-title">Trockendichte rd</div>
+      <div class="rc-desc">Aus Rohdichte und Wassergehalt</div>
+      <div class="rc-ig"><label class="rc-lbl">Rohdichte r (g/cm3)</label><input class="rc-inp" type="number" id="rd-r" placeholder="z.B. 1.92" step="0.01" oninput="cRD()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">Wassergehalt w (%)</label><input class="rc-inp" type="number" id="rd-w" placeholder="z.B. 10" step="0.1" oninput="cRD()"/></div>
+      <div class="rc-res" id="rd-res">rd = &mdash; g/cm3</div>
+    </div>
+    <div class="rc-card">
+      <div class="rc-title">Verdichtungsgrad Dpr</div>
+      <div class="rc-desc">Baustelle vs. Proctordichte</div>
+      <div class="rc-ig"><label class="rc-lbl">rd Baustelle (g/cm3)</label><input class="rc-inp" type="number" id="dpr-b" placeholder="z.B. 1.73" step="0.01" oninput="cDPR()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">rPr Proctordichte (g/cm3)</label><input class="rc-inp" type="number" id="dpr-p" placeholder="z.B. 1.80" step="0.01" oninput="cDPR()"/></div>
+      <div class="rc-res" id="dpr-res">Dpr = &mdash; %</div>
+    </div>
+    <div class="rc-card">
+      <div class="rc-title">Plastizitaetszahl IP</div>
+      <div class="rc-desc">Fliessgrenze &minus; Ausrollgrenze</div>
+      <div class="rc-ig"><label class="rc-lbl">Fliessgrenze wL (%)</label><input class="rc-inp" type="number" id="ip-wl" placeholder="z.B. 38" oninput="cIP()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">Ausrollgrenze wP (%)</label><input class="rc-inp" type="number" id="ip-wp" placeholder="z.B. 18" oninput="cIP()"/></div>
+      <div class="rc-res" id="ip-res">IP = &mdash; %</div>
+    </div>
+    <div class="rc-card">
+      <div class="rc-title">Konsistenzzahl IC</div>
+      <div class="rc-desc">Zustandsform bindiger Boeden</div>
+      <div class="rc-ig"><label class="rc-lbl">Fliessgrenze wL (%)</label><input class="rc-inp" type="number" id="ic-wl" placeholder="z.B. 38" oninput="cIC()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">Wassergehalt w (%)</label><input class="rc-inp" type="number" id="ic-w" placeholder="z.B. 24" oninput="cIC()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">Plastizitaetszahl IP (%)</label><input class="rc-inp" type="number" id="ic-ip" placeholder="z.B. 20" oninput="cIC()"/></div>
+      <div class="rc-res" id="ic-res">IC = &mdash;</div>
+    </div>
+    <div class="rc-card">
+      <div class="rc-title">Ev2/Ev1 Verhaeltnis</div>
+      <div class="rc-desc">Plattendruckversuch pruefen</div>
+      <div class="rc-ig"><label class="rc-lbl">Ev1 (MN/m2)</label><input class="rc-inp" type="number" id="ev1" placeholder="z.B. 65" oninput="cEV()"/></div>
+      <div class="rc-ig"><label class="rc-lbl">Ev2 (MN/m2)</label><input class="rc-inp" type="number" id="ev2" placeholder="z.B. 120" oninput="cEV()"/></div>
+      <div class="rc-res" id="ev-res">Ev2/Ev1 = &mdash;</div>
+    </div>
+  </div>
+</div>
+
+<!-- TABELLEN -->
+<div class="page" id="page-tabellen">
+  <div style="margin-bottom:18px;"><div style="font-family:var(--display);font-size:22px;font-weight:800;margin-bottom:5px;">Tabellen Geotechnik &#128202;</div></div>
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:var(--display);font-size:14px;font-weight:700;">Konsistenzzahl IC &mdash; Zustandsform bindiger Boeden</div>
+      <div class="tbl-box" style="margin:0;border:none;border-radius:0;"><table class="et"><thead><tr><th>IC</th><th>Zustand</th><th>Beschreibung</th></tr></thead><tbody>
+        <tr><td>&lt; 0</td><td>Fluessig</td><td>Breiig, flussig</td></tr>
+        <tr><td>0&ndash;0,25</td><td>Sehr weich</td><td>Kaum standfest</div></td></tr>
+        <tr><td>0,25&ndash;0,5</td><td>Weich</td><td>Mit Finger eindruckbar</td></tr>
+        <tr><td>0,5&ndash;0,75</td><td>Steif</td><td>Mit Fingernagel einritzbar</td></tr>
+        <tr><td>0,75&ndash;1,0</td><td>Halbfest</td><td>Schwer einritzbar</td></tr>
+        <tr><td>&gt; 1,0</td><td>Fest</td><td>Getrocknet, hart</td></tr>
+      </tbody></table></div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:var(--display);font-size:14px;font-weight:700;">Siebmaschenweiten &mdash; Standardsiebsatz DIN 18123</div>
+      <div class="tbl-box" style="margin:0;border:none;border-radius:0;"><table class="et"><thead><tr><th>Maschen (mm)</th><th>Fraktion</th><th>Bodenart</th></tr></thead><tbody>
+        <tr><td>0,002</td><td>Ton</td><td>T (Schlaemmanalyse)</td></tr>
+        <tr><td>0,063</td><td>Schluff/Ton-Grenze</td><td>Feinanteil</td></tr>
+        <tr><td>0,125 / 0,25 / 0,5</td><td>Feinsand</td><td>fS</td></tr>
+        <tr><td>1,0 / 2,0</td><td>Mittelsand</td><td>mS</td></tr>
+        <tr><td>4,0 / 8,0</td><td>Grobsand/Feinkies</td><td>gS/fG</td></tr>
+        <tr><td>16 / 31,5 / 63</td><td>Mittel/Grobkies</td><td>mG/gG</td></tr>
+      </tbody></table></div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:var(--display);font-size:14px;font-weight:700;">Mindest-Verdichtungsgrad Dpr (ZTV E-StB)</div>
+      <div class="tbl-box" style="margin:0;border:none;border-radius:0;"><table class="et"><thead><tr><th>Einbaubereich</th><th>Dpr (%)</th></tr></thead><tbody>
+        <tr><td>Unterbau (Strasse)</td><td>&ge; 97</td></tr>
+        <tr><td>Damm, allgemein</td><td>&ge; 95</td></tr>
+        <tr><td>Leitungsgraben</td><td>&ge; 97</td></tr>
+        <tr><td>Hinterfuellung Bauwerke</td><td>&ge; 97</td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+</div>
+
+  </div><!-- main -->
+</div><!-- content -->
+</div><!-- layout -->
+
+<!-- MOBILE BOTTOM -->
+<div class="mob-bottom" id="mob-bottom">
+  <button class="mbn active" data-id="proctor" onclick="show('proctor')"><span class="mbn-i">&#128309;</span><span class="mbn-l">Proctor</span></button>
+  <button class="mbn" data-id="platte" onclick="show('platte')"><span class="mbn-i">&#11035;</span><span class="mbn-l">Platte</span></button>
+  <button class="mbn" data-id="dpr" onclick="show('dpr')"><span class="mbn-i">&#128202;</span><span class="mbn-l">Dpr</span></button>
+  <button class="mbn" data-id="wassergehalt" onclick="show('wassergehalt')"><span class="mbn-i">&#128167;</span><span class="mbn-l">Wasser</span></button>
+  <button class="mbn" data-id="siebung" onclick="show('siebung')"><span class="mbn-i">&#9638;</span><span class="mbn-l">Siebung</span></button>
+  <button class="mbn" data-id="atterberg" onclick="show('atterberg')"><span class="mbn-i">&#128207;</span><span class="mbn-l">Atterb.</span></button>
+  <button class="mbn" data-id="karten" onclick="show('karten')"><span class="mbn-i">&#127183;</span><span class="mbn-l">Karten</span></button>
+  <button class="mbn" data-id="quiz" onclick="show('quiz')"><span class="mbn-i">&#129504;</span><span class="mbn-l">Quiz</span></button>
+  <button class="mbn" data-id="rechner" onclick="show('rechner')"><span class="mbn-i">&#129518;</span><span class="mbn-l">Rechn.</span></button>
+</div>
+
+<script>
+const H={proctor:'Proctorversuch &mdash; DIN 18127',platte:'Plattendruckversuch &mdash; DIN 18134',dpr:'Verdichtungsgrad Dpr',wassergehalt:'Wassergehalt &mdash; DIN 18121',siebung:'Siebanalyse &mdash; DIN 18123',atterberg:'Atterbergsche Grenzen',schlaemm:'Schlammanalyse',cbr:'CBR-Versuch',rammson:'Rammsondierung DPL',n18196:'DIN 18196 Bodenklassen',n18300:'DIN 18300 Erdarbeiten',n18127:'DIN 18127 Proctor',n18134:'DIN 18134 Platte',n18123:'DIN 18123 Siebung',n18122:'DIN 18122 Atterberg',karten:'Lernkarten Geotechnik',quiz:'Quiz Geotechnik',rechner:'Rechner Geotechnik',tabellen:'Tabellen Geotechnik'};
+function show(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));document.querySelectorAll('.mbn').forEach(i=>i.classList.remove('active'));const p=document.getElementById('page-'+id);if(p)p.classList.add('active');const si=document.querySelector('.sb-item[onclick="show(\''+id+'\')"]');if(si)si.classList.add('active');const mi=document.querySelector('.mbn[data-id="'+id+'"]');if(mi)mi.classList.add('active');document.getElementById('tb-h').innerHTML=H[id]||id;window.scrollTo(0,0);closeSB();}
+function toggleSB(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('mob-overlay').classList.toggle('open');}
+function closeSB(){document.getElementById('sidebar').classList.remove('open');document.getElementById('mob-overlay').classList.remove('open');}
+function switchTab(t,btn){document.querySelectorAll('.sbt').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('nav-a').style.display=t==='a'?'block':'none';document.getElementById('nav-n').style.display=t==='n'?'block':'none';document.getElementById('nav-z').style.display=t==='z'?'block':'none';if(t==='z')show('karten');if(t==='n')show('n18196');if(t==='a')show('proctor');}
+window.addEventListener('resize',()=>{document.querySelector('.mob-btn').style.display=window.innerWidth<=768?'flex':'none';});
+if(window.innerWidth<=768)document.querySelector('.mob-btn').style.display='flex';
+function upl(el){el.querySelector('input[type="file"]').click();}
+function prv(input){if(!input.files||!input.files[0])return;const r=new FileReader();r.onload=e=>{const p=input.closest('.stp-ph');p.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;"/>';};r.readAsDataURL(input.files[0]);}
+
+const KARTEN=[
+  {cat:'grundlagen',q:'Was ist die Proctordichte rPr?',a:'Die maximale Trockendichte bei optimaler Einbaufeuchte (wPr) und definierter Verdichtungsenergie im Proctorversuch.'},
+  {cat:'grundlagen',q:'Was beschreibt der Verdichtungsgrad Dpr?',a:'Dpr = rd,Baustelle / rPr x 100. Zeigt wie gut der eingebaute Boden verdichtet wurde. Ziel: mind. 97% (Strassenbau).'},
+  {cat:'formeln',q:'Wie berechnet man die Trockendichte rd?',a:'rd = r / (1 + w). r = Rohdichte, w = Wassergehalt als Dezimalzahl (z.B. 0,10 fuer 10%).'},
+  {cat:'formeln',q:'Wie berechnet man den Wassergehalt w?',a:'w = (m2-m3)/(m3-m1) x 100%. m1=Behaelter leer, m2=feucht+Behaelter, m3=trocken+Behaelter.'},
+  {cat:'formeln',q:'Wie berechnet man die Plastizitaetszahl IP?',a:'IP = wL - wP. IP < 7: wenig plastisch. IP 7-17: mittelpplastisch. IP > 17: sehr plastisch.'},
+  {cat:'normen',q:'Was regelt DIN 18127?',a:'Proctorversuch: Bestimmung der Proctordichte rPr und der optimalen Einbaufeuchte wPr.'},
+  {cat:'normen',q:'Was regelt DIN 18134?',a:'Plattendruckversuch: Bestimmung der Verformungsmoduln Ev1 und Ev2 am Bauwerk.'},
+  {cat:'normen',q:'Was regelt DIN 18196?',a:'Bodenklassifikation fuer bautechnische Zwecke nach Zusammensetzung (GW, SE, ML, CH usw.).'},
+  {cat:'praxis',q:'Wie viele Laststufen braucht der Proctorversuch?',a:'Mindestens 5 Wassergehaltsstufen fuer eine aussagekraeftige Proctor-Kurve mit sicherem Maximum.'},
+  {cat:'praxis',q:'Was bedeutet Ev2/Ev1 <= 2,2?',a:'Ausreichende Verdichtung. Der Wiederbelastungsmodul darf max. 2,2x groesser sein als der Erstbelastungsmodul.'},
+  {cat:'grundlagen',q:'Was ist die Konsistenzzahl IC?',a:'IC = (wL-w)/IP. IC<0: fluessig. 0-0,5: weich. 0,5-0,75: steif. 0,75-1: halbfest. >1: fest.'},
+  {cat:'formeln',q:'Wie berechnet man den CBR-Wert?',a:'CBR (%) = Messkraft / Standardkraft x 100. Standardkraft bei 2,5mm: 13,2 kN.'},
+  {cat:'grundlagen',q:'Was ist die Fliessgrenze wL?',a:'Wassergehalt, bei dem der Boden vom plastischen in den fluessigen Zustand uebergeht. Casagrande: 25 Schlaege.'},
+  {cat:'normen',q:'Was beschreibt DIN 18300?',a:'VOB/C Erdarbeiten: Bodenklassen 1-7 nach Loesbarkeit. 1=Oberboden, 7=schwer loesbarer Fels.'},
+  {cat:'praxis',q:'Bei welcher Temperatur wird Boden fuer w getrocknet?',a:'105 +/- 5 Grad Celsius, mind. 24h. Ausnahme: organische Boeden und Gips nur 60 Grad.'},
+];
+let fcData=[...KARTEN],fcIdx=0,fcOk=0;
+function filterFC(cat,btn){document.querySelectorAll('.fc-fb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');fcData=cat==='alle'?[...KARTEN]:KARTEN.filter(k=>k.cat===cat);fcIdx=0;fcOk=0;document.getElementById('flashcard').classList.remove('flipped');renderFC();}
+function renderFC(){if(!fcData.length)return;const c=fcData[fcIdx];document.getElementById('fc-stat').textContent='Karte '+(fcIdx+1)+' von '+fcData.length+' · '+fcOk+' gewusst';document.getElementById('fc-cat').textContent=c.cat.toUpperCase();document.getElementById('fc-q').textContent=c.q;document.getElementById('fc-a').textContent=c.a;document.getElementById('flashcard').classList.remove('flipped');}
+function flipFC(){document.getElementById('flashcard').classList.toggle('flipped');}
+function nextFC(){fcIdx=(fcIdx+1)%fcData.length;renderFC();}
+function rateFC(ok){if(ok)fcOk=Math.min(fcOk+1,fcData.length);nextFC();}
+
+const QUIZ=[
+  {q:'Wie lautet die Formel fuer den Wassergehalt w?',opts:['w=m2/(m3-m1)','w=(m2-m3)/(m3-m1)x100','w=(m3-m1)/m2x100','w=m2-m3/m1'],correct:1,ex:'w=(m2-m3)/(m3-m1)x100. Zaehler=Wassermasse, Nenner=Trockenmasse.'},
+  {q:'Wie viele Schlaege je Lage beim normalen Proctorversuch (Diam 100mm)?',opts:['15','25','35','55'],correct:1,ex:'25 Schlaege je Lage, 3 Lagen = 75 gesamt. Hammer 2,5 kg, Fallhoehe 300mm.'},
+  {q:'Was ist die Proctordichte?',opts:['Hoechste moegliche Dichte','Max. Trockendichte bei optimaler Feuchte','Rohdichte des Bodens','Dichte der Bodenkoerner'],correct:1,ex:'rPr ist die maximale Trockendichte bei optimaler Einbaufeuchte wPr im Proctorversuch.'},
+  {q:'Welchen Maximaldruck hat der Plattendruckversuch nach DIN 18134?',opts:['0,3 MN/m2','0,5 MN/m2','1,0 MN/m2','0,25 MN/m2'],correct:1,ex:'Maximaler Pruufdruck: 0,5 MN/m2 = 500 kPa = 5 bar. Zwei Zyklen: Ev1 und Ev2.'},
+  {q:'Was bedeutet Ev2/Ev1 <= 2,2?',opts:['Zu hohe Tragfaehigkeit','Ausreichende Verdichtung','Zu weicher Boden','Falsches Pruefgeraet'],correct:1,ex:'Ev2/Ev1 <= 2,2 zeigt ausreichende Verdichtung. Hoehere Werte = plastische Verformungen.'},
+  {q:'Welche Siebgroesse trennt Feinkorn von Grobkorn?',opts:['0,02mm','0,04mm','0,063mm','0,1mm'],correct:2,ex:'0,063mm ist die Grenze Fein-/Grobkorn nach DIN 18123.'},
+  {q:'Wie wird die Trockendichte berechnet?',opts:['rd=r x(1+w)','rd=r/(1+w)','rd=r-w','rd=r xw'],correct:1,ex:'rd=r/(1+w). w als Dezimalzahl einsetzen (z.B. 0,10 fuer 10%).'},
+  {q:'Was ist die Plastizitaetszahl IP?',opts:['IP=wP/wL','IP=wLxwP','IP=wL-wP','IP=wL+wP'],correct:2,ex:'IP=wL-wP. IP<7: wenig plastisch. 7-17: mittelpplastisch. >17: sehr plastisch.'},
+  {q:'Welche Bodengruppe nach DIN 18196 bezeichnet weitgestuften Kies?',opts:['SE','GW','ML','CH'],correct:1,ex:'GW=Kies, weitgestuft. Cu>6, Cc 1-3. Sehr gut tragfaehig und verdichtbar.'},
+  {q:'Was regelt DIN 18300?',opts:['Proctorversuch','Klassifikation','Erdarbeiten Klassen 1-7','Setzung'],correct:2,ex:'DIN 18300 VOB/C: Erdarbeiten, Bodenklassen 1 (Oberboden) bis 7 (Fels).'},
+  {q:'Bei welcher Temperatur wird Boden fuer den Wassergehalt getrocknet?',opts:['60C','80C','105C','120C'],correct:2,ex:'105 +/- 5 Grad C, mind. 24h. Organische Boeden und Gips: nur 60 Grad.'},
+  {q:'Was ist die Konsistenzzahl IC=0,6?',opts:['Fluessig','Weich','Steif','Fest'],correct:2,ex:'IC 0,5-0,75=steif. IC<0=fluessig, 0-0,25=sehr weich, 0,25-0,5=weich, 0,75-1=halbfest, >1=fest.'},
+  {q:'Wie viele Proben braucht der Proctorversuch?',opts:['2','3','5','8'],correct:2,ex:'Mind. 5 Proben mit unterschiedlichen Wassergehalten, um das Maximum sicher zu bestimmen.'},
+  {q:'Was misst die Rammsondierung DPL?',opts:['Korngroesse','Schlagzahl N10','Wassergehalt','Scherfestigkeit'],correct:1,ex:'N10=Anzahl Schlaege pro 10cm. Hammer 10kg, Fallhoehe 500mm. Hinweis auf Lagerungsdichte.'},
+  {q:'Welcher Verdichtungsgrad Dpr ist fuer Strassenunterbau gefordert?',opts:['90%','95%','97%','100%'],correct:2,ex:'Fuer Strassenunterbau (Planum) nach ZTV E-StB: Dpr >= 97%.'},
+];
+let qIdx=0,qScore=0,qAnswered=false;
+function renderQZ(){document.getElementById('qz-area').style.display='block';document.getElementById('qz-result').style.display='none';const q=QUIZ[qIdx];document.getElementById('qz-num').textContent='Frage '+(qIdx+1)+' / '+QUIZ.length;document.getElementById('qz-score').textContent=qScore+' richtig';document.getElementById('qz-pb').style.width=((qIdx+1)/QUIZ.length*100)+'%';document.getElementById('qz-q').textContent=q.q;document.getElementById('qz-opts').innerHTML=q.opts.map((o,i)=>'<button class="qz-opt" onclick="answerQZ('+i+')">'+o+'</button>').join('');document.getElementById('qz-expl').className='qz-expl';document.getElementById('qz-next').className='qz-next';qAnswered=false;}
+function answerQZ(idx){if(qAnswered)return;qAnswered=true;const q=QUIZ[qIdx];document.querySelectorAll('.qz-opt').forEach(b=>b.disabled=true);document.querySelectorAll('.qz-opt')[q.correct].classList.add('correct');if(idx!==q.correct)document.querySelectorAll('.qz-opt')[idx].classList.add('wrong');else qScore++;document.getElementById('qz-expl').innerHTML='<strong>Erklaerung:</strong> '+q.ex;document.getElementById('qz-expl').className='qz-expl show';document.getElementById('qz-next').className='qz-next show';document.getElementById('qz-score').textContent=qScore+' richtig';}
+function nextQZ(){qIdx++;if(qIdx>=QUIZ.length){document.getElementById('qz-area').style.display='none';const pct=Math.round(qScore/QUIZ.length*100);document.getElementById('qz-result').style.display='block';document.getElementById('qz-ico').textContent=pct>=80?'&#127942;':pct>=60?'&#128077;':'&#128218;';document.getElementById('qz-rtitle').textContent=pct>=80?'Ausgezeichnet!':pct>=60?'Gut gemacht!':'Weiter ueben!';document.getElementById('qz-rsub').textContent=qScore+' von '+QUIZ.length+' richtig ('+pct+'%)';}else{renderQZ();}}
+function restartQZ(){qIdx=0;qScore=0;qAnswered=false;renderQZ();}
+function cWG(){const m1=+document.getElementById('wg-m1').value,m2=+document.getElementById('wg-m2').value,m3=+document.getElementById('wg-m3').value;const el=document.getElementById('wg-res');if(!m1||!m2||!m3){el.textContent='w = -- %';el.className='rc-res';return;}const w=((m2-m3)/(m3-m1)*100).toFixed(1);el.textContent='w = '+w+' %';el.className='rc-res ok';}
+function cRD(){const r=+document.getElementById('rd-r').value,w=+document.getElementById('rd-w').value;const el=document.getElementById('rd-res');if(!r){el.textContent='rd = -- g/cm3';el.className='rc-res';return;}const rd=(r/(1+w/100)).toFixed(3);el.textContent='rd = '+rd+' g/cm3';el.className='rc-res ok';}
+function cDPR(){const b=+document.getElementById('dpr-b').value,p=+document.getElementById('dpr-p').value;const el=document.getElementById('dpr-res');if(!b||!p){el.textContent='Dpr = -- %';el.className='rc-res';return;}const d=(b/p*100).toFixed(1);el.textContent='Dpr = '+d+'% '+(d>=97?'OK':'zu gering');el.className='rc-res'+(d>=97?' ok':' bad');}
+function cIP(){const wl=+document.getElementById('ip-wl').value,wp=+document.getElementById('ip-wp').value;const el=document.getElementById('ip-res');if(!wl||!wp){el.textContent='IP = -- %';el.className='rc-res';return;}const ip=(wl-wp).toFixed(1);const cls=ip<7?'wenig plastisch':ip<=17?'mittelpplastisch':'sehr plastisch';el.textContent='IP = '+ip+'% ('+cls+')';el.className='rc-res ok';}
+function cIC(){const wl=+document.getElementById('ic-wl').value,w=+document.getElementById('ic-w').value,ip=+document.getElementById('ic-ip').value;const el=document.getElementById('ic-res');if(!wl||!ip){el.textContent='IC = --';el.className='rc-res';return;}const ic=((wl-w)/ip).toFixed(2);const z=ic<0?'fluessig':ic<0.25?'sehr weich':ic<0.5?'weich':ic<0.75?'steif':ic<1?'halbfest':'fest';el.textContent='IC = '+ic+' ('+z+')';el.className='rc-res ok';}
+function cEV(){const e1=+document.getElementById('ev1').value,e2=+document.getElementById('ev2').value;const el=document.getElementById('ev-res');if(!e1||!e2){el.textContent='Ev2/Ev1 = --';el.className='rc-res';return;}const ratio=(e2/e1).toFixed(2);el.textContent='Ev2/Ev1 = '+ratio+' '+(ratio<=2.2?'OK':'zu hoch');el.className='rc-res'+(ratio<=2.2?' ok':' bad');}
+renderFC();renderQZ();
+</script>
+</body>
+</html>

@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BetonCheck Pro — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Space Grotesk',sans-serif;background:#020408;color:#e8f0fe;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(79,159,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(79,159,255,.025) 1px,transparent 1px);background-size:52px 52px;pointer-events:none;}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;z-index:100;background:#020408;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{width:100%;max-width:400px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:36px 32px;position:relative;z-index:2;}
+.lb-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+.lb-mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#020408;font-family:'JetBrains Mono',monospace;}
+.lb-text{font-size:14px;font-weight:600;}
+.lb-text span{color:#f59e0b;}
+.lb-title{font-family:'Instrument Serif',serif;font-size:24px;margin-bottom:6px;}
+.lb-sub{font-size:12px;color:#6b8299;margin-bottom:24px;font-weight:300;}
+.lb-field{margin-bottom:14px;}
+.lb-label{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;color:#6b8299;margin-bottom:5px;display:block;}
+.lb-input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:11px 13px;color:#e8f0fe;font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none;transition:border-color .2s;}
+.lb-input:focus{border-color:rgba(245,158,11,.4);}
+.lb-input::placeholder{color:#3d5066;}
+.btn-lb{width:100%;padding:13px;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:9px;color:#020408;font-size:14px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .2s;margin-top:4px;}
+.btn-lb:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(245,158,11,.25);}
+.lb-err{font-size:11px;color:#f87171;text-align:center;margin-top:8px;min-height:16px;font-family:'JetBrains Mono',monospace;}
+.lb-warn{font-size:10px;color:#f59e0b;text-align:center;margin-top:10px;font-family:'JetBrains Mono',monospace;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15);border-radius:7px;padding:7px;}
+
+/* SHELL */
+#admin-shell{display:none;height:100vh;flex-direction:row;overflow:hidden;position:relative;z-index:1;}
+#admin-shell.active{display:flex;}
+
+/* SIDEBAR */
+.sb{width:220px;flex-shrink:0;background:rgba(8,12,20,.96);border-right:1px solid rgba(245,158,11,.07);display:flex;flex-direction:column;height:100vh;overflow-y:auto;}
+.sb-head{padding:18px 14px 13px;border-bottom:1px solid rgba(245,158,11,.07);}
+.sb-logo{display:flex;align-items:center;gap:9px;margin-bottom:5px;}
+.sb-mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#020408;font-family:'JetBrains Mono',monospace;}
+.sb-title{font-size:13px;font-weight:600;}
+.sb-title span{color:#f59e0b;}
+.sb-badge{font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;color:#f59e0b;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);padding:2px 8px;border-radius:100px;}
+.sb-nav{padding:10px 8px;flex:1;}
+.sb-sec{margin-bottom:14px;}
+.sb-lbl{font-size:8px;color:#1e2d3d;font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;padding:0 8px;margin-bottom:4px;}
+.sbn{display:flex;align-items:center;gap:8px;width:100%;padding:9px 10px;border-radius:8px;background:none;border:1px solid transparent;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;color:#64748b;transition:all .12s;text-align:left;}
+.sbn:hover{background:rgba(255,255,255,.04);color:#e8f0fe;}
+.sbn.active{background:rgba(245,158,11,.1);color:#f59e0b;border-color:rgba(245,158,11,.18);}
+.sb-ico{font-size:14px;width:17px;text-align:center;flex-shrink:0;}
+.sb-div{height:1px;background:rgba(255,255,255,.05);margin:6px 10px;}
+.sb-logout{margin:10px 8px;padding:9px 10px;border-radius:8px;background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.12);cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;color:#f87171;display:flex;align-items:center;gap:8px;transition:all .15s;width:calc(100% - 16px);}
+.sb-logout:hover{background:rgba(248,113,113,.12);}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.topbar{height:50px;background:rgba(8,12,20,.9);border-bottom:1px solid rgba(245,158,11,.07);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
+.tb-title{font-family:'Instrument Serif',serif;font-size:15px;}
+.tb-right{font-size:10px;color:#2d3f52;font-family:'JetBrains Mono',monospace;}
+.content{flex:1;overflow-y:auto;padding:28px 32px;-webkit-overflow-scrolling:touch;}
+
+/* CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px;}
+.stat-card{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:13px;padding:22px 20px;transition:all .2s;}
+.stat-card:hover{border-color:rgba(255,255,255,.1);}
+.sc-num{font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:500;line-height:1;margin-bottom:5px;}
+.sc-lbl{font-size:11px;color:#6b8299;font-weight:300;}
+
+/* PANEL */
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* TABLE */
+.tbl-wrap{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:13px;overflow:hidden;margin-top:20px;}
+.tbl-head{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;}
+.tbl-title{font-size:14px;font-weight:600;}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{padding:10px 16px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#6b8299;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);}
+.tbl td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);color:#8aa3b8;vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(255,255,255,.02);}
+.tbl td:first-child{color:#e8f0fe;font-weight:500;}
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:100px;font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;}
+.badge-pruefer{background:rgba(79,159,255,.1);color:#4f9fff;border:1px solid rgba(79,159,255,.2);}
+.badge-azubi{background:rgba(0,212,170,.1);color:#00d4aa;border:1px solid rgba(0,212,170,.2);}
+.badge-admin{background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.2);}
+.badge-active{background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.2);}
+.badge-inactive{background:rgba(255,255,255,.06);color:#6b8299;border:1px solid rgba(255,255,255,.1);}
+.badge-pro{background:rgba(79,159,255,.1);color:#4f9fff;border:1px solid rgba(79,159,255,.2);}
+.badge-free{background:rgba(255,255,255,.06);color:#6b8299;border:1px solid rgba(255,255,255,.08);}
+.badge-enterprise{background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.2);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .2s;border:none;}
+.btn-primary{background:#4f9fff;color:#020408;}
+.btn-primary:hover{background:#6aadff;}
+.btn-gold{background:#f59e0b;color:#020408;}
+.btn-gold:hover{background:#fbbf24;}
+.btn-danger{background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.2);}
+.btn-danger:hover{background:rgba(248,113,113,.2);}
+.btn-ghost{background:rgba(255,255,255,.05);color:#e8f0fe;border:1px solid rgba(255,255,255,.08);}
+.btn-ghost:hover{background:rgba(255,255,255,.09);}
+.btn-sm{padding:5px 11px;font-size:11px;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:#0c1118;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:32px;width:100%;max-width:480px;position:relative;}
+.modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.06);border:none;color:#6b8299;width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:rgba(255,255,255,.1);color:#e8f0fe;}
+.modal-title{font-family:'Instrument Serif',serif;font-size:22px;margin-bottom:6px;}
+.modal-sub{font-size:12px;color:#6b8299;font-weight:300;margin-bottom:24px;}
+.form-field{margin-bottom:16px;}
+.form-label{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;color:#6b8299;margin-bottom:5px;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:11px 13px;color:#e8f0fe;font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none;transition:border-color .2s;}
+.form-input:focus{border-color:rgba(245,158,11,.35);}
+.form-input::placeholder{color:#3d5066;}
+.form-select{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:11px 13px;color:#e8f0fe;font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none;cursor:pointer;}
+.form-select option{background:#0c1118;color:#e8f0fe;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;}
+
+/* SUCCESS / ERROR TOASTS */
+.toast{position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;display:none;align-items:center;gap:10px;animation:slideIn .3s ease;}
+.toast.show{display:flex;}
+.toast-success{background:#10b981;color:#020408;}
+.toast-error{background:#ef4444;color:#fff;}
+@keyframes slideIn{from{transform:translateX(100px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:60px 20px;color:#3d5066;}
+.empty-ico{font-size:40px;margin-bottom:12px;opacity:.5;}
+.empty-t{font-size:14px;font-weight:500;margin-bottom:6px;color:#6b8299;}
+.empty-s{font-size:12px;font-weight:300;}
+
+/* SECTION HEADER */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.sec-title{font-family:'Instrument Serif',serif;font-size:22px;}
+.sec-sub{font-size:13px;color:#6b8299;font-weight:300;margin-bottom:20px;}
+
+/* PLAN CARDS */
+.plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px;}
+.plan-card{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px;transition:all .2s;}
+.plan-card:hover{border-color:rgba(255,255,255,.1);}
+.plan-name{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:#6b8299;margin-bottom:8px;}
+.plan-price{font-family:'Instrument Serif',serif;font-size:32px;line-height:1;margin-bottom:4px;}
+.plan-period{font-size:10px;color:#6b8299;font-family:'JetBrains Mono',monospace;}
+.plan-count{font-size:22px;font-weight:600;margin-top:12px;}
+.plan-count-lbl{font-size:10px;color:#6b8299;}
+
+@media(max-width:768px){
+  .sb{display:none;}
+  .content{padding:18px 14px;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="lb-logo">
+      <div class="lb-mark">A</div>
+      <div class="lb-text">Beton<span>Check</span> Admin</div>
+    </div>
+    <div class="lb-title">Admin-Bereich</div>
+    <p class="lb-sub">Nur für Administratoren. Firmen- und Nutzerverwaltung.</p>
+    <div class="lb-field">
+      <label class="lb-label">Admin E-Mail</label>
+      <input class="lb-input" type="email" id="a-email" placeholder="admin@betoncheck.de"/>
+    </div>
+    <div class="lb-field">
+      <label class="lb-label">Passwort</label>
+      <input class="lb-input" type="password" id="a-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()"/>
+    </div>
+    <button class="btn-lb" onclick="adminLogin()">Admin-Login</button>
+    <div class="lb-err" id="a-err"></div>
+    <div class="lb-warn">⚠ Dieser Bereich ist nur für Administratoren. Alle Aktionen werden protokolliert.</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast toast-success" id="toast-ok">✓ <span id="toast-ok-msg">Gespeichert</span></div>
+<div class="toast toast-error" id="toast-err">✕ <span id="toast-err-msg">Fehler</span></div>
+
+<!-- ADMIN SHELL -->
+<div id="admin-shell">
+  <div class="sb">
+    <div class="sb-head">
+      <div class="sb-logo"><div class="sb-mark">A</div><div class="sb-title">Beton<span>Check</span></div></div>
+      <span class="sb-badge">Admin Panel</span>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-sec">
+        <div class="sb-lbl">Übersicht</div>
+        <button class="sbn active" onclick="showPage('dashboard')"><span class="sb-ico">📊</span>Dashboard</button>
+      </div>
+      <div class="sb-div"></div>
+      <div class="sb-sec">
+        <div class="sb-lbl">Firmen</div>
+        <button class="sbn" onclick="showPage('firmen')"><span class="sb-ico">🏢</span>Alle Firmen</button>
+        <button class="sbn" onclick="openModal('modal-firma')"><span class="sb-ico">➕</span>Firma anlegen</button>
+      </div>
+      <div class="sb-div"></div>
+      <div class="sb-sec">
+        <div class="sb-lbl">Nutzer</div>
+        <button class="sbn" onclick="showPage('nutzer')"><span class="sb-ico">👥</span>Alle Nutzer</button>
+        <button class="sbn" onclick="openModal('modal-nutzer')"><span class="sb-ico">➕</span>Nutzer einladen</button>
+      </div>
+      <div class="sb-div"></div>
+      <div class="sb-sec">
+        <div class="sb-lbl">Abonnements</div>
+        <button class="sbn" onclick="showPage('abos')"><span class="sb-ico">💳</span>Abo-Übersicht</button>
+        <button class="sbn" onclick="showPage('stripe')"><span class="sb-ico">⚡</span>Stripe Setup</button>
+      </div>
+      <div class="sb-div"></div>
+      <div class="sb-sec">
+        <div class="sb-lbl">System</div>
+        <button class="sbn" onclick="showPage('einstellungen')"><span class="sb-ico">⚙️</span>Einstellungen</button>
+        <a href="app.html" class="sbn"><span class="sb-ico">↩</span>Zur App</a>
+      </div>
+    </div>
+    <button class="sb-logout" onclick="adminLogout()">↩ Abmelden</button>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-title" id="page-title">Dashboard</div>
+      <div class="tb-right" id="admin-email-display">—</div>
+    </div>
+    <div class="content" id="main-content">
+
+      <!-- DASHBOARD -->
+      <div class="panel active" id="page-dashboard">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="sc-num" style="color:#4f9fff" id="stat-firmen">0</div><div class="sc-lbl">Registrierte Firmen</div></div>
+          <div class="stat-card"><div class="sc-num" style="color:#00d4aa" id="stat-nutzer">0</div><div class="sc-lbl">Aktive Nutzer</div></div>
+          <div class="stat-card"><div class="sc-num" style="color:#f59e0b" id="stat-pro">0</div><div class="sc-lbl">Pro-Abonnements</div></div>
+          <div class="stat-card"><div class="sc-num" style="color:#a78bfa" id="stat-revenue">0€</div><div class="sc-lbl">Monatlicher Umsatz (MRR)</div></div>
+        </div>
+        <div class="plan-grid">
+          <div class="plan-card"><div class="plan-name">Azubi (Free)</div><div class="plan-price" style="color:#6b8299">0€</div><div class="plan-period">/ Monat</div><div class="plan-count" id="cnt-free" style="color:#6b8299">0</div><div class="plan-count-lbl">aktive Nutzer</div></div>
+          <div class="plan-card"><div class="plan-name">Professional</div><div class="plan-price" style="color:#4f9fff">49€</div><div class="plan-period">/ Monat</div><div class="plan-count" id="cnt-pro" style="color:#4f9fff">0</div><div class="plan-count-lbl">Firmen</div></div>
+          <div class="plan-card"><div class="plan-name">Enterprise</div><div class="plan-price" style="color:#f59e0b">99€</div><div class="plan-period">/ Monat</div><div class="plan-count" id="cnt-ent" style="color:#f59e0b">0</div><div class="plan-count-lbl">Firmen</div></div>
+        </div>
+        <div class="tbl-wrap">
+          <div class="tbl-head"><div class="tbl-title">Zuletzt registrierte Firmen</div></div>
+          <table class="tbl"><thead><tr><th>Firma</th><th>Plan</th><th>Nutzer</th><th>Registriert</th><th>Status</th></tr></thead>
+          <tbody id="recent-firmen"><tr><td colspan="5" style="text-align:center;padding:24px;color:#3d5066;font-family:JetBrains Mono,monospace;font-size:11px;">Noch keine Firmen registriert</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- FIRMEN -->
+      <div class="panel" id="page-firmen">
+        <div class="sec-head">
+          <div><div class="sec-title">Firmen</div><p class="sec-sub">Alle registrierten Unternehmen verwalten.</p></div>
+          <button class="btn btn-gold" onclick="openModal('modal-firma')">➕ Firma anlegen</button>
+        </div>
+        <div class="tbl-wrap">
+          <div class="tbl-head">
+            <div class="tbl-title">Alle Firmen</div>
+            <input type="text" placeholder="Suchen…" oninput="filterFirmen(this.value)" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:6px 12px;color:#e8f0fe;font-family:'Space Grotesk',sans-serif;font-size:12px;outline:none;width:200px;">
+          </div>
+          <table class="tbl"><thead><tr><th>Firma</th><th>E-Mail</th><th>Plan</th><th>Nutzer</th><th>Erstellt</th><th>Status</th><th>Aktionen</th></tr></thead>
+          <tbody id="firmen-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- NUTZER -->
+      <div class="panel" id="page-nutzer">
+        <div class="sec-head">
+          <div><div class="sec-title">Nutzer</div><p class="sec-sub">Alle Nutzer über alle Firmen.</p></div>
+          <button class="btn btn-primary" onclick="openModal('modal-nutzer')">➕ Nutzer einladen</button>
+        </div>
+        <div class="tbl-wrap">
+          <div class="tbl-head">
+            <div class="tbl-title">Alle Nutzer</div>
+            <input type="text" placeholder="Suchen…" oninput="filterNutzer(this.value)" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:6px 12px;color:#e8f0fe;font-family:'Space Grotesk',sans-serif;font-size:12px;outline:none;width:200px;">
+          </div>
+          <table class="tbl"><thead><tr><th>E-Mail</th><th>Firma</th><th>Rolle</th><th>Erstellt</th><th>Status</th><th>Aktionen</th></tr></thead>
+          <tbody id="nutzer-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ABOS -->
+      <div class="panel" id="page-abos">
+        <div class="sec-title" style="margin-bottom:6px;">Abo-Übersicht</div>
+        <p class="sec-sub">Alle aktiven Abonnements im Überblick.</p>
+        <div class="tbl-wrap">
+          <table class="tbl"><thead><tr><th>Firma</th><th>Plan</th><th>Monatlich</th><th>Nutzer</th><th>Seit</th><th>Nächste Zahlung</th><th>Status</th></tr></thead>
+          <tbody id="abos-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- STRIPE SETUP -->
+      <div class="panel" id="page-stripe">
+        <div class="sec-title" style="margin-bottom:6px;">Stripe Setup</div>
+        <p class="sec-sub">Verbinde dein Stripe-Konto für Zahlungen.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:800px;">
+          <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:24px;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:5px;">Schritt 1 — Stripe Account</div>
+            <div style="font-size:12px;color:#6b8299;font-weight:300;margin-bottom:16px;line-height:1.6;">Registriere dich kostenlos auf stripe.com. Kein Kreditkarte nötig — zahlen tust du erst wenn Kunden zahlen (1,4% + 25ct pro Transaktion).</div>
+            <a href="https://stripe.com" target="_blank" class="btn btn-ghost" style="font-size:12px;">stripe.com öffnen →</a>
+          </div>
+          <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:24px;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:5px;">Schritt 2 — API Keys</div>
+            <div style="font-size:12px;color:#6b8299;font-weight:300;margin-bottom:16px;line-height:1.6;">In Stripe unter Developers → API Keys deinen Publishable Key (pk_live_...) hier eintragen.</div>
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="form-label">Stripe Publishable Key</label>
+              <input class="form-input" type="text" id="stripe-pk" placeholder="pk_live_..." style="font-family:'JetBrains Mono',monospace;font-size:11px;"/>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:24px;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:5px;">Schritt 3 — Payment Links</div>
+            <div style="font-size:12px;color:#6b8299;font-weight:300;margin-bottom:16px;line-height:1.6;">In Stripe unter Products → Payment Links je einen Link für Pro (49€) und Enterprise (99€) anlegen. Die Links hier eintragen.</div>
+            <div class="form-field">
+              <label class="form-label">Pro 49€/Monat Link</label>
+              <input class="form-input" type="text" id="link-pro" placeholder="https://buy.stripe.com/..." style="font-size:11px;font-family:'JetBrains Mono',monospace;"/>
+            </div>
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="form-label">Enterprise 99€/Monat Link</label>
+              <input class="form-input" type="text" id="link-ent" placeholder="https://buy.stripe.com/..." style="font-size:11px;font-family:'JetBrains Mono',monospace;"/>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:24px;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:5px;">Schritt 4 — Speichern & Testen</div>
+            <div style="font-size:12px;color:#6b8299;font-weight:300;margin-bottom:16px;line-height:1.6;">Nach dem Speichern erscheinen die Stripe-Links automatisch auf der Preisseite der Website und in der App.</div>
+            <button class="btn btn-gold" onclick="saveStripe()" style="width:100%;justify-content:center;">Stripe-Daten speichern</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- EINSTELLUNGEN -->
+      <div class="panel" id="page-einstellungen">
+        <div class="sec-title" style="margin-bottom:6px;">Einstellungen</div>
+        <p class="sec-sub">System- und App-Konfiguration.</p>
+        <div style="max-width:600px;display:flex;flex-direction:column;gap:14px;">
+          <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:22px;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:14px;">App-Name & Branding</div>
+            <div class="form-field"><label class="form-label">App-Name</label><input class="form-input" type="text" id="cfg-appname" value="BetonCheck Pro"/></div>
+            <div class="form-field" style="margin-bottom:0;"><label class="form-label">Support E-Mail</label><input class="form-input" type="email" id="cfg-email" placeholder="info@betoncheck.de"/></div>
+          </div>
+          <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:22px;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:14px;">Neuen Admin anlegen</div>
+            <div class="form-field"><label class="form-label">Admin E-Mail</label><input class="form-input" type="email" id="cfg-admin-email" placeholder="neuer@admin.de"/></div>
+            <div class="form-field" style="margin-bottom:16px;"><label class="form-label">Temporäres Passwort</label><input class="form-input" type="text" id="cfg-admin-pw" placeholder="min. 8 Zeichen"/></div>
+            <button class="btn btn-gold" onclick="createAdmin()">Admin anlegen</button>
+          </div>
+          <button class="btn btn-primary" onclick="saveSettings()" style="align-self:flex-start;">Einstellungen speichern</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: FIRMA ANLEGEN -->
+<div class="modal-overlay" id="modal-firma">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-firma')">✕</button>
+    <div class="modal-title">Firma anlegen</div>
+    <p class="modal-sub">Neues Unternehmen im System registrieren.</p>
+    <div class="form-field"><label class="form-label">Firmenname *</label><input class="form-input" type="text" id="f-name" placeholder="Musterbau GmbH"/></div>
+    <div class="form-field"><label class="form-label">E-Mail (Admin der Firma) *</label><input class="form-input" type="email" id="f-email" placeholder="admin@musterbau.de"/></div>
+    <div class="form-field"><label class="form-label">Telefon</label><input class="form-input" type="tel" id="f-tel" placeholder="+49 123 456789"/></div>
+    <div class="form-field"><label class="form-label">Abo-Plan *</label>
+      <select class="form-select" id="f-plan">
+        <option value="free">Azubi (kostenlos)</option>
+        <option value="pro" selected>Professional (49€/Monat)</option>
+        <option value="enterprise">Enterprise (99€/Monat)</option>
+      </select>
+    </div>
+    <div class="form-field"><label class="form-label">Max. Nutzer</label><input class="form-input" type="number" id="f-maxuser" placeholder="10" value="10"/></div>
+    <div class="form-field" style="margin-bottom:0;"><label class="form-label">Notizen (intern)</label><textarea class="form-input" id="f-notes" rows="2" placeholder="Interne Notizen…" style="resize:vertical;"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-firma')">Abbrechen</button>
+      <button class="btn btn-gold" onclick="createFirma()">Firma anlegen</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NUTZER EINLADEN -->
+<div class="modal-overlay" id="modal-nutzer">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-nutzer')">✕</button>
+    <div class="modal-title">Nutzer einladen</div>
+    <p class="modal-sub">Neuen Nutzer registrieren und einer Firma zuweisen.</p>
+    <div class="form-field"><label class="form-label">E-Mail *</label><input class="form-input" type="email" id="n-email" placeholder="pruefer@firma.de"/></div>
+    <div class="form-field"><label class="form-label">Temporäres Passwort *</label><input class="form-input" type="text" id="n-pw" placeholder="min. 6 Zeichen"/></div>
+    <div class="form-field"><label class="form-label">Rolle *</label>
+      <select class="form-select" id="n-role">
+        <option value="pruefer">🔬 Prüfer</option>
+        <option value="azubi">📚 Azubi</option>
+        <option value="admin">⚙️ Firmen-Admin</option>
+      </select>
+    </div>
+    <div class="form-field" style="margin-bottom:0;"><label class="form-label">Firma *</label>
+      <select class="form-select" id="n-firma"><option value="">-- Firma wählen --</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-nutzer')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="createNutzer()">Nutzer anlegen</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: FIRMA BEARBEITEN -->
+<div class="modal-overlay" id="modal-edit-firma">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-edit-firma')">✕</button>
+    <div class="modal-title">Firma bearbeiten</div>
+    <input type="hidden" id="ef-id"/>
+    <div class="form-field"><label class="form-label">Firmenname</label><input class="form-input" type="text" id="ef-name"/></div>
+    <div class="form-field"><label class="form-label">E-Mail</label><input class="form-input" type="email" id="ef-email"/></div>
+    <div class="form-field"><label class="form-label">Abo-Plan</label>
+      <select class="form-select" id="ef-plan">
+        <option value="free">Azubi (kostenlos)</option>
+        <option value="pro">Professional (49€/Monat)</option>
+        <option value="enterprise">Enterprise (99€/Monat)</option>
+      </select>
+    </div>
+    <div class="form-field"><label class="form-label">Status</label>
+      <select class="form-select" id="ef-status">
+        <option value="active">Aktiv</option>
+        <option value="inactive">Inaktiv</option>
+        <option value="suspended">Gesperrt</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-firma')">Abbrechen</button>
+      <button class="btn btn-gold" onclick="saveFirmaEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── FIREBASE ───
+const fbConfig = {
+  apiKey: "AIzaSyD5zBXhZj0kbwhT8qXOLxOOGVM6OiHxtXA",
+  authDomain: "pruefcheckpro.firebaseapp.com",
+  projectId: "pruefcheckpro",
+  storageBucket: "pruefcheckpro.firebasestorage.app",
+  messagingSenderId: "401257250920",
+  appId: "1:401257250920:web:fd29840f77833e13847bdd"
+};
+let fb, auth, db;
+try {
+  fb = firebase.initializeApp(fbConfig, 'admin');
+  auth = firebase.auth(fb);
+  db = firebase.firestore(fb);
+} catch(e) { console.warn('Firebase:', e.message); }
+
+// ─── ADMIN EMAILS (add your own here) ───
+const ADMIN_EMAILS = ['admin@betoncheck.de', 'anna@betoncheck.de'];
+
+// ─── STATE ───
+let allFirmen = [];
+let allNutzer = [];
+
+// ─── AUTH ───
+async function adminLogin() {
+  const email = document.getElementById('a-email').value.trim();
+  const pw = document.getElementById('a-pw').value;
+  const err = document.getElementById('a-err');
+  err.textContent = '';
+  if (!email || !pw) { err.textContent = 'Bitte E-Mail und Passwort eingeben.'; return; }
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+  } catch(e) {
+    const msgs = {'auth/wrong-password':'Falsches Passwort.','auth/user-not-found':'Nutzer nicht gefunden.','auth/invalid-credential':'Falsche Zugangsdaten.'};
+    err.textContent = msgs[e.code] || e.message;
+  }
+}
+
+if (auth) {
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      // Check if admin
+      let isAdmin = ADMIN_EMAILS.includes(user.email);
+      if (!isAdmin && db) {
+        try {
+          const doc = await db.collection('users').doc(user.uid).get();
+          isAdmin = doc.exists && doc.data().role === 'admin';
+        } catch(e) {}
+      }
+      if (!isAdmin) {
+        document.getElementById('a-err').textContent = 'Kein Zugriff. Nur Admins erlaubt.';
+        await auth.signOut(); return;
+      }
+      document.getElementById('admin-email-display').textContent = user.email;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-shell').classList.add('active');
+      loadAllData();
+    }
+  });
+}
+
+async function adminLogout() {
+  if (auth) await auth.signOut();
+  document.getElementById('admin-shell').classList.remove('active');
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+// ─── DATA LOADING ───
+async function loadAllData() {
+  if (!db) return;
+  try {
+    // Load firms
+    const firmenSnap = await db.collection('firmen').orderBy('createdAt', 'desc').get();
+    allFirmen = firmenSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Load users
+    const nutzerSnap = await db.collection('users').orderBy('createdAt', 'desc').get();
+    allNutzer = nutzerSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    updateDashboard();
+    renderFirmen();
+    renderNutzer();
+    renderAbos();
+    updateFirmaSelect();
+  } catch(e) { console.warn('Load error:', e.message); }
+}
+
+function updateDashboard() {
+  document.getElementById('stat-firmen').textContent = allFirmen.length;
+  document.getElementById('stat-nutzer').textContent = allNutzer.length;
+  const pro = allFirmen.filter(f => f.plan === 'pro').length;
+  const ent = allFirmen.filter(f => f.plan === 'enterprise').length;
+  const free = allFirmen.filter(f => !f.plan || f.plan === 'free').length;
+  document.getElementById('stat-pro').textContent = pro + ent;
+  document.getElementById('stat-revenue').textContent = (pro * 49 + ent * 99) + '€';
+  document.getElementById('cnt-free').textContent = free;
+  document.getElementById('cnt-pro').textContent = pro;
+  document.getElementById('cnt-ent').textContent = ent;
+  // Recent firms
+  const recent = allFirmen.slice(0, 5);
+  const tbody = document.getElementById('recent-firmen');
+  tbody.innerHTML = recent.length ? recent.map(f => `
+    <tr>
+      <td>${f.name || '—'}</td>
+      <td><span class="badge badge-${f.plan||'free'}">${planLabel(f.plan)}</span></td>
+      <td>${f.maxUser || 10}</td>
+      <td>${fmtDate(f.createdAt)}</td>
+      <td><span class="badge badge-${f.status||'active'}">${f.status||'aktiv'}</span></td>
+    </tr>`).join('')
+  : '<tr><td colspan="5" style="text-align:center;padding:24px;color:#3d5066;font-family:JetBrains Mono,monospace;font-size:11px;">Noch keine Firmen</td></tr>';
+}
+
+function renderFirmen(filter='') {
+  const tbody = document.getElementById('firmen-tbody');
+  const list = filter ? allFirmen.filter(f => (f.name||'').toLowerCase().includes(filter.toLowerCase()) || (f.email||'').toLowerCase().includes(filter.toLowerCase())) : allFirmen;
+  tbody.innerHTML = list.length ? list.map(f => `
+    <tr>
+      <td>${f.name||'—'}</td>
+      <td style="color:#6b8299;font-size:12px;">${f.email||'—'}</td>
+      <td><span class="badge badge-${f.plan||'free'}">${planLabel(f.plan)}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;">${f.maxUser||10}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b8299;">${fmtDate(f.createdAt)}</td>
+      <td><span class="badge badge-${f.status==='inactive'?'inactive':'active'}">${f.status==='inactive'?'Inaktiv':'Aktiv'}</span></td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="editFirma('${f.id}')">✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFirma('${f.id}','${f.name}')">🗑</button>
+      </td>
+    </tr>`).join('')
+  : '<tr><td colspan="7" style="text-align:center;padding:30px;color:#3d5066;font-family:JetBrains Mono,monospace;font-size:11px;">Keine Firmen gefunden</td></tr>';
+}
+
+function renderNutzer(filter='') {
+  const tbody = document.getElementById('nutzer-tbody');
+  const list = filter ? allNutzer.filter(n => (n.email||'').toLowerCase().includes(filter.toLowerCase())) : allNutzer;
+  tbody.innerHTML = list.length ? list.map(n => {
+    const firma = allFirmen.find(f => f.id === n.firmaId);
+    return `<tr>
+      <td style="font-size:12px;">${n.email||'—'}</td>
+      <td style="color:#6b8299;font-size:12px;">${firma?.name||'—'}</td>
+      <td><span class="badge badge-${n.role||'azubi'}">${roleLabel(n.role)}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b8299;">${fmtDate(n.createdAt)}</td>
+      <td><span class="badge badge-active">Aktiv</span></td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="changeRole('${n.id}')">Rolle ändern</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteNutzer('${n.id}','${n.email}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('')
+  : '<tr><td colspan="6" style="text-align:center;padding:30px;color:#3d5066;font-family:JetBrains Mono,monospace;font-size:11px;">Keine Nutzer gefunden</td></tr>';
+}
+
+function renderAbos() {
+  const tbody = document.getElementById('abos-tbody');
+  const active = allFirmen.filter(f => f.plan && f.plan !== 'free');
+  tbody.innerHTML = active.length ? active.map(f => `
+    <tr>
+      <td>${f.name||'—'}</td>
+      <td><span class="badge badge-${f.plan}">${planLabel(f.plan)}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#4f9fff;">${f.plan==='pro'?'49€':'99€'}/Monat</td>
+      <td>${f.maxUser||10}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b8299;">${fmtDate(f.createdAt)}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b8299;">—</td>
+      <td><span class="badge badge-active">Aktiv</span></td>
+    </tr>`).join('')
+  : '<tr><td colspan="7" style="text-align:center;padding:30px;color:#3d5066;font-family:JetBrains Mono,monospace;font-size:11px;">Keine aktiven Abos</td></tr>';
+}
+
+function updateFirmaSelect() {
+  const sel = document.getElementById('n-firma');
+  sel.innerHTML = '<option value="">-- Firma wählen --</option>' + allFirmen.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+}
+
+// ─── FIRMA ANLEGEN ───
+async function createFirma() {
+  const name = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const plan = document.getElementById('f-plan').value;
+  const maxUser = parseInt(document.getElementById('f-maxuser').value) || 10;
+  const notes = document.getElementById('f-notes').value.trim();
+  if (!name || !email) { showToast('error', 'Name und E-Mail sind Pflichtfelder.'); return; }
+  if (!db) { showToast('error', 'Keine Datenbankverbindung.'); return; }
+  try {
+    const firmaId = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+    await db.collection('firmen').doc(firmaId).set({
+      name, email, plan, maxUser, notes,
+      status: 'active',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    closeModal('modal-firma');
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-email').value = '';
+    document.getElementById('f-notes').value = '';
+    showToast('ok', `Firma "${name}" erfolgreich angelegt.`);
+    loadAllData();
+  } catch(e) { showToast('error', 'Fehler: ' + e.message); }
+}
+
+// ─── NUTZER ANLEGEN ───
+async function createNutzer() {
+  const email = document.getElementById('n-email').value.trim();
+  const pw = document.getElementById('n-pw').value;
+  const role = document.getElementById('n-role').value;
+  const firmaId = document.getElementById('n-firma').value;
+  if (!email || !pw || !firmaId) { showToast('error', 'Alle Pflichtfelder ausfüllen.'); return; }
+  if (!db || !auth) { showToast('error', 'Keine Firebase-Verbindung.'); return; }
+  try {
+    // Create user in Firebase Auth (uses secondary app instance to avoid logging out admin)
+    const secondary = firebase.apps.find(a => a.name === 'secondary') ||
+                      firebase.initializeApp(fbConfig, 'secondary');
+    const secAuth = firebase.auth(secondary);
+    const cred = await secAuth.createUserWithEmailAndPassword(email, pw);
+    await secAuth.signOut();
+    // Save to Firestore
+    await db.collection('users').doc(cred.user.uid).set({
+      email, role, firmaId,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    closeModal('modal-nutzer');
+    document.getElementById('n-email').value = '';
+    document.getElementById('n-pw').value = '';
+    showToast('ok', `Nutzer "${email}" als ${roleLabel(role)} angelegt.`);
+    loadAllData();
+  } catch(e) {
+    const msgs = {'auth/email-already-in-use':'E-Mail bereits registriert.','auth/weak-password':'Passwort zu schwach (min. 6 Zeichen).'};
+    showToast('error', msgs[e.code] || e.message);
+  }
+}
+
+// ─── FIRMA BEARBEITEN ───
+function editFirma(id) {
+  const f = allFirmen.find(x => x.id === id);
+  if (!f) return;
+  document.getElementById('ef-id').value = id;
+  document.getElementById('ef-name').value = f.name || '';
+  document.getElementById('ef-email').value = f.email || '';
+  document.getElementById('ef-plan').value = f.plan || 'free';
+  document.getElementById('ef-status').value = f.status || 'active';
+  openModal('modal-edit-firma');
+}
+async function saveFirmaEdit() {
+  const id = document.getElementById('ef-id').value;
+  const data = {
+    name: document.getElementById('ef-name').value.trim(),
+    email: document.getElementById('ef-email').value.trim(),
+    plan: document.getElementById('ef-plan').value,
+    status: document.getElementById('ef-status').value
+  };
+  if (!db || !id) return;
+  try {
+    await db.collection('firmen').doc(id).update(data);
+    closeModal('modal-edit-firma');
+    showToast('ok', 'Firma gespeichert.');
+    loadAllData();
+  } catch(e) { showToast('error', e.message); }
+}
+
+// ─── DELETE ───
+async function deleteFirma(id, name) {
+  if (!confirm(`Firma "${name}" wirklich löschen? Alle zugehörigen Daten werden entfernt.`)) return;
+  if (!db) return;
+  try {
+    await db.collection('firmen').doc(id).delete();
+    showToast('ok', `Firma "${name}" gelöscht.`);
+    loadAllData();
+  } catch(e) { showToast('error', e.message); }
+}
+async function deleteNutzer(id, email) {
+  if (!confirm(`Nutzer "${email}" wirklich löschen?`)) return;
+  if (!db) return;
+  try {
+    await db.collection('users').doc(id).delete();
+    showToast('ok', `Nutzer "${email}" gelöscht.`);
+    loadAllData();
+  } catch(e) { showToast('error', e.message); }
+}
+
+// ─── ROLE CHANGE ───
+async function changeRole(id) {
+  const n = allNutzer.find(x => x.id === id);
+  if (!n) return;
+  const newRole = n.role === 'pruefer' ? 'azubi' : n.role === 'azubi' ? 'admin' : 'pruefer';
+  if (!confirm(`Rolle von "${n.email}" auf "${roleLabel(newRole)}" ändern?`)) return;
+  try {
+    await db.collection('users').doc(id).update({ role: newRole });
+    showToast('ok', `Rolle geändert zu ${roleLabel(newRole)}.`);
+    loadAllData();
+  } catch(e) { showToast('error', e.message); }
+}
+
+// ─── STRIPE ───
+async function saveStripe() {
+  const pk = document.getElementById('stripe-pk').value.trim();
+  const linkPro = document.getElementById('link-pro').value.trim();
+  const linkEnt = document.getElementById('link-ent').value.trim();
+  if (!db) { showToast('error', 'Keine Datenbankverbindung.'); return; }
+  try {
+    await db.collection('config').doc('stripe').set({ publishableKey: pk, linkPro, linkEnterprise: linkEnt, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    showToast('ok', 'Stripe-Daten gespeichert! Die Links erscheinen jetzt auf der Website.');
+  } catch(e) { showToast('error', e.message); }
+}
+
+// ─── ADMIN ANLEGEN ───
+async function createAdmin() {
+  const email = document.getElementById('cfg-admin-email').value.trim();
+  const pw = document.getElementById('cfg-admin-pw').value;
+  if (!email || !pw) { showToast('error', 'E-Mail und Passwort eingeben.'); return; }
+  if (!db || !auth) { showToast('error', 'Keine Firebase-Verbindung.'); return; }
+  try {
+    const secondary = firebase.apps.find(a => a.name === 'secondary') ||
+                      firebase.initializeApp(fbConfig, 'secondary');
+    const secAuth = firebase.auth(secondary);
+    const cred = await secAuth.createUserWithEmailAndPassword(email, pw);
+    await secAuth.signOut();
+    await db.collection('users').doc(cred.user.uid).set({
+      email, role: 'admin', firmaId: 'betoncheck',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('cfg-admin-email').value = '';
+    document.getElementById('cfg-admin-pw').value = '';
+    showToast('ok', `Admin "${email}" angelegt.`);
+  } catch(e) {
+    const msgs = {'auth/email-already-in-use':'E-Mail bereits registriert.'};
+    showToast('error', msgs[e.code] || e.message);
+  }
+}
+
+async function saveSettings() {
+  if (!db) { showToast('error', 'Keine DB.'); return; }
+  try {
+    await db.collection('config').doc('app').set({
+      appName: document.getElementById('cfg-appname').value,
+      supportEmail: document.getElementById('cfg-email').value,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    showToast('ok', 'Einstellungen gespeichert.');
+  } catch(e) { showToast('error', e.message); }
+}
+
+// ─── UI HELPERS ───
+function showPage(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sbn').forEach(b => b.classList.remove('active'));
+  const p = document.getElementById('page-' + id);
+  if (p) p.classList.add('active');
+  const btn = document.querySelector(`.sbn[onclick="showPage('${id}')"]`);
+  if (btn) btn.classList.add('active');
+  const titles = {dashboard:'Dashboard',firmen:'Firmen',nutzer:'Nutzer',abos:'Abo-Übersicht',stripe:'Stripe Setup',einstellungen:'Einstellungen'};
+  document.getElementById('page-title').textContent = titles[id] || id;
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function filterFirmen(q) { renderFirmen(q); }
+function filterNutzer(q) { renderNutzer(q); }
+function planLabel(p) { return {free:'Azubi',pro:'Pro',enterprise:'Enterprise'}[p] || p || 'Free'; }
+function roleLabel(r) { return {pruefer:'Prüfer',azubi:'Azubi',admin:'Admin'}[r] || r || 'Azubi'; }
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function showToast(type, msg) {
+  const el = document.getElementById(type === 'ok' ? 'toast-ok' : 'toast-err');
+  const msgEl = document.getElementById(type === 'ok' ? 'toast-ok-msg' : 'toast-err-msg');
+  msgEl.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
