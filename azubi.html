@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BetonCheck — Azubi-Bereich</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Space Grotesk',sans-serif;background:#020408;color:#e8f0fe;-webkit-font-smoothing:antialiased;}
+.shell{display:flex;height:100vh;overflow:hidden;}
+.sb{width:210px;flex-shrink:0;background:rgba(8,12,20,.97);border-right:1px solid rgba(139,92,246,.07);display:flex;flex-direction:column;height:100vh;overflow-y:auto;}
+.sb-head{padding:14px 12px 10px;border-bottom:1px solid rgba(139,92,246,.07);}
+.sb-logo{font-size:14px;font-weight:600;color:#e8f0fe;}
+.sb-logo span{color:#a78bfa;}
+.sb-sub{font-size:8px;color:#2d3f52;font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;}
+.sb-prog{background:rgba(255,255,255,.05);border-radius:100px;height:3px;margin-top:9px;}
+.sb-pb{background:linear-gradient(90deg,#a78bfa,#10b981);height:3px;border-radius:100px;transition:width .4s;}
+.sb-pl{font-size:8px;color:#6b8299;font-family:'JetBrains Mono',monospace;margin-top:3px;}
+.sb-nav{padding:8px 6px;flex:1;}
+.sb-sec{margin-bottom:10px;}
+.sb-lbl{font-size:8px;color:#1e2d3d;font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;padding:0 8px;margin-bottom:3px;}
+.sbn{display:flex;align-items:center;gap:7px;width:100%;padding:8px 9px;border-radius:7px;background:none;border:1px solid transparent;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:500;color:#64748b;transition:all .12s;text-align:left;min-height:36px;-webkit-tap-highlight-color:transparent;}
+.sbn:hover{background:rgba(255,255,255,.04);color:#e8f0fe;}
+.sbn.ab{background:rgba(79,159,255,.1);color:#4f9fff;border-color:rgba(79,159,255,.18);}
+.sbn.ag{background:rgba(0,212,170,.1);color:#00d4aa;border-color:rgba(0,212,170,.18);}
+.sbn.aa{background:rgba(245,158,11,.1);color:#f59e0b;border-color:rgba(245,158,11,.18);}
+.sbn.av{background:rgba(139,92,246,.1);color:#a78bfa;border-color:rgba(139,92,246,.18);}
+.sbn-ico{font-size:13px;width:16px;text-align:center;flex-shrink:0;}
+.sb-div{height:1px;background:rgba(255,255,255,.05);margin:5px 9px;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.topbar{height:48px;background:rgba(8,12,20,.95);border-bottom:1px solid rgba(139,92,246,.07);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;}
+.tb-t{font-family:'Instrument Serif',serif;font-size:15px;}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.panel{display:none;padding:clamp(14px,3vw,24px);}
+.panel.active{display:block;}
+/* HOME */
+.hg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,185px),1fr));gap:10px;margin-bottom:20px;}
+.hc{border-radius:12px;padding:18px;cursor:pointer;border:1px solid transparent;-webkit-tap-highlight-color:transparent;transition:all .2s;}
+.hc.cb{background:rgba(79,159,255,.05);border-color:rgba(79,159,255,.13);}
+.hc.cb:hover{background:rgba(79,159,255,.09);}
+.hc.cg{background:rgba(0,212,170,.05);border-color:rgba(0,212,170,.13);}
+.hc.cg:hover{background:rgba(0,212,170,.09);}
+.hc.ca{background:rgba(245,158,11,.05);border-color:rgba(245,158,11,.13);}
+.hc.ca:hover{background:rgba(245,158,11,.09);}
+.hc-ico{font-size:26px;margin-bottom:8px;}
+.hc-t{font-family:'Instrument Serif',serif;font-size:16px;margin-bottom:3px;}
+.hc.cb .hc-t{color:#4f9fff;}.hc.cg .hc-t{color:#00d4aa;}.hc.ca .hc-t{color:#f59e0b;}
+.hc-d{font-size:10px;color:#6b8299;line-height:1.4;margin-bottom:8px;font-weight:300;}
+.hc-s{font-size:9px;font-family:'JetBrains Mono',monospace;color:#3d5066;display:flex;gap:8px;}
+/* FLASHCARD */
+.fc-prog{background:rgba(255,255,255,.05);border-radius:100px;height:3px;margin-bottom:12px;}
+.fc-pb{background:linear-gradient(90deg,#a78bfa,#10b981);height:3px;border-radius:100px;transition:width .3s;}
+.fc-cnt{text-align:center;font-size:10px;color:#3d5066;font-family:'JetBrains Mono',monospace;margin-bottom:12px;}
+.fc-wrap{perspective:1000px;max-width:540px;margin:0 auto 16px;}
+.fc-card{width:100%;min-height:200px;cursor:pointer;position:relative;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1);-webkit-tap-highlight-color:transparent;}
+.fc-card.flipped{transform:rotateY(180deg);}
+.fc-front,.fc-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;padding:24px;display:flex;flex-direction:column;justify-content:center;}
+.fc-front{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);}
+.fc-back{background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.18);transform:rotateY(180deg);}
+.fc-cat{font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:#a78bfa;margin-bottom:10px;}
+.fc-q{font-family:'Instrument Serif',serif;font-size:clamp(16px,3vw,22px);line-height:1.3;margin-bottom:10px;}
+.fc-hint{font-size:10px;color:#3d5066;font-style:italic;}
+.fc-a{font-size:14px;line-height:1.65;color:#e8f0fe;font-weight:300;}
+.fc-norm{font-size:9px;font-family:'JetBrains Mono',monospace;color:#a78bfa;margin-top:10px;}
+.fc-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.fb{padding:8px 18px;border-radius:9px;border:none;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;cursor:pointer;min-height:40px;-webkit-tap-highlight-color:transparent;}
+.fb-n{background:rgba(248,113,113,.12);color:#f87171;}
+.fb-w{background:rgba(139,92,246,.15);color:#a78bfa;}
+.fb-g{background:rgba(16,185,129,.12);color:#10b981;}
+/* QUIZ */
+.qcard{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:clamp(16px,3vw,24px);max-width:580px;}
+.qnum{font-size:9px;font-family:'JetBrains Mono',monospace;color:#6b8299;margin-bottom:10px;letter-spacing:1px;}
+.qq{font-family:'Instrument Serif',serif;font-size:clamp(15px,2.5vw,20px);line-height:1.3;margin-bottom:16px;}
+.qopts{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.qopt{padding:11px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);cursor:pointer;font-size:13px;text-align:left;font-family:'Space Grotesk',sans-serif;color:#e8f0fe;transition:all .15s;min-height:44px;-webkit-tap-highlight-color:transparent;}
+.qopt:hover{border-color:rgba(139,92,246,.25);background:rgba(139,92,246,.07);}
+.qopt.correct{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);color:#10b981;}
+.qopt.wrong{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.25);color:#f87171;}
+.qopt.disabled{pointer-events:none;}
+.qexp{font-size:12px;color:#8aa3b8;line-height:1.6;padding:12px;background:rgba(139,92,246,.06);border-radius:9px;border:1px solid rgba(139,92,246,.12);font-weight:300;margin-top:10px;display:none;}
+.qexp.show{display:block;}
+.qnav{display:flex;justify-content:flex-end;margin-top:14px;}
+.qnext{padding:9px 22px;background:#a78bfa;color:#020408;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;min-height:40px;}
+.qresult{text-align:center;padding:32px 20px;}
+.qscore{font-family:'Instrument Serif',serif;font-size:52px;line-height:1;margin-bottom:6px;}
+.qlbl{font-size:13px;color:#6b8299;margin-bottom:20px;}
+.qrestart{padding:11px 26px;background:#a78bfa;color:#020408;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;}
+/* RECHNER */
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:12px;}
+.cc{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:18px;transition:border-color .2s;}
+.cc:hover{border-color:rgba(139,92,246,.15);}
+.cc-t{font-size:13px;font-weight:600;margin-bottom:3px;}
+.cc-d{font-size:10px;color:#6b8299;font-weight:300;margin-bottom:12px;}
+.cf{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.cl{font-size:9px;color:#6b8299;font-family:'JetBrains Mono',monospace;width:130px;flex-shrink:0;}
+.ci{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:6px 9px;color:#e8f0fe;font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;-webkit-appearance:none;}
+.ci:focus{border-color:rgba(139,92,246,.3);}
+.ci.sel{cursor:pointer;}
+.cr{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.14);border-radius:7px;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#a78bfa;min-height:35px;margin-top:6px;}
+/* NORMEN */
+.ng{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px;}
+.nc{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:16px;}
+.nc-n{font-family:'JetBrains Mono',monospace;font-size:11px;color:#a78bfa;margin-bottom:5px;}
+.nc-t{font-size:13px;font-weight:600;margin-bottom:5px;}
+.nc-d{font-size:11px;color:#6b8299;line-height:1.55;font-weight:300;}
+.nc-g{font-size:9px;font-family:'JetBrains Mono',monospace;color:#4f9fff;margin-top:7px;}
+/* TABS */
+.stabs{display:flex;gap:5px;margin-bottom:16px;flex-wrap:wrap;}
+.stab{padding:5px 14px;border-radius:100px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);color:#6b8299;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.stab.ab{background:rgba(79,159,255,.1);border-color:rgba(79,159,255,.2);color:#4f9fff;}
+.stab.ag{background:rgba(0,212,170,.1);border-color:rgba(0,212,170,.2);color:#00d4aa;}
+.stab.aa{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.2);color:#f59e0b;}
+/* MOBILE */
+.mob-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;}
+.mob-ov.open{display:block;}
+.mob-btn{display:none;background:none;border:none;color:#e8f0fe;font-size:19px;cursor:pointer;padding:3px;}
+@media(max-width:768px){
+  .sb{position:fixed;left:-214px;top:0;height:100vh;z-index:300;transition:left .25s ease;box-shadow:6px 0 30px rgba(0,0,0,.9);}
+  .sb.open{left:0;}
+  .mob-btn{display:flex!important;align-items:center;}
+  .topbar{padding:0 12px;}
+  .panel{padding:12px 11px 20px;}
+}
+</style>
+</head>
+<body>
+<div class="mob-ov" id="mob-ov" onclick="closeSB()"></div>
+<div class="shell">
+<div class="sb" id="sb">
+  <div class="sb-head">
+    <div class="sb-logo">Beton<span>Check</span></div>
+    <div class="sb-sub">Azubi-Bereich</div>
+    <div class="sb-prog"><div class="sb-pb" id="spb" style="width:0%"></div></div>
+    <div class="sb-pl" id="spl">0 von 0 gelernt</div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-sec">
+      <div class="sb-lbl">Start</div>
+      <button class="sbn av" onclick="showP('home')"><span class="sbn-ico">🏠</span>Übersicht</button>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">🧱 Beton</div>
+      <button class="sbn" onclick="showP('fc-beton')"><span class="sbn-ico">🃏</span>Lernkarten</button>
+      <button class="sbn" onclick="showP('qz-beton')"><span class="sbn-ico">🧠</span>Quiz</button>
+      <button class="sbn" onclick="showP('calc-beton')"><span class="sbn-ico">🧮</span>Rechner</button>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">🌍 Geotechnik</div>
+      <button class="sbn" onclick="showP('fc-geo')"><span class="sbn-ico">🃏</span>Lernkarten</button>
+      <button class="sbn" onclick="showP('qz-geo')"><span class="sbn-ico">🧠</span>Quiz</button>
+      <button class="sbn" onclick="showP('calc-geo')"><span class="sbn-ico">🧮</span>Rechner</button>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">🛣️ Asphalt</div>
+      <button class="sbn" onclick="showP('fc-asphalt')"><span class="sbn-ico">🃏</span>Lernkarten</button>
+      <button class="sbn" onclick="showP('qz-asphalt')"><span class="sbn-ico">🧠</span>Quiz</button>
+      <button class="sbn" onclick="showP('calc-asphalt')"><span class="sbn-ico">🧮</span>Rechner</button>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Referenz</div>
+      <button class="sbn" onclick="showP('normen')"><span class="sbn-ico">📚</span>Normen</button>
+    </div>
+  </div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="mob-btn" style="display:none" onclick="toggleSB()">☰</button>
+      <div class="tb-t" id="tb-t">Azubi-Bereich</div>
+    </div>
+    <span id="sc" style="font-size:10px;color:#a78bfa;font-family:'JetBrains Mono',monospace;"></span>
+  </div>
+  <div class="content">
+
+    <div class="panel active" id="panel-home">
+      <div style="font-family:'Instrument Serif',serif;font-size:clamp(20px,4vw,30px);margin-bottom:5px;">Azubi-Lernbereich 🎓</div>
+      <p style="font-size:12px;color:#6b8299;font-weight:300;margin-bottom:20px;">Lernkarten, Quiz und Rechner für alle drei Fachbereiche.</p>
+      <div class="hg">
+        <div class="hc cb" onclick="showP('fc-beton')"><div class="hc-ico">🧱</div><div class="hc-t">Beton & Mörtel</div><div class="hc-d">Druckfestigkeit, Konsistenz, Expositionsklassen, Normen.</div><div class="hc-s"><span>🃏 20</span><span>🧠 15</span><span>🧮 5</span></div></div>
+        <div class="hc cg" onclick="showP('fc-geo')"><div class="hc-ico">🌍</div><div class="hc-t">Geotechnik</div><div class="hc-d">Proctor, Plattendruckversuch, Bodenklassen, Atterberg.</div><div class="hc-s"><span>🃏 20</span><span>🧠 15</span><span>🧮 5</span></div></div>
+        <div class="hc ca" onclick="showP('fc-asphalt')"><div class="hc-ico">🛣️</div><div class="hc-t">Asphalttechnik</div><div class="hc-d">Marshall, Verdichtungsgrad, Texturtiefe, Asphaltarten.</div><div class="hc-s"><span>🃏 20</span><span>🧠 15</span><span>🧮 5</span></div></div>
+      </div>
+    </div>
+
+    <!-- FC panels -->
+    <div class="panel" id="panel-fc-beton"><div class="fc-prog"><div class="fc-pb" id="pb-beton" style="width:0%"></div></div><div class="fc-cnt" id="cnt-beton">Karte 1/20</div><div class="fc-wrap"><div class="fc-card" id="fcc-beton" onclick="flip('beton')"><div class="fc-front"><div class="fc-cat" id="fcat-b"></div><div class="fc-q" id="fq-b"></div><div class="fc-hint">Tippen zum Aufdecken</div></div><div class="fc-back"><div class="fc-cat" id="bcat-b"></div><div class="fc-a" id="fa-b"></div><div class="fc-norm" id="fn-b"></div></div></div></div><div class="fc-btns"><button class="fb fb-n" onclick="rate('beton','n')">✗ Nochmal</button><button class="fb fb-w" onclick="rate('beton','w')">→ Weiter</button><button class="fb fb-g" onclick="rate('beton','g')">✓ Gewusst</button></div></div>
+    <div class="panel" id="panel-fc-geo"><div class="fc-prog"><div class="fc-pb" id="pb-geo" style="width:0%"></div></div><div class="fc-cnt" id="cnt-geo">Karte 1/20</div><div class="fc-wrap"><div class="fc-card" id="fcc-geo" onclick="flip('geo')"><div class="fc-front"><div class="fc-cat" id="fcat-g"></div><div class="fc-q" id="fq-g"></div><div class="fc-hint">Tippen zum Aufdecken</div></div><div class="fc-back"><div class="fc-cat" id="bcat-g"></div><div class="fc-a" id="fa-g"></div><div class="fc-norm" id="fn-g"></div></div></div></div><div class="fc-btns"><button class="fb fb-n" onclick="rate('geo','n')">✗ Nochmal</button><button class="fb fb-w" onclick="rate('geo','w')">→ Weiter</button><button class="fb fb-g" onclick="rate('geo','g')">✓ Gewusst</button></div></div>
+    <div class="panel" id="panel-fc-asphalt"><div class="fc-prog"><div class="fc-pb" id="pb-asphalt" style="width:0%"></div></div><div class="fc-cnt" id="cnt-asphalt">Karte 1/20</div><div class="fc-wrap"><div class="fc-card" id="fcc-asphalt" onclick="flip('asphalt')"><div class="fc-front"><div class="fc-cat" id="fcat-a"></div><div class="fc-q" id="fq-a"></div><div class="fc-hint">Tippen zum Aufdecken</div></div><div class="fc-back"><div class="fc-cat" id="bcat-a"></div><div class="fc-a" id="fa-a"></div><div class="fc-norm" id="fn-a"></div></div></div></div><div class="fc-btns"><button class="fb fb-n" onclick="rate('asphalt','n')">✗ Nochmal</button><button class="fb fb-w" onclick="rate('asphalt','w')">→ Weiter</button><button class="fb fb-g" onclick="rate('asphalt','g')">✓ Gewusst</button></div></div>
+
+    <!-- QUIZ panels -->
+    <div class="panel" id="panel-qz-beton"><div id="qw-beton"></div></div>
+    <div class="panel" id="panel-qz-geo"><div id="qw-geo"></div></div>
+    <div class="panel" id="panel-qz-asphalt"><div id="qw-asphalt"></div></div>
+
+    <!-- RECHNER BETON -->
+    <div class="panel" id="panel-calc-beton">
+      <div style="font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:14px;">🧮 Rechner Beton</div>
+      <div class="cg">
+        <div class="cc"><div class="cc-t">w/z-Wert</div><div class="cc-d">w/z = Wasser / Zement</div><div class="cf"><span class="cl">Wasser (kg/m³)</span><input class="ci" type="number" id="wz-w" placeholder="180" oninput="calcWZ()"/></div><div class="cf"><span class="cl">Zement (kg/m³)</span><input class="ci" type="number" id="wz-z" placeholder="350" oninput="calcWZ()"/></div><div class="cr" id="r-wz">w/z = —</div></div>
+        <div class="cc"><div class="cc-t">Druckfestigkeit fc</div><div class="cc-d">fc = F / A [N/mm²]</div><div class="cf"><span class="cl">Bruchlast F (kN)</span><input class="ci" type="number" id="fc-f" placeholder="855" oninput="calcFC()"/></div><div class="cf"><span class="cl">Probekörper</span><select class="ci sel" id="fc-t" onchange="calcFC()"><option value="22500">Würfel 150mm</option><option value="10000">Würfel 100mm</option><option value="17671">Zylinder Ø150mm</option><option value="7854">Zylinder Ø100mm</option><option value="1600">Prisma 40×40mm</option></select></div><div class="cr" id="r-fc">fc = — N/mm²</div></div>
+        <div class="cc"><div class="cc-t">Rohdichte Frischbeton</div><div class="cc-d">ρ = m / V × 1000</div><div class="cf"><span class="cl">Masse m (kg)</span><input class="ci" type="number" id="rd-m" placeholder="8.2" oninput="calcRD()"/></div><div class="cf"><span class="cl">Volumen V (l)</span><input class="ci" type="number" id="rd-v" placeholder="4" oninput="calcRD()"/></div><div class="cr" id="r-rd">ρ = — kg/m³</div></div>
+        <div class="cc"><div class="cc-t">Luftgehalt</div><div class="cc-d">L = (1 - ρist/ρref) × 100</div><div class="cf"><span class="cl">ρ ist (kg/m³)</span><input class="ci" type="number" id="lg-i" placeholder="2380" oninput="calcLG()"/></div><div class="cf"><span class="cl">ρ ref (kg/m³)</span><input class="ci" type="number" id="lg-r" placeholder="2420" oninput="calcLG()"/></div><div class="cr" id="r-lg">L = — %</div></div>
+        <div class="cc"><div class="cc-t">Zementgehalt</div><div class="cc-d">z = w / (w/z)</div><div class="cf"><span class="cl">Wasser w (kg/m³)</span><input class="ci" type="number" id="zg-w" placeholder="175" oninput="calcZG()"/></div><div class="cf"><span class="cl">w/z-Wert</span><input class="ci" type="number" id="zg-wz" placeholder="0.5" step="0.01" oninput="calcZG()"/></div><div class="cr" id="r-zg">z = — kg/m³</div></div>
+      </div>
+    </div>
+
+    <!-- RECHNER GEO -->
+    <div class="panel" id="panel-calc-geo">
+      <div style="font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:14px;">🧮 Rechner Geotechnik</div>
+      <div class="cg">
+        <div class="cc"><div class="cc-t">Verdichtungsgrad Dpr</div><div class="cc-d">Dpr = (ρd / ρPr) × 100 %</div><div class="cf"><span class="cl">ρd ist (g/cm³)</span><input class="ci" type="number" id="dpr-i" placeholder="1.85" step="0.01" oninput="calcDPR()"/></div><div class="cf"><span class="cl">ρPr (g/cm³)</span><input class="ci" type="number" id="dpr-p" placeholder="1.95" step="0.01" oninput="calcDPR()"/></div><div class="cr" id="r-dpr">Dpr = — %</div></div>
+        <div class="cc"><div class="cc-t">Wassergehalt w</div><div class="cc-d">w = (mf - mt) / mt × 100</div><div class="cf"><span class="cl">m feucht (g)</span><input class="ci" type="number" id="wg-f" placeholder="125.4" oninput="calcWG()"/></div><div class="cf"><span class="cl">m trocken (g)</span><input class="ci" type="number" id="wg-t" placeholder="115.2" oninput="calcWG()"/></div><div class="cr" id="r-wg">w = — %</div></div>
+        <div class="cc"><div class="cc-t">Ev2 / Ev1 Verhältnis</div><div class="cc-d">Anforderung: Ev2/Ev1 ≤ 2,2</div><div class="cf"><span class="cl">Ev2 (MN/m²)</span><input class="ci" type="number" id="ev-2" placeholder="120" oninput="calcEV()"/></div><div class="cf"><span class="cl">Ev1 (MN/m²)</span><input class="ci" type="number" id="ev-1" placeholder="60" oninput="calcEV()"/></div><div class="cr" id="r-ev">Ev2/Ev1 = —</div></div>
+        <div class="cc"><div class="cc-t">Plastizitätszahl Ip</div><div class="cc-d">Ip = wL - wP</div><div class="cf"><span class="cl">Fließgrenze wL (%)</span><input class="ci" type="number" id="ip-l" placeholder="45" oninput="calcIP()"/></div><div class="cf"><span class="cl">Ausrollgrenze wP (%)</span><input class="ci" type="number" id="ip-p" placeholder="22" oninput="calcIP()"/></div><div class="cr" id="r-ip">Ip = — %</div></div>
+        <div class="cc"><div class="cc-t">Konsistenzzahl IC</div><div class="cc-d">IC = (wL - w) / Ip</div><div class="cf"><span class="cl">wL (%)</span><input class="ci" type="number" id="ic-l" placeholder="45" oninput="calcIC()"/></div><div class="cf"><span class="cl">w nat (%)</span><input class="ci" type="number" id="ic-w" placeholder="35" oninput="calcIC()"/></div><div class="cf"><span class="cl">Ip (%)</span><input class="ci" type="number" id="ic-p" placeholder="23" oninput="calcIC()"/></div><div class="cr" id="r-ic">IC = —</div></div>
+      </div>
+    </div>
+
+    <!-- RECHNER ASPHALT -->
+    <div class="panel" id="panel-calc-asphalt">
+      <div style="font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:14px;">🧮 Rechner Asphalt</div>
+      <div class="cg">
+        <div class="cc"><div class="cc-t">Verdichtungsgrad VG</div><div class="cc-d">VG = (ρBK / ρmax) × 100 %</div><div class="cf"><span class="cl">ρ Bohrkern (g/cm³)</span><input class="ci" type="number" id="vg-b" placeholder="2.35" step="0.01" oninput="calcVG()"/></div><div class="cf"><span class="cl">ρ max (g/cm³)</span><input class="ci" type="number" id="vg-m" placeholder="2.45" step="0.01" oninput="calcVG()"/></div><div class="cr" id="r-vg">VG = — %</div></div>
+        <div class="cc"><div class="cc-t">Raumgewicht Bohrkern</div><div class="cc-d">ρ = m / V (geometrisch)</div><div class="cf"><span class="cl">Masse m (g)</span><input class="ci" type="number" id="rg-m" placeholder="1842" oninput="calcRG()"/></div><div class="cf"><span class="cl">Ø (mm)</span><input class="ci" type="number" id="rg-d" placeholder="100" oninput="calcRG()"/></div><div class="cf"><span class="cl">Höhe h (mm)</span><input class="ci" type="number" id="rg-h" placeholder="40" oninput="calcRG()"/></div><div class="cr" id="r-rg">ρ = — g/cm³</div></div>
+        <div class="cc"><div class="cc-t">Texturtiefe MTD</div><div class="cc-d">Sandfleckmethode: 25ml Sand</div><div class="cf"><span class="cl">Sanddurchm. d (mm)</span><input class="ci" type="number" id="mtd-d" placeholder="280" oninput="calcMTD()"/></div><div class="cr" id="r-mtd">MTD = — mm</div></div>
+        <div class="cc"><div class="cc-t">Marshall-Quotient MQ</div><div class="cc-d">MQ = Stabilität / Fließwert</div><div class="cf"><span class="cl">Stabilität (N)</span><input class="ci" type="number" id="mq-s" placeholder="8500" oninput="calcMQ()"/></div><div class="cf"><span class="cl">Fließwert (mm)</span><input class="ci" type="number" id="mq-f" placeholder="3.2" step="0.1" oninput="calcMQ()"/></div><div class="cr" id="r-mq">MQ = — N/mm</div></div>
+        <div class="cc"><div class="cc-t">Hohlraumgehalt VA</div><div class="cc-d">VA = (1 - ρR/ρRL) × 100 %</div><div class="cf"><span class="cl">ρ Raumgewicht</span><input class="ci" type="number" id="va-r" placeholder="2.35" step="0.01" oninput="calcVA()"/></div><div class="cf"><span class="cl">ρ Raumlos</span><input class="ci" type="number" id="va-l" placeholder="2.48" step="0.01" oninput="calcVA()"/></div><div class="cr" id="r-va">VA = — %</div></div>
+      </div>
+    </div>
+
+    <!-- NORMEN -->
+    <div class="panel" id="panel-normen">
+      <div style="font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:14px;">📚 Normen-Übersicht</div>
+      <div class="stabs">
+        <button class="stab ab" onclick="showNormen('beton',this)">🧱 Beton</button>
+        <button class="stab ag" onclick="showNormen('geo',this)">🌍 Geotechnik</button>
+        <button class="stab aa" onclick="showNormen('asphalt',this)">🛣️ Asphalt</button>
+      </div>
+      <div class="ng" id="normen-grid"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+<script>
+// ══ DATA ══
+const CARDS={
+  beton:[
+    {c:'DRUCKFESTIGKEIT',q:'Was bedeutet C30/37?',a:'C30/37: 30 N/mm² Zylinderdruckfestigkeit, 37 N/mm² Würfeldruckfestigkeit nach 28 Tagen. C = Concrete, erste Zahl = Zylinder, zweite = Würfel.',n:'DIN EN 206'},
+    {c:'PROBEKÖRPER',q:'Maße des Normwürfels nach DIN EN 12390-1?',a:'Kantenlänge 150 mm. Alternativ 100 mm (mit Umrechnungsfaktor). Fläche 150mm-Würfel: 22.500 mm².',n:'DIN EN 12390-1'},
+    {c:'KONSISTENZ',q:'Setzmaßklassen S1 bis S5 — Werte?',a:'S1: 10-40mm (steif), S2: 50-90mm (plastisch), S3: 100-150mm (weich), S4: 160-210mm (sehr weich), S5: ≥220mm (fließfähig)',n:'DIN EN 12350-2'},
+    {c:'EXPOSITIONSKLASSEN',q:'Was bedeutet XC2?',a:'XC2 = Carbonatisierung, mäßige Feuchte (meist feucht). Z.B. Fundamente. w/z ≤ 0,60, Mindestzement 280 kg/m³.',n:'DIN EN 206'},
+    {c:'EXPOSITIONSKLASSEN',q:'Wann gilt XF4?',a:'Frost-Tausalz hoch: Fahrbahndecken, Parkdecks. LP-Beton, Luftporengehalt ≥ 4%, w/z ≤ 0,45, Mindestzement 320 kg/m³.',n:'DIN EN 206'},
+    {c:'DRUCKFESTIGKEIT',q:'Formel für fc aus Bruchlast F?',a:'fc = F [N] / A [mm²]. Würfel 150mm: A = 22.500 mm². Beispiel: F = 855 kN → fc = 855.000 / 22.500 = 38,0 N/mm².',n:'DIN EN 12390-3'},
+    {c:'NORMEN',q:'Was regelt DIN EN 12390-3?',a:'Druckfestigkeit von Probekörpern (Würfel und Zylinder). Belastungsgeschwindigkeit: 0,6 ±0,2 N/mm²·s.',n:'DIN EN 12390-3'},
+    {c:'NORMEN',q:'Was regelt DIN EN 12390-8?',a:'Wassereindringtiefe unter Druck: 500 kPa für 72h. Nach Spalten max. Eindringtiefe messen. WU-Beton: max. 50mm.',n:'DIN EN 12390-8'},
+    {c:'FRISCHBETON',q:'Wie wird Luftgehalt gemessen?',a:'Druckausgleichsverfahren (DIN EN 12350-7): Behälter mit Beton, Drucktopf aufsetzen, Luft einpumpen, Ventil öffnen — Druckabfall = Luftgehalt in %.',n:'DIN EN 12350-7'},
+    {c:'w/z-WERT',q:'Was ist der w/z-Wert?',a:'Wasserzementwert = Wassermasse / Zementmasse. Je kleiner, desto fester und dichter. XF4: ≤ 0,45. XC1: ≤ 0,60.',n:'DIN EN 206'},
+    {c:'NACHBEHANDLUNG',q:'Wie lange Nachbehandlung für C30/37?',a:'Mindestens 5 Tage bei Temperaturen > 5°C (DIN EN 13670). Bei CEM III mindestens 7 Tage. Feucht halten oder abdichten.',n:'DIN EN 13670'},
+    {c:'BETONHERSTELLUNG',q:'Wie viele Lagen beim Würfel befüllen?',a:'3 gleiche Lagen (je ca. 50mm). Jede Lage durch Stochern (25×) oder Rütteln verdichten (DIN EN 12390-2).',n:'DIN EN 12390-2'},
+    {c:'ZEMENT',q:'Was bedeutet CEM II/B-S 32,5 R?',a:'CEM II = Portlandhüttenzement. B = hoher Hüttensandanteil. S = Hüttensand. 32,5 = Mindesfestigkeit MPa nach 28d. R = hohe Anfangsfestigkeit.',n:'DIN EN 197-1'},
+    {c:'ROHDICHTE',q:'Wie Frischbetonrohdichte messen?',a:'DIN EN 12350-6: Kalibrierten Behälter mit Beton füllen, abstreichen, wiegen. ρ = (mBehälter+Beton - mBehälter) / VBehälter. Typisch 2300-2400 kg/m³.',n:'DIN EN 12350-6'},
+    {c:'TEMPERATUR',q:'Grenztemperaturen beim Betoneinbau?',a:'Unter +5°C: Einbau nicht erlaubt. Über 30°C Betontemperatur: Schutzmaßnahmen nötig. Idealtemperatur: +5°C bis +30°C.',n:'DIN EN 13670'},
+    {c:'SPALTZUG',q:'Was ist die Spaltzugfestigkeit?',a:'DIN EN 12390-6: Würfel/Zylinder liegend einspannen, Linienlast einleiten bis Spalten. Typisch ca. 10% der Druckfestigkeit.',n:'DIN EN 12390-6'},
+    {c:'BIEGEZUG',q:'An welchen Probekörpern wird Biegezug geprüft?',a:'DIN EN 12390-5: Balken/Prismen (160×40×40mm) im Drei- oder Vierpunktbiegeversuch. Auch für Mörtelprüfung nach EN 196-1.',n:'DIN EN 12390-5'},
+    {c:'EXPOSITIONSKLASSEN',q:'Welche Klassen gibt es bei XC?',a:'XC1: trocken/ständig nass. XC2: mäßig feucht (Fundamente). XC3: mäßig bis hohe Feuchte. XC4: Wechsel trocken/nass (z.B. Brüstungen).',n:'DIN EN 206'},
+    {c:'KONSISTENZ',q:'Ausbreitmaßklassen F1 bis F6?',a:'F1: ≤340mm. F2: 350-410mm. F3: 420-480mm. F4: 490-550mm. F5: 560-620mm. F6: ≥630mm (Selbstverdichtend).',n:'DIN EN 12350-5'},
+    {c:'PRÜFPROTOKOLL',q:'Was muss ein Frischbetonprotokoll enthalten?',a:'Datum/Uhrzeit, Lieferschein-Nr., Betonsorte, Expositionsklasse, Frischbetontemperatur, Setzmaß/Ausbreitmaß, Luftgehalt, Rohdichte, Prüfer.',n:'DIN EN 206'},
+  ],
+  geo:[
+    {c:'PROCTOR',q:'Ziel des Proctorversuchs?',a:'Bestimmung der optimalen Verdichtungsfeuchte wPr und der Proctordichte ρPr als Referenzwert für die Verdichtungskontrolle auf der Baustelle.',n:'DIN 18127'},
+    {c:'VERDICHTUNG',q:'Dpr = 97% bedeutet?',a:'Die erreichte Trockendichte beträgt 97% der Proctordichte. Unterbau: Dpr ≥ 97%, Planum: Dpr ≥ 100%.',n:'DIN 18127'},
+    {c:'PLATTENDRUCKVERSUCH',q:'Was wird beim PDV gemessen?',a:'Verformungsmodul Ev1 (1. Belastung) und Ev2 (2. Belastung) mit Ø300mm Platte. Ev2/Ev1 ≤ 2,2, Ev2 je nach Schicht.',n:'DIN 18134'},
+    {c:'PLATTENDRUCKVERSUCH',q:'Ev2-Anforderungen für verschiedene Schichten?',a:'Planum: ≥45 MN/m². Frostschutzschicht: ≥80 MN/m². Schottertragschicht: ≥120 MN/m². Asphaltunterlage: ≥100 MN/m².',n:'ZTV E-StB'},
+    {c:'BODENKLASSEN',q:'Was charakterisiert GW nach DIN 18196?',a:'GW = Gut gestufte Kiese und Kies-Sand-Gemische mit wenig Feinanteilen. Gut verdichtbar, hohe Tragfähigkeit, geeignet als Dammbaustoff.',n:'DIN 18196'},
+    {c:'SIEBANALYSE',q:'Was zeigt die Korngrößenlinie?',a:'Durchgangsprozente der Kornfraktionen. Siebsatz 0,063mm bis 63mm. Basis für Bodenklassifikation (DIN 18196) und Eignungsbeurteilung.',n:'DIN 18123'},
+    {c:'ATTERBERG',q:'Plastizitätszahl Ip berechnen?',a:'Ip = wL - wP. Fließgrenze wL minus Ausrollgrenze wP. Je größer Ip, desto plastischer. CH: Ip >35%, CL: 7-35%, ML: <7%.',n:'DIN 18122'},
+    {c:'WASSERGEHALT',q:'Formel für Wassergehalt w?',a:'w = (mfeucht - mtrocken) / mtrocken × 100 [%]. Probe bei 105°C trocknen bis Massekonstanz.',n:'DIN 18121'},
+    {c:'VERDICHTUNGSGRAD',q:'Formel Dpr?',a:'Dpr = (ρd,ist / ρPr) × 100 [%]. ρd,ist = gemessene Trockendichte auf Baustelle. ρPr = Proctordichte aus Labor.',n:'DIN 18127'},
+    {c:'KONSISTENZZAHL',q:'IC berechnen und bewerten?',a:'IC = (wL - w) / Ip. IC >1: fest/halbfest. IC 0,75-1: steif. IC 0,5-0,75: weich. IC <0,5: breiig/fließend.',n:'DIN 18122'},
+    {c:'CBR',q:'Was ist CBR und wozu dient er?',a:'California Bearing Ratio: Stempel drückt in Boden, Kraft/Standardkraft × 100 = CBR [%]. Maß für Tragfähigkeit. Straßenbau: meist CBR ≥ 3-10% gefordert.',n:'DIN EN 13286-47'},
+    {c:'RAMMSONDIERUNG',q:'Was ist DPL?',a:'Dynamic Probing Light = Leichte Rammsondierung. 10kg Fallgewicht, 50cm Fallhöhe. Schlagzahlen N10 pro 10cm Eindringtiefe zeigen Lagerungsdichte.',n:'DIN EN ISO 22476-2'},
+    {c:'BODENVERBESSERUNG',q:'Unterschied Bodenverbesserung vs. -stabilisierung?',a:'Verbesserung: kurzfristig (Kalk) um Boden bearbeitbar zu machen. Stabilisierung: dauerhaft (Zement/Kalk) für tragende Schichten.',n:'ZTV E-StB'},
+    {c:'FLIESSGRENZE',q:'Wie wL mit Casagrande bestimmen?',a:'Feuchter Boden in Schale, Rille einschneiden. Anzahl Schläge bis Rille 13mm schließt zählen. wL = Wassergehalt bei 25 Schlägen.',n:'DIN 18122-1'},
+    {c:'NORM',q:'Was regelt DIN 18300 (VOB/C)?',a:'ATV Erdarbeiten. Bodenklassen für die Vergütung von Erdarbeiten nach Lösbarkeit. Heute ergänzt durch DIN EN ISO 14688.',n:'DIN 18300'},
+    {c:'EV-WERT',q:'Formel für Ev-Wert?',a:'Ev = 1,5 × r × Δσ / Δs [MN/m²]. r = Plattenradius (150mm), Δσ = Spannungszuwachs, Δs = Setzungszuwachs.',n:'DIN 18134'},
+    {c:'BODENUNTERSUCHUNG',q:'Ungestörte vs. gestörte Bodenprobe?',a:'Ungestört: natürliche Struktur und Lagerungsdichte erhalten (Stechzylinder). Gestört: umgelagert. Für realistische Laborergebnisse immer ungestört entnehmen.',n:'DIN EN ISO 22475'},
+    {c:'PROCTOR',q:'Durchführung Proctorversuch?',a:'3 Lagen à 25 Schläge mit 2,5kg Hammer, Fallhöhe 30cm. 5 verschiedene Wassergehalte → Proctorkurve → Optimum ablesen.',n:'DIN 18127'},
+    {c:'VERDICHTUNGSKONTROLLE',q:'Methoden der Verdichtungskontrolle?',a:'1. Plattendruckversuch (Ev1, Ev2), 2. Proctorversuch + Wassergehalt = Dpr, 3. Leichte Fallgewichtsmethode, 4. Rammsondierung DPL.',n:'ZTV E-StB'},
+    {c:'GRENZWERTE',q:'Anforderungen Planum Straßenbau?',a:'Ev2 ≥ 45 MN/m², Ev2/Ev1 ≤ 2,2, Dpr ≥ 100% (wenn möglich). Frostsichere Ausführung. Keine Verwitterungsschutt, keine org. Anteile.',n:'ZTV E-StB'},
+  ],
+  asphalt:[
+    {c:'MARSHALL',q:'Zweck des Marshall-Versuchs?',a:'Bestimmung von Stabilität und Fließwert von Asphalt-PK (Ø101,6mm). Eignungsprüfung und Qualitätskontrolle von Mischgut.',n:'EN 12697-34'},
+    {c:'MARSHALL',q:'Marshall-PK Herstellung?',a:'Mischgut bei ~150°C in Form einbauen, mit Marshall-Hammer 75 Schläge je Seite. Ø 101,6mm. Abkühlen, ausdrücken, vermessen.',n:'EN 12697-34'},
+    {c:'VERDICHTUNGSGRAD',q:'VG-Formel und Anforderung?',a:'VG = ρBohrkern / ρmax × 100 [%]. Anforderung je nach Schicht 97-98%. Zu gering = Verformungsanfälligkeit und vorzeitige Schäden.',n:'ZTV Asphalt-StB'},
+    {c:'TEXTURTIEFE',q:'MTD berechnen?',a:'MTD = 4V / (π×d²) mit V = 25ml Sand und d = Sanddurchmesser. Anforderung: MTD ≥ 0,5mm. Maß für Oberflächenrauheit.',n:'EN 13036-1'},
+    {c:'TEMPERATUR',q:'Einbautemperatur AC D (Deckschicht)?',a:'Min. 120°C. Liefertemperatur: 145-165°C. Walztemperatur: 1. Verdichtung bei 120-140°C. Unter 120°C keine ausreichende Verdichtung.',n:'TL Asphalt-StB'},
+    {c:'ASPHALTARTEN',q:'Unterschied AC und SMA?',a:'AC (Asphaltbeton): offene Struktur, weit verbreitet. SMA (Splittmastixasphalt): Skelett aus grobem Splitt + Mastix. Lärmarm, hochbeständig, teurer.',n:'TL Asphalt-StB'},
+    {c:'BITUMEN',q:'Was bedeutet Bitumen 50/70?',a:'Penetration 50-70 (0,1mm bei 25°C, 100g, 5s). Standardbitumen für Deckschichten. Weicheres Bitumen = größere Zahl. PmB = polymermodifiziert.',n:'DIN EN 12591'},
+    {c:'HOHLRAUM',q:'Hohlraumgehalt VA berechnen?',a:'VA = (1 - ρRaum/ρRaumlos) × 100 [%]. AC D: 3-6%, SMA: 2-4%, PA: 18-25%. Zu niedrig: Aufwölbung. Zu hoch: Wassereinlagerung.',n:'EN 12697-8'},
+    {c:'GRIFFIGKEIT',q:'SRT-Wert und Anforderung?',a:'Skid Resistance Value, Pendelversuch. Anforderung Neubau: SRT ≥ 55. Gibt Rutschfestigkeit an. Zu gering = erhöhtes Unfallrisiko.',n:'EN 13036-4'},
+    {c:'RAUMGEWICHT',q:'Methoden zur Raumgewichtsbestimmung?',a:'1. Geometrisch: m/V aus Maßen. 2. Hydrostatisch: Auftrieb in Wasser (Archimedisch). 3. Vakuummethode für PA. Standard: hydrostatisch EN 12697-6.',n:'EN 12697-6'},
+    {c:'NORMEN',q:'Was ist ZTV Asphalt-StB?',a:'Zusätzliche Technische Vertragsbedingungen: Einbau, Verdichtung (VG≥97%), Temperaturanforderungen, Qualitätssicherung, Abnahme. Gilt für Bundesstraßen.',n:'ZTV Asphalt-StB'},
+    {c:'NORMEN',q:'Was ist TL Asphalt-StB?',a:'Technische Lieferbedingungen: Anforderungen an Mischgutkomposition, Bitumengehalt, Sieblinien, Hohlräume. Je nach Schicht und Belastungsklasse.',n:'TL Asphalt-StB'},
+    {c:'SCHICHTAUFBAU',q:'Aufbau Straßenoberbau von oben?',a:'Deckschicht (2-4cm) → Binderschicht (4-8cm) → Asphalttragschicht (8-20cm) → Frostschutzschicht (20-50cm) → Unterbau.',n:'RStO'},
+    {c:'EXTRAKTION',q:'Was ist eine Extraktion?',a:'Lösen des Bitumens mit Lösungsmittel → Bitumengehalt aus Gewichtsdifferenz + Siebanalyse des Mineralstoffs. Zur Mischgutkontrolle.',n:'EN 12697-1'},
+    {c:'VERDICHTUNG',q:'Walzentypen für Asphalt?',a:'1. Glattradfwalze (statisch/Vibration): Vor- und Hauptverdichtung. 2. Gummiradwalze (knetend): Zwischenverdichtung. Kombination für optimales Ergebnis.',n:'ZTV Asphalt-StB'},
+    {c:'SCHICHTDICKE',q:'Schichtdickenprüfung Bohrkern?',a:'Mindestens 3 Messungen mit Schieblehre, Mittelwert. Anforderung: Mittelwert ≥ Sollmaß - 10%, Einzelwert ≥ Sollmaß - 20%.',n:'ZTV Asphalt-StB'},
+    {c:'OFFENPORIGER ASPHALT',q:'Wozu wird PA (offenporiger Asphalt) verwendet?',a:'Lärmmindernde Deckschichten: bis 8 dB Lärmreduktion durch hohen Hohlraumgehalt (18-25%). Empfindlich gegen Frost, geringere Dauerhaftigkeit.',n:'TL Asphalt-StB'},
+    {c:'MARSHALL-QUOTIENT',q:'MQ berechnen?',a:'MQ = Stabilität [N] / Fließwert [mm] = [N/mm]. Maß für Steifigkeit. Hoher MQ = steifer Asphalt. Typisch: 2000-5000 N/mm.',n:'EN 12697-34'},
+    {c:'EINBAUPROTOKOLL',q:'Was enthält ein Einbauprotokoll?',a:'Datum, Wetter, Untergrundtemperatur, Mischguttemperatur, Lieferschein-Nr., Fertigereinstellungen, Walzentyp/-überfahrten, Schichtdicke, Prüfer.',n:'ZTV Asphalt-StB'},
+    {c:'BOHRKERN',q:'Wie wird Bohrkern entnommen?',a:'Diamantkernbohrgerät (Ø100 oder 150mm), wassergekühltes Bohren bis Schichtunterkante. Beschriften (km, Seite, Datum), Schichtdicken messen.',n:'ZTV Asphalt-StB'},
+  ]
+};
+
+const QUIZ={
+  beton:[
+    {q:'Welche Druckfestigkeit hat C25/30?',o:['25 N/mm² Zylinder / 30 N/mm² Würfel','30 N/mm² Zylinder / 25 N/mm² Würfel','25 N/mm² für beides','30 N/mm² für beides'],a:0,e:'C25/30: erste Zahl = Zylinderdruckfestigkeit (fck,cyl = 25), zweite = Würfeldruckfestigkeit (fck,cube = 30) nach 28 Tagen.'},
+    {q:'Kantenlänge Normwürfel nach DIN EN 12390-1?',o:['100 mm','150 mm','200 mm','250 mm'],a:1,e:'150mm. Kleinere 100mm-Würfel mit Umrechnungsfaktor. Fläche: 150×150 = 22.500 mm².'},
+    {q:'XC3 steht für?',o:['Carbonatisierung, trocken','Carbonatisierung, mäßige bis hohe Feuchte','Chloridangriff, mäßig','Frost-Tausalz-Angriff'],a:1,e:'XC3 = Carbonatisierung, mäßige bis hohe Feuchte. Z.B. Außenbauteile mit Regenschutz. w/z ≤ 0,55.'},
+    {q:'Setzmaßklasse S3 entspricht?',o:['10-40 mm','50-90 mm','100-150 mm','160-210 mm'],a:2,e:'S3 = weich, 100-150mm. Gut verarbeitbar für normale Bewehrungsdichten.'},
+    {q:'Luftgehalt-Prüfnorm?',o:['DIN EN 12350-2','DIN EN 12390-3','DIN EN 12350-7','DIN EN 206'],a:2,e:'DIN EN 12350-7: Druckausgleichsverfahren (Drucktopf-Methode). Druckabfall proportional zum Luftgehalt.'},
+    {q:'Fläche eines Würfels 150mm?',o:['15.000 mm²','20.000 mm²','22.500 mm²','25.000 mm²'],a:2,e:'A = 150 × 150 = 22.500 mm². fc = F/A. Bei F = 855 kN: fc = 855.000/22.500 = 38 N/mm².'},
+    {q:'XF4 erfordert mindestens?',o:['280 kg/m³ Zement, w/z≤0,55','300 kg/m³ Zement, w/z≤0,50','320 kg/m³ Zement, w/z≤0,45','350 kg/m³ Zement, w/z≤0,40'],a:2,e:'XF4 (Frost-Tausalz hoch): 320 kg/m³, w/z ≤ 0,45, LP-Beton mind. 4% Luftgehalt.'},
+    {q:'w/z-Wert Formel?',o:['Zement/Wasser','Wasser/Zement','Wasser×Zement','(Wasser+Zement)/2'],a:1,e:'w/z = Wassermasse / Zementmasse. Je kleiner, desto dichter und fester. Maßgebend für Dauerhaftigkeit.'},
+    {q:'Normfestigkeit nach wie vielen Tagen?',o:['7 Tage','14 Tage','28 Tage','56 Tage'],a:2,e:'28 Tage bei 20°C. Frühfestigkeiten bei 2, 7 Tage möglich. Langzeitwerte bei 56 oder 90 Tagen.'},
+    {q:'DIN EN 12390-8 prüft?',o:['Biegezugfestigkeit','Spaltzugfestigkeit','Wassereindringtiefe','Elastizitätsmodul'],a:2,e:'Wassereindringtiefe unter Druck: 500 kPa für 72h. Nach Spalten Eindringtiefe messen. WU-Beton: max. 50mm.'},
+    {q:'Mindesttemperatur für Betonerhärtung?',o:['-5°C','0°C','+5°C','+10°C'],a:2,e:'+5°C. Darunter läuft Hydratation zu langsam oder stoppt. Unter 0°C: Frost zerstört frischen Beton.'},
+    {q:'Wie viele Lagen beim Würfelbefüllen?',o:['1 Lage','2 Lagen','3 Lagen','4 Lagen'],a:2,e:'3 gleiche Lagen (je ~50mm). Jede Lage 25× stochern oder rütteln (DIN EN 12390-2).'},
+    {q:'Was bedeutet R in CEM II 42,5 R?',o:['Rein','Hohe Anfangsfestigkeit','Regulär','Recycling'],a:1,e:'R = rapid = hohe Anfangsfestigkeit. N = normal. Frühere Mindestdruckfestigkeit (z.B. nach 2 Tagen).'},
+    {q:'F3 im Ausbreitmaß entspricht?',o:['≤340 mm','350-410 mm','420-480 mm','490-550 mm'],a:2,e:'F3 = 420-480mm. F1: ≤340mm, F2: 350-410mm, F4: 490-550mm, F5: 560-620mm, F6: ≥630mm.'},
+    {q:'Prüfnorm Würfeldruckfestigkeit?',o:['DIN EN 12350-2','DIN EN 12390-3','DIN EN 206','DIN EN 13670'],a:1,e:'DIN EN 12390-3: Druckfestigkeit von Probekörpern. Belastungsgeschwindigkeit 0,6 ±0,2 N/mm²/s.'},
+  ],
+  geo:[
+    {q:'Was bestimmt der Proctorversuch?',o:['Korngrößenverteilung','Optimale Verdichtungsfeuchte + Proctordichte','Tragfähigkeit (Ev-Wert)','Plastizität'],a:1,e:'Proctorversuch (DIN 18127): Bestimmung wPr (optimale Verdichtungsfeuchte) und ρPr (Proctordichte) als Referenz.'},
+    {q:'Dpr = 97% bedeutet?',o:['97% der Proctordichte erreicht','97% Wassergehalt','3% Hohlräume','Unvollständige Verdichtung'],a:0,e:'Dpr = ρd,ist/ρPr × 100 = 97%. Unterbau ≥ 97%, Planum ≥ 100% nach ZTV E-StB.'},
+    {q:'Plattendruckversuch Plattendurchmesser?',o:['Ø 200mm','Ø 300mm','Ø 400mm','Ø 500mm'],a:1,e:'Ø 300mm nach DIN 18134. Platte wird stufenweise belastet, Setzungen gemessen.'},
+    {q:'Ev2-Anforderung Planum?',o:['Ev2 ≥ 25 MN/m²','Ev2 ≥ 45 MN/m²','Ev2 ≥ 80 MN/m²','Ev2 ≥ 120 MN/m²'],a:1,e:'Planum: Ev2 ≥ 45 MN/m². Frostschutzschicht ≥ 80, Schottertragschicht ≥ 120 MN/m².'},
+    {q:'Ip = wL - wP bestimmt?',o:['Wassergehalt','Plastizitätszahl','Verdichtungsgrad','Konsistenzzahl'],a:1,e:'Ip = Plastizitätszahl. Differenz Fließgrenze und Ausrollgrenze. CH: Ip >35%, CL: 7-35%, ML: <7%.'},
+    {q:'Ev2/Ev1 Anforderung?',o:['≤ 1,5','≤ 2,2','≤ 3,0','≤ 5,0'],a:1,e:'Ev2/Ev1 ≤ 2,2 = ausreichend vorbelastet. Höhere Werte: lockere Lagerung oder unzureichende Verdichtung.'},
+    {q:'Siebanalyse bestimmt?',o:['Tragfähigkeit','Wassergehalt','Korngrößenverteilung','Plastizität'],a:2,e:'DIN 18123: Korngrößenverteilung durch Sieben. Siebsatz 0,063-63mm. Ergebnis als Sieblinie.'},
+    {q:'Wassergehalt Formel?',o:['(mf-mt)/mt × 100','(mt-mf)/mf × 100','mf/mt × 100','mWasser/mfeucht × 100'],a:0,e:'w = (mfeucht - mtrocken)/mtrocken × 100 [%]. Bei 105°C trocknen bis Massekonstanz.'},
+    {q:'GW nach DIN 18196 ist?',o:['Gut gestufte Kiese','Gemischte Wässer','Grobe Werkstoffe','Gesteinswolle'],a:0,e:'GW = Gut gestufte Kiese und Kies-Sand-Gemische. Gut verdichtbar, hohe Tragfähigkeit.'},
+    {q:'Fließgrenze wL bestimmt mit?',o:['Proctorgerät','Casagrande-Gerät','Siebsatz','Stechzylinder'],a:1,e:'Casagrande-Gerät (DIN 18122-1): 25 Schläge bis Rille 13mm schließt = wL.'},
+    {q:'DIN 18300 (VOB/C) regelt?',o:['Proctorversuch','Plattendruckversuch','Erdarbeiten/Bodenklassen für Vergütung','Siebanalyse'],a:2,e:'VOB/C ATV Erdarbeiten. Bodenklassen für Abrechnung nach Lösbarkeit. Heute DIN EN ISO 14688.'},
+    {q:'CBR = California Bearing Ratio ist?',o:['Carbonatisierungswiderstand','Tragfähigkeitsmaß','Tongehalt','Verdichtungsgrad'],a:1,e:'Stempel drückt in Boden, Kraft/Standardkraft × 100 = CBR [%]. Maß für Tragfähigkeit des Bodens.'},
+    {q:'Konsistenzzahl IC = 0,75-1 bedeutet?',o:['Fest/halbfest','Steif','Weich','Fließend'],a:1,e:'IC: >1 = fest, 0,75-1 = steif, 0,5-0,75 = weich, <0,5 = breiig/fließend.'},
+    {q:'DPL steht für?',o:['Direkte Probelinie','Dynamic Probing Light = Leichte Rammsondierung','Dichte-Plastizitätslimit','Druckprüfung Laborlinie'],a:1,e:'DPL = Dynamic Probing Light (DIN EN ISO 22476-2). 10kg Fallgewicht, 50cm. N10 = Schläge/10cm.'},
+    {q:'Mindest-Dpr für Unterbau?',o:['Dpr ≥ 90%','Dpr ≥ 95%','Dpr ≥ 97%','Dpr ≥ 100%'],a:2,e:'Unterbau Dpr ≥ 97%, Planum/Frostschutzschicht Dpr ≥ 100% nach ZTV E-StB.'},
+  ],
+  asphalt:[
+    {q:'Min. Einbautemperatur AC D?',o:['80°C','100°C','120°C','140°C'],a:2,e:'Min. 120°C. Darunter zu zähflüssiges Bitumen, keine ausreichende Verdichtung. Liefertemperatur 145-165°C.'},
+    {q:'VG-Formel?',o:['ρmax/ρBK × 100','ρBK/ρmax × 100','(ρBK-ρmax)/ρmax','ρmax-ρBK'],a:1,e:'VG = ρBohrkern/ρmax × 100 [%]. Anforderung 97-98% je nach Schicht.'},
+    {q:'MTD = Mean Texture Depth ist?',o:['Minimale Tiefendimension','Mittlere Texturtiefe','Maximale Texturdicke','Materialtiefendichte'],a:1,e:'Mittlere Texturtiefe aus Sandfleckmethode. MTD = 4V/(π×d²). Anforderung ≥ 0,5mm.'},
+    {q:'Bitumen 50/70 bedeutet?',o:['Schmelzpunkt 50-70°C','Penetration 50-70×0,1mm','Viskosität 50-70 mm²/s','Erweichungspunkt 50-70°C'],a:1,e:'Penetration nach EN 1426 bei 25°C, 100g, 5s. Standard für Deckschichten.'},
+    {q:'SMA ist?',o:['Standard Mischgut Asphalt','Splittmastixasphalt','Straßenmischmaschine','Spezialasphalt'],a:1,e:'Splittmastixasphalt: Splitt-Skelett + Bitumenmastix. Lärmarm, hochbeständig, für hochbelastete Straßen.'},
+    {q:'Hohlraumgehalt AC D sollte betragen?',o:['0-2%','3-6%','8-12%','18-25%'],a:1,e:'AC D: 3-6%. SMA: 2-4%. PA: 18-25%. Zu niedrig: Aufwölbung. Zu hoch: Wassereinlagerung.'},
+    {q:'Marshall-PK Anzahl Schläge je Seite?',o:['25','50','75','100'],a:2,e:'75 Schläge je Seite mit Marshall-Hammer (4,54kg, 457mm Fallhöhe) nach EN 12697-34.'},
+    {q:'SRT-Anforderung Neubau?',o:['SRT ≥ 35','SRT ≥ 45','SRT ≥ 55','SRT ≥ 65'],a:2,e:'SRT ≥ 55 für neue Deckschichten. Pendelversuch nach EN 13036-4. Griffigkeitsmaß.'},
+    {q:'ZTV Asphalt-StB regelt?',o:['Mischgutzusammensetzung','Einbau, Verdichtung, Qualitätssicherung','Bitumensorten','Straßendimensionierung'],a:1,e:'ZTV = Zusätzliche Technische Vertragsbedingungen. Einbau, VG ≥ 97%, Temperaturen, Abnahme.'},
+    {q:'Extraktion bestimmt?',o:['Druckfestigkeit','Bitumengehalt + Mineralstoffzusammensetzung','Verdichtungsgrad','Schichtdicke'],a:1,e:'Extraktion (EN 12697-1): Lösungsmittel löst Bitumen. Bitumengehalt aus Gewichtsdifferenz + Siebanalyse.'},
+    {q:'Schichtaufbau von oben?',o:['Tragschicht - Binderschicht - Deckschicht','Deckschicht - Binderschicht - Tragschicht','Binderschicht - Deckschicht - Tragschicht','Deckschicht - Tragschicht - Binderschicht'],a:1,e:'Von oben: Deckschicht → Binderschicht → Asphalttragschicht → Frostschutzschicht → Unterbau.'},
+    {q:'TL Asphalt-StB ist?',o:['Technische Lieferbedingungen für Mischgut','Technische Lernunterlage','Tiefbauleitlinie','Tragschichtlastfaktor'],a:0,e:'Technische Lieferbedingungen für Asphaltmischgut. Anforderungen Zusammensetzung, Hohlräume, Sieblinien.'},
+    {q:'Bohrkern-Schichtdickenmessung: Mindestanzahl Messungen?',o:['1 Messung','2 Messungen','3 Messungen','5 Messungen'],a:2,e:'Mind. 3 Messungen gleichmäßig verteilt, Mittelwert. Anforderung: Mittel ≥ Soll-10%, Einzelwert ≥ Soll-20%.'},
+    {q:'MQ = Marshall-Quotient berechnet sich als?',o:['Fließwert / Stabilität','Stabilität × Fließwert','Stabilität / Fließwert','(Stabilität + Fließwert) / 2'],a:2,e:'MQ = Stabilität [N] / Fließwert [mm] = [N/mm]. Maß für Steifigkeit des Asphalts.'},
+    {q:'Hauptverdichtungstemperatur Asphalt?',o:['60-80°C','80-100°C','120-140°C','150-170°C'],a:2,e:'120-140°C für Hauptverdichtung. Darunter Bitumen zu zähflüssig für wirksame Verdichtung.'},
+  ]
+};
+
+const NORMEN={
+  beton:[
+    {n:'DIN EN 206',t:'Beton — Festlegung, Eigenschaften',d:'Grundnorm. Expositionsklassen XC/XD/XS/XF/XA/XM, Konsistenzklassen, Grenzwerte w/z, Zementgehalt.',g:'w/z: 0,45-0,65'},
+    {n:'DIN EN 12390-2',t:'Herstellung + Lagerung Probekörper',d:'3 Lagen, 25× stochern/rütteln. Lagerung 20°C ±2°C, feucht.',g:'20°C ±2°C'},
+    {n:'DIN EN 12390-3',t:'Druckfestigkeit Probekörper',d:'Druckfestigkeitsprüfung Würfel/Zylinder. Belastung 0,6 ±0,2 N/mm²/s.',g:'Belastung: 0,6 N/mm²/s'},
+    {n:'DIN EN 12390-5',t:'Biegezugfestigkeit',d:'Drei-/Vierpunktbiegeversuch an Prismen 160×40×40mm.',g:'Typisch: 3-6 N/mm²'},
+    {n:'DIN EN 12390-6',t:'Spaltzugfestigkeit',d:'Liegend eingespannt, Linienlast. fct,sp ≈ 10% der Druckfestigkeit.',g:'~10% der fc'},
+    {n:'DIN EN 12390-8',t:'Wassereindringtiefe unter Druck',d:'500 kPa für 72h. Max. Eindringtiefe nach Spalten.',g:'WU-Beton: max. 50mm'},
+    {n:'DIN EN 12350-2',t:'Setzmaß (Frischbeton)',d:'Abrams-Kegel 300mm. S1 (10-40mm) bis S5 (≥220mm).',g:'S3: 100-150mm'},
+    {n:'DIN EN 12350-7',t:'Luftgehalt Druckausgleich',d:'Drucktopf-Methode. Druckabfall = Luftgehalt.',g:'LP-Beton: ≥4,0%'},
+    {n:'DIN EN 13670',t:'Ausführung Betonbauwerke',d:'Nachbehandlung: mind. 5 Tage bei >5°C. Einbautemperatur: 5-30°C.',g:'Min. +5°C'},
+    {n:'DIN EN 197-1',t:'Zement — Zusammensetzung',d:'CEM I-V Typen, Festigkeitsklassen 32,5/42,5/52,5, N/R.',g:'CEM I = Portland'},
+  ],
+  geo:[
+    {n:'DIN 18127',t:'Proctorversuch',d:'Optimale Verdichtungsfeuchte wPr und Proctordichte ρPr. 3 Lagen, 25 Schläge.',g:'Referenz: ρPr'},
+    {n:'DIN 18134',t:'Plattendruckversuch',d:'Ev1/Ev2 mit Ø300mm Platte. Stufenweise Belastung.',g:'Planum: Ev2≥45'},
+    {n:'DIN 18196',t:'Bodenklassifikation',d:'GW, GP, GM, GC, SW, SP, SM, SC, ML, CL, MH, CH, OH, Pt.',g:'—'},
+    {n:'DIN 18123',t:'Sieb- und Schlämmanalyse',d:'Korngrößenverteilung: Sieben >0,063mm, Sedimentationsanalyse <0,063mm.',g:'—'},
+    {n:'DIN 18122',t:'Atterbergsche Grenzen',d:'wP (Ausrollgrenze), wL (Fließgrenze). Ip = wL - wP.',g:'CH: Ip>35%'},
+    {n:'DIN 18121',t:'Wassergehalt',d:'Trocknen bei 105°C. w = (mf-mt)/mt × 100.',g:'—'},
+    {n:'ZTV E-StB',t:'Erdbauarbeiten Straße',d:'Verdichtungsanforderungen, Ev2/Ev1, Dpr-Werte je Schicht.',g:'Unterbau: Dpr≥97%'},
+    {n:'DIN EN ISO 22476-2',t:'Rammsondierung DPL',d:'10kg, 50cm Fallhöhe. N10 = Schläge pro 10cm Eindringtiefe.',g:'—'},
+    {n:'DIN 18300',t:'Erdarbeiten (VOB/C)',d:'Bodenklassen für Vergütung nach Lösbarkeit und Bearbeitungsaufwand.',g:'—'},
+    {n:'DIN 18125',t:'Dichte des Bodens',d:'Trockendichte und Feuchtedichte. Grundlage Verdichtungsnachweis.',g:'—'},
+  ],
+  asphalt:[
+    {n:'EN 12697-34',t:'Marshall-Versuch',d:'75 Schläge/Seite, Ø101,6mm. Stabilität und Fließwert.',g:'Stabilität: je nach Art'},
+    {n:'EN 12697-6',t:'Raumgewicht Bohrkern',d:'Geometrisch, hydrostatisch oder SSD. Basis für VG.',g:'—'},
+    {n:'EN 12697-8',t:'Hohlraumgehalt VA',d:'VA = (1-ρR/ρRL)×100. AC D: 3-6%, SMA: 2-4%, PA: 18-25%.',g:'AC D: 3-6%'},
+    {n:'EN 12697-1',t:'Extraktion (Bitumengehalt)',d:'Lösen mit Lösungsmittel, Bitumengehalt und Siebanalyse.',g:'—'},
+    {n:'EN 13036-1',t:'Sandfleckmethode (MTD)',d:'25ml Sand, Kreisdurchmesser messen. MTD = 4V/(π×d²).',g:'MTD≥0,5mm'},
+    {n:'EN 13036-4',t:'Pendelversuch (SRT)',d:'Gummipendel gibt Griffigkeit. SRT ≥ 55 Neubau.',g:'SRT≥55'},
+    {n:'TL Asphalt-StB',t:'Technische Lieferbedingungen',d:'Anforderungen an Zusammensetzung je Schicht und Belastungsklasse.',g:'—'},
+    {n:'ZTV Asphalt-StB',t:'Einbau und Verdichtung',d:'Temperaturanforderungen, VG≥97%, Einbauprotokoll.',g:'VG≥97%'},
+    {n:'DIN EN 12591',t:'Bitumensorten',d:'20/30, 35/50, 50/70, 70/100, 100/150. Größer = weicher.',g:'50/70: Standard'},
+    {n:'RStO',t:'Standardisierung Oberbau',d:'Dimensionierung nach Belastungsklassen Bk0,3 bis Bk100.',g:'—'},
+  ]
+};
+
+// ══ STATE ══
+const ST={};
+['beton','geo','asphalt'].forEach(a=>{ST[a]={i:0,cards:[...CARDS[a]],ok:new Set()};});
+const abbr={beton:'b',geo:'g',asphalt:'a'};
+const QST={};
+
+function initFC(a){if(!ST[a]._init){ST[a]._init=true;showCard(a);}}
+function showCard(a){
+  const s=ST[a],ab=abbr[a],tot=CARDS[a].length;
+  if(s.i>=s.cards.length){
+    document.getElementById('fcc-'+a).innerHTML=`<div class="fc-front" style="position:relative;border-radius:16px;"><div class="fc-cat">FERTIG 🎉</div><div class="fc-q">Alle ${tot} Karten durch!</div><div style="font-size:12px;color:#10b981;margin-top:10px;">Gewusst: ${s.ok.size}/${tot}</div><button onclick="restartFC('${a}')" style="margin-top:14px;padding:7px 18px;background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.2);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;">🔄 Nochmal</button></div>`;
+    updProg(a);return;
+  }
+  const c=s.cards[s.i];
+  document.getElementById('fcat-'+ab).textContent=c.c;document.getElementById('fq-'+ab).textContent=c.q;
+  document.getElementById('bcat-'+ab).textContent=c.c;document.getElementById('fa-'+ab).textContent=c.a;document.getElementById('fn-'+ab).textContent=c.n;
+  document.getElementById('fcc-'+a).classList.remove('flipped');
+  document.getElementById('cnt-'+a).textContent=`Karte ${s.i+1}/${s.cards.length}`;
+  updProg(a);
+}
+function flip(a){document.getElementById('fcc-'+a).classList.toggle('flipped');}
+function rate(a,r){
+  const s=ST[a];
+  if(r==='g'){s.ok.add(s.i);s.i++;}
+  else if(r==='w'){s.i++;}
+  else{const c=s.cards[s.i];s.cards.splice(s.i,1);s.cards.push(c);}
+  showCard(a);
+}
+function restartFC(a){const s=ST[a];s.i=0;s.ok=new Set();s.cards=[...CARDS[a]];showCard(a);}
+function updProg(a){
+  const s=ST[a],tot=CARDS[a].length;
+  const pct=tot>0?Math.round(s.i/tot*100):0;
+  const pb=document.getElementById('pb-'+a);if(pb)pb.style.width=pct+'%';
+  let total=0,done=0;
+  ['beton','geo','asphalt'].forEach(x=>{total+=CARDS[x].length;done+=ST[x].ok.size;});
+  const spb=document.getElementById('spb');const spl=document.getElementById('spl');const sc=document.getElementById('sc');
+  if(spb)spb.style.width=(total>0?Math.round(done/total*100):0)+'%';
+  if(spl)spl.textContent=`${done} von ${total} gelernt`;
+  if(sc&&done>0)sc.textContent=`🎓 ${done}/${total}`;
+}
+
+// QUIZ
+function initQuiz(a){
+  QST[a]={i:0,score:0,qs:[...QUIZ[a]].sort(()=>Math.random()-0.5)};
+  renderQ(a);
+}
+function renderQ(a){
+  const s=QST[a],w=document.getElementById('qw-'+a);
+  if(s.i>=s.qs.length){
+    const p=Math.round(s.score/s.qs.length*100);
+    w.innerHTML=`<div class="qresult"><div class="qscore" style="color:${p>=80?'#10b981':p>=60?'#f59e0b':'#f87171'}">${s.score}/${s.qs.length}</div><div class="qlbl">${p>=80?'Sehr gut! 🎉':p>=60?'Gut 👍':'Weiter üben 📚'} (${p}%)</div><button class="qrestart" onclick="initQuiz('${a}')">🔄 Nochmal</button></div>`;
+    return;
+  }
+  const q=s.qs[s.i];
+  w.innerHTML=`<div class="qcard"><div class="qnum">Frage ${s.i+1}/${s.qs.length} · Punkte: ${s.score}</div><div class="qq">${q.q}</div><div class="qopts">${q.o.map((o,i)=>`<button class="qopt" onclick="answerQ('${a}',${i})">${String.fromCharCode(65+i)}) ${o}</button>`).join('')}</div><div class="qexp" id="qe-${a}"></div><div class="qnav"><button class="qnext" id="qn-${a}" onclick="nextQ('${a}')" style="display:none">Weiter →</button></div></div>`;
+}
+function answerQ(a,ch){
+  const s=QST[a],q=s.qs[s.i];
+  document.querySelectorAll(`#qw-${a} .qopt`).forEach(o=>o.classList.add('disabled'));
+  const opts=document.querySelectorAll(`#qw-${a} .qopt`);
+  opts[ch].classList.add(ch===q.a?'correct':'wrong');
+  if(ch!==q.a)opts[q.a].classList.add('correct');
+  if(ch===q.a)s.score++;
+  const ex=document.getElementById('qe-'+a);if(ex){ex.textContent=q.e;ex.classList.add('show');}
+  const nb=document.getElementById('qn-'+a);if(nb)nb.style.display='block';
+}
+function nextQ(a){QST[a].i++;renderQ(a);}
+
+// RECHNER
+function calcWZ(){const w=+document.getElementById('wz-w').value,z=+document.getElementById('wz-z').value;document.getElementById('r-wz').textContent=z?`w/z = ${(w/z).toFixed(3)} ${w/z<=0.6?'✓':'⚠'}`:'w/z = —';}
+function calcFC(){const f=+document.getElementById('fc-f').value,a=+document.getElementById('fc-t').value;document.getElementById('r-fc').textContent=f?`fc = ${(f*1000/a).toFixed(1)} N/mm²`:'fc = — N/mm²';}
+function calcRD(){const m=+document.getElementById('rd-m').value,v=+document.getElementById('rd-v').value;document.getElementById('r-rd').textContent=v?`ρ = ${(m/v*1000).toFixed(0)} kg/m³`:'ρ = — kg/m³';}
+function calcLG(){const i=+document.getElementById('lg-i').value,r=+document.getElementById('lg-r').value;document.getElementById('r-lg').textContent=r?`L = ${((1-i/r)*100).toFixed(1)} %`:'L = — %';}
+function calcZG(){const w=+document.getElementById('zg-w').value,wz=+document.getElementById('zg-wz').value;document.getElementById('r-zg').textContent=wz?`z = ${(w/wz).toFixed(0)} kg/m³`:'z = — kg/m³';}
+function calcDPR(){const i=+document.getElementById('dpr-i').value,p=+document.getElementById('dpr-p').value;const d=i/p*100;document.getElementById('r-dpr').textContent=p?`Dpr = ${d.toFixed(1)} % ${d>=97?'✓':'⚠ <97%'}`:'Dpr = — %';}
+function calcWG(){const f=+document.getElementById('wg-f').value,t=+document.getElementById('wg-t').value;document.getElementById('r-wg').textContent=t?`w = ${((f-t)/t*100).toFixed(1)} %`:'w = — %';}
+function calcEV(){const e2=+document.getElementById('ev-2').value,e1=+document.getElementById('ev-1').value;const r=e1?e2/e1:0;document.getElementById('r-ev').textContent=e1?`Ev2/Ev1 = ${r.toFixed(2)} ${r<=2.2?'✓ i.O.':'⚠ zu hoch'}`:'Ev2/Ev1 = —';}
+function calcIP(){const l=+document.getElementById('ip-l').value,p=+document.getElementById('ip-p').value;document.getElementById('r-ip').textContent=l&&p?`Ip = ${(l-p).toFixed(1)} %`:'Ip = — %';}
+function calcIC(){const l=+document.getElementById('ic-l').value,w=+document.getElementById('ic-w').value,p=+document.getElementById('ic-p').value;const ic=p?(l-w)/p:0;const lbl=ic>=1?'fest':ic>=0.75?'steif':ic>=0.5?'weich':'breiig';document.getElementById('r-ic').textContent=p?`IC = ${ic.toFixed(2)} (${lbl})`:'IC = —';}
+function calcVG(){const b=+document.getElementById('vg-b').value,m=+document.getElementById('vg-m').value;const v=m?b/m*100:0;document.getElementById('r-vg').textContent=m?`VG = ${v.toFixed(1)} % ${v>=97?'✓':'⚠'}`:'VG = — %';}
+function calcRG(){const m=+document.getElementById('rg-m').value,d=+document.getElementById('rg-d').value,h=+document.getElementById('rg-h').value;const v=Math.PI*(d/2)*(d/2)*h/1000;document.getElementById('r-rg').textContent=v?`ρ = ${(m/v).toFixed(3)} g/cm³`:'ρ = — g/cm³';}
+function calcMTD(){const d=+document.getElementById('mtd-d').value;const mtd=d?(4*25000/(Math.PI*d*d)).toFixed(2):0;document.getElementById('r-mtd').textContent=d?`MTD = ${mtd} mm ${mtd>=0.5?'✓':'⚠ <0,5mm'}`:'MTD = — mm';}
+function calcMQ(){const s=+document.getElementById('mq-s').value,f=+document.getElementById('mq-f').value;document.getElementById('r-mq').textContent=f?`MQ = ${(s/f).toFixed(0)} N/mm`:'MQ = — N/mm';}
+function calcVA(){const r=+document.getElementById('va-r').value,l=+document.getElementById('va-l').value;document.getElementById('r-va').textContent=l?`VA = ${((1-r/l)*100).toFixed(1)} %`:'VA = — %';}
+
+// NORMEN
+function showNormen(a,btn){
+  document.querySelectorAll('.stab').forEach(b=>{b.classList.remove('ab','ag','aa');});
+  const cls={beton:'ab',geo:'ag',asphalt:'aa'};btn.classList.add(cls[a]);
+  document.getElementById('normen-grid').innerHTML=NORMEN[a].map(n=>`<div class="nc"><div class="nc-n">${n.n}</div><div class="nc-t">${n.t}</div><div class="nc-d">${n.d}</div>${n.g&&n.g!=='—'?`<div class="nc-g">⚡ ${n.g}</div>`:''}</div>`).join('');
+}
+
+// PANEL NAV
+const PT={'home':'Azubi-Bereich','fc-beton':'Lernkarten Beton','fc-geo':'Lernkarten Geotechnik','fc-asphalt':'Lernkarten Asphalt','qz-beton':'Quiz Beton','qz-geo':'Quiz Geotechnik','qz-asphalt':'Quiz Asphalt','calc-beton':'Rechner Beton','calc-geo':'Rechner Geotechnik','calc-asphalt':'Rechner Asphalt','normen':'Normen-Übersicht'};
+function showP(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sbn').forEach(b=>b.classList.remove('ab','ag','aa','av'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.getElementById('tb-t').textContent=PT[id]||id;
+  if(id.startsWith('fc-')){const a=id.replace('fc-','');initFC(a);}
+  if(id.startsWith('qz-')){initQuiz(id.replace('qz-',''));}
+  if(id==='normen')showNormen('beton',document.querySelector('.stab.ab'));
+  closeSB();document.querySelector('.content').scrollTo(0,0);
+}
+function toggleSB(){document.getElementById('sb').classList.toggle('open');document.getElementById('mob-ov').classList.toggle('open');}
+function closeSB(){document.getElementById('sb').classList.remove('open');document.getElementById('mob-ov').classList.remove('open');}
+showNormen('beton',document.querySelector('.stab.ab'));
+if(window.innerWidth<=768){const b=document.querySelector('.mob-btn');if(b)b.style.display='flex';}
+</script>
+</body>
+</html>

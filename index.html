@@ -3,22 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BetonCheck Pro — Baustoffprüfung Digital</title>
+<title>PrüfCheck Pro — Baustoffprüfung Digital</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
-body{font-family:'Space Grotesk',sans-serif;background:#020408;color:#e8f0fe;overflow-x:hidden;cursor:none;}
-body::after{content:'';position:fixed;inset:0;z-index:999;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;opacity:0.5;}
-.cursor{width:10px;height:10px;background:#4f9fff;border-radius:50%;position:fixed;z-index:9999;pointer-events:none;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .2s,height .2s;}
-.cursor-ring{width:32px;height:32px;border:1px solid rgba(79,159,255,.35);border-radius:50%;position:fixed;z-index:9998;pointer-events:none;transform:translate(-50%,-50%);}
+body{font-family:'Space Grotesk',sans-serif;background:#020408;color:#e8f0fe;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(79,159,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(79,159,255,.025) 1px,transparent 1px);background-size:52px 52px;pointer-events:none;}
 /* NAV */
 nav{position:fixed;top:0;left:0;right:0;z-index:500;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 6%;transition:background .3s,border-color .3s;}
-nav.scrolled{background:rgba(2,4,8,.92);backdrop-filter:blur(20px);border-bottom:1px solid rgba(79,159,255,.08);}
+nav.scrolled{background:rgba(2,4,8,.94);backdrop-filter:blur(20px);border-bottom:1px solid rgba(79,159,255,.08);}
 .nav-logo{display:flex;align-items:center;gap:11px;text-decoration:none;}
 .nlm{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#4f9fff,#00d4aa);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#020408;font-family:'JetBrains Mono',monospace;}
-.nlt{font-size:14px;font-weight:600;color:#e8f0fe;letter-spacing:.3px;}
+.nlt{font-size:14px;font-weight:600;color:#e8f0fe;}
 .nlt span{color:#4f9fff;}
 .nav-links{display:flex;gap:28px;}
 .nav-links a{font-size:13px;color:#6b8299;text-decoration:none;font-weight:500;transition:color .15s;}
@@ -52,12 +50,9 @@ h1 .outline{-webkit-text-stroke:1px rgba(79,159,255,.4);-webkit-text-fill-color:
 .hstats{display:flex;gap:46px;flex-wrap:wrap;opacity:0;animation:fadeUp .8s 1s forwards;}
 .hs-n{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:500;background:linear-gradient(135deg,#e8f0fe,#4f9fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;}
 .hs-l{font-size:10px;color:#3d5066;margin-top:3px;letter-spacing:1px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;}
-.scroll-hint{position:absolute;bottom:36px;left:6%;display:flex;align-items:center;gap:10px;font-size:10px;color:#2d3f52;font-family:'JetBrains Mono',monospace;letter-spacing:1px;animation:fadeIn 1s 1.5s both;}
-.sline{width:36px;height:1px;background:rgba(255,255,255,.08);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
-@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 /* SECTIONS */
-.section{padding:110px 6%;position:relative;}
+.section{padding:110px 6%;position:relative;z-index:1;}
 .stag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#4f9fff;margin-bottom:14px;padding:4px 11px;border:1px solid rgba(79,159,255,.14);border-radius:100px;background:rgba(79,159,255,.05);}
 .sh{font-family:'Instrument Serif',serif;font-size:clamp(30px,4.2vw,56px);letter-spacing:-1px;line-height:1.1;margin-bottom:14px;}
 .sh em{font-style:italic;color:#4f9fff;}
@@ -65,7 +60,7 @@ h1 .outline{-webkit-text-stroke:1px rgba(79,159,255,.4);-webkit-text-fill-color:
 /* REVEAL */
 .reveal{opacity:0;transform:translateY(36px);transition:opacity .7s ease,transform .7s ease;}
 .reveal.visible{opacity:1;transform:translateY(0);}
-.rd1{transition-delay:.1s;}.rd2{transition-delay:.2s;}.rd3{transition-delay:.3s;}.rd4{transition-delay:.4s;}
+.rd1{transition-delay:.1s;}.rd2{transition-delay:.2s;}.rd3{transition-delay:.3s;}
 /* MODULES */
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
 .mcard{border-radius:18px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.018);padding:34px;cursor:pointer;transition:all .35s cubic-bezier(.4,0,.2,1);text-decoration:none;display:block;position:relative;overflow:hidden;}
@@ -82,7 +77,6 @@ h1 .outline{-webkit-text-stroke:1px rgba(79,159,255,.4);-webkit-text-fill-color:
 .mc-big .mt,.mc-beton .mt{color:#4f9fff;}
 .mc-geo .mt{color:#00d4aa;}
 .mc-asp .mt{color:#f59e0b;}
-.mc-wuerfel .mt{color:#a78bfa;}
 .md{font-size:12px;color:#6b8299;line-height:1.65;font-weight:300;margin-bottom:17px;}
 .mpills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px;}
 .mpill{font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 9px;border-radius:100px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);color:#6b8299;}
@@ -90,7 +84,6 @@ h1 .outline{-webkit-text-stroke:1px rgba(79,159,255,.4);-webkit-text-fill-color:
 .mc-big .marr,.mc-beton .marr{color:#4f9fff;}
 .mc-geo .marr{color:#00d4aa;}
 .mc-asp .marr{color:#f59e0b;}
-.mc-wuerfel .marr{color:#a78bfa;}
 .mcard:hover .marr{gap:10px;}
 /* FEATURES */
 .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;}
@@ -99,6 +92,14 @@ h1 .outline{-webkit-text-stroke:1px rgba(79,159,255,.4);-webkit-text-fill-color:
 .fi-ico{font-size:28px;margin-bottom:14px;}
 .fi-t{font-size:15px;font-weight:600;margin-bottom:7px;}
 .fi-d{font-size:13px;color:#6b8299;line-height:1.65;font-weight:300;}
+/* PROBEKOERPER */
+.pk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px;}
+.pk-card{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:22px;transition:all .2s;}
+.pk-card:hover{border-color:rgba(79,159,255,.15);background:rgba(79,159,255,.04);}
+.pk-ico{font-size:30px;margin-bottom:10px;}
+.pk-t{font-size:14px;font-weight:600;margin-bottom:4px;}
+.pk-d{font-size:11px;color:#6b8299;line-height:1.55;font-weight:300;}
+.pk-norm{font-size:9px;font-family:'JetBrains Mono',monospace;color:#4f9fff;margin-top:8px;}
 /* ROLES */
 .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
 .rc{border-radius:22px;padding:42px 38px;border:1px solid rgba(255,255,255,.055);position:relative;overflow:hidden;}
@@ -133,19 +134,21 @@ h1 .outline{-webkit-text-stroke:1px rgba(79,159,255,.4);-webkit-text-fill-color:
 .pfeat{display:flex;gap:9px;font-size:12px;color:#8aa3b8;font-weight:300;}
 .pfeat::before{content:'✓';color:#00d4aa;font-weight:700;flex-shrink:0;}
 .pfeat.no{opacity:.3;}.pfeat.no::before{content:'–';color:#3d5066;}
-.btn-p{display:block;width:100%;text-align:center;padding:13px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;text-decoration:none;transition:all .2s;border:none;}
+.btn-p{display:block;width:100%;text-align:center;padding:14px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;text-decoration:none;transition:all .2s;border:none;}
 .bpp{background:linear-gradient(135deg,#4f9fff,#0ea5e9);color:#fff;}
 .bpp:hover{transform:translateY(-2px);box-shadow:0 7px 22px rgba(79,159,255,.28);}
 .bpo{background:transparent;border:1px solid rgba(255,255,255,.09);color:#e8f0fe;}
 .bpo:hover{background:rgba(255,255,255,.04);}
-/* CTA BAND */
-.ctaband{margin:0 6% 110px;border-radius:22px;background:linear-gradient(135deg,rgba(79,159,255,.07),rgba(0,212,170,.04));border:1px solid rgba(79,159,255,.13);padding:68px 56px;display:flex;align-items:center;justify-content:space-between;gap:28px;flex-wrap:wrap;position:relative;overflow:hidden;}
+.bpg{background:linear-gradient(135deg,#f59e0b,#d97706);color:#020408;}
+.bpg:hover{transform:translateY(-2px);box-shadow:0 7px 22px rgba(245,158,11,.28);}
+/* CTA */
+.ctaband{margin:0 6% 110px;border-radius:22px;background:linear-gradient(135deg,rgba(79,159,255,.07),rgba(0,212,170,.04));border:1px solid rgba(79,159,255,.13);padding:68px 56px;display:flex;align-items:center;justify-content:space-between;gap:28px;flex-wrap:wrap;position:relative;overflow:hidden;z-index:1;}
 .ctaband::before{content:'';position:absolute;top:-80px;right:-80px;width:360px;height:360px;background:radial-gradient(circle,rgba(79,159,255,.1),transparent 70%);pointer-events:none;}
 .ctah{font-family:'Instrument Serif',serif;font-size:clamp(26px,3.3vw,44px);line-height:1.1;max-width:440px;}
 .ctah em{font-style:italic;color:#4f9fff;}
 .ctabtns{display:flex;gap:11px;flex-wrap:wrap;flex-shrink:0;}
 /* FOOTER */
-footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;}
+footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;position:relative;z-index:1;}
 .flogo{display:flex;align-items:center;gap:9px;text-decoration:none;}
 .flm{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#4f9fff,#00d4aa);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#020408;font-family:'JetBrains Mono',monospace;}
 .flt{font-size:13px;font-weight:600;color:#6b8299;}
@@ -153,7 +156,6 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
 .flinks a{font-size:11px;color:#2d3f52;text-decoration:none;font-family:'JetBrains Mono',monospace;transition:color .2s;}
 .flinks a:hover{color:#6b8299;}
 .fcopy{font-size:10px;color:#1a2530;font-family:'JetBrains Mono',monospace;}
-/* RESPONSIVE */
 @media(max-width:880px){
   .nav-links{display:none;}
   .mgrid{grid-template-columns:1fr;}
@@ -162,20 +164,14 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
   .rgrid{grid-template-columns:1fr;}
   .pgrid{grid-template-columns:1fr;}
   .ctaband{padding:36px 26px;}
-  body{cursor:default;}
-  .cursor,.cursor-ring{display:none;}
 }
 @media(max-width:560px){
   .section{padding:80px 5%;}
   .hero{padding:88px 5% 48px;}
-  .hstats{gap:22px;}
 }
 </style>
 </head>
 <body>
-
-<div class="cursor" id="cur"></div>
-<div class="cursor-ring" id="curR"></div>
 
 <nav id="nav">
   <a href="#" class="nav-logo">
@@ -184,7 +180,7 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
   </a>
   <div class="nav-links">
     <a href="#module">Module</a>
-    <a href="#features">Features</a>
+    <a href="#probekoerper">Probekörper</a>
     <a href="#rollen">Rollen</a>
     <a href="#preise">Preise</a>
   </div>
@@ -200,21 +196,21 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
   <div class="hc">
     <div class="eyebrow"><span class="edot"></span>Baustoffprüfung · Digital · Professional</div>
     <h1>Die <em>smarte</em> Plattform<br>für <span class="outline">Baustoff-</span><br>prüfer.</h1>
-    <p class="hdesc">Beton, Geotechnik und Asphalt — alles in einer App. Prüfverfahren, Normen, Würfelmanager und Azubi-Schulung. Synchronisiert auf allen Geräten.</p>
+    <p class="hdesc">Beton, Geotechnik und Asphalt — alles in einer App. Prüfverfahren, Normen, Probekörperverwaltung und Azubi-Schulung. Synchronisiert auf allen Geräten.</p>
     <div class="hbtns">
       <a href="app.html" class="btn-hp">🚀 Kostenlos starten</a>
-      <a href="#module" class="btn-hs">Module ansehen</a>
+      <a href="#preise" class="btn-hs">Preise ansehen</a>
     </div>
     <div class="hstats">
       <div><div class="hs-n">3</div><div class="hs-l">Fachbereiche</div></div>
-      <div><div class="hs-n">25+</div><div class="hs-l">Prüfverfahren</div></div>
-      <div><div class="hs-n">50+</div><div class="hs-l">Lernkarten</div></div>
+      <div><div class="hs-n">30+</div><div class="hs-l">Prüfverfahren</div></div>
+      <div><div class="hs-n">60+</div><div class="hs-l">Lernkarten</div></div>
       <div><div class="hs-n">∞</div><div class="hs-l">Cloud Sync</div></div>
     </div>
   </div>
-  <div class="scroll-hint"><div class="sline"></div>Scroll</div>
 </section>
 
+<!-- MODULE -->
 <section class="section" id="module" style="background:linear-gradient(180deg,#020408,#040810 50%,#020408);">
   <div class="stag">Fachbereiche</div>
   <div class="sh reveal">Drei Module.<br><em>Ein System.</em></div>
@@ -224,11 +220,11 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
       <div class="mnm">01 / BETON & MÖRTEL</div>
       <div class="mico">🧱</div>
       <div class="mt">Beton & Mörtel</div>
-      <div class="md">Würfelmanager mit Cloud-Sync, PDF-Prüfberichte nach DIN EN 12390, Prüfkalender mit Erinnerungen, Konsistenzklassen, Expositionsklassen und vollständige Normen-Bibliothek.</div>
+      <div class="md">Probekörperverwaltung (Würfel, Prismen, Zylinder) mit Cloud-Sync, PDF-Prüfberichte nach DIN EN 12390, Prüfkalender mit Erinnerungen.</div>
       <div class="mpills">
         <span class="mpill">EN 12390-3</span><span class="mpill">EN 12350</span><span class="mpill">DIN EN 206</span>
-        <span class="mpill">Würfelmanager</span><span class="mpill">Setzmaß</span><span class="mpill">Druckfestigkeit</span>
-        <span class="mpill">Luftgehalt</span><span class="mpill">Ausbreitmaß</span><span class="mpill">Wassereindringung</span>
+        <span class="mpill">Würfel 150mm</span><span class="mpill">Prismen</span><span class="mpill">Zylinder</span>
+        <span class="mpill">Setzmaß</span><span class="mpill">Druckfestigkeit</span>
       </div>
       <div class="marr">Modul öffnen →</div>
     </a>
@@ -236,8 +232,8 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
       <div class="mnm">02 / GEOTECHNIK</div>
       <div class="mico">🌍</div>
       <div class="mt">Geotechnik</div>
-      <div class="md">Proctor, Plattendruckversuch Ev1/Ev2, Siebanalyse, Atterbergsche Grenzen — alle Verfahren mit Illustrationen und Azubi-Modul.</div>
-      <div class="mpills"><span class="mpill">DIN 18127</span><span class="mpill">DIN 18134</span><span class="mpill">DIN 18196</span><span class="mpill">DIN 18300</span><span class="mpill">CBR</span></div>
+      <div class="md">Proctor, Plattendruckversuch Ev1/Ev2, Siebanalyse, CBR-Versuch, Rammsondierung — mit Azubi-Modul.</div>
+      <div class="mpills"><span class="mpill">DIN 18127</span><span class="mpill">DIN 18134</span><span class="mpill">DIN 18196</span><span class="mpill">CBR</span><span class="mpill">DPL</span></div>
       <div class="marr">Modul öffnen →</div>
     </a>
     <a href="app.html" class="mcard mc-asp reveal rd2">
@@ -245,26 +241,72 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
       <div class="mico">🛣️</div>
       <div class="mt">Asphalttechnik</div>
       <div class="md">Marshall-Versuch, Bohrkernentnahme, Sandfleckmethode, Verdichtungsgrad — vollständig nach ZTV Asphalt-StB.</div>
-      <div class="mpills"><span class="mpill">EN 12697</span><span class="mpill">TL Asphalt</span><span class="mpill">ZTV Asphalt</span><span class="mpill">EN 13036-1</span></div>
+      <div class="mpills"><span class="mpill">EN 12697</span><span class="mpill">TL Asphalt</span><span class="mpill">ZTV Asphalt</span><span class="mpill">Bohrkern</span></div>
       <div class="marr">Modul öffnen →</div>
     </a>
   </div>
 </section>
 
-<section class="section" id="features" style="background:#040810;">
-  <div class="stag">Features</div>
-  <div class="sh reveal">Was andere nicht <em>haben.</em></div>
-  <p class="ss reveal rd1">Gebaut von Prüfern, für Prüfer.</p>
-  <div class="fgrid">
-    <div class="fi reveal"><div class="fi-ico">☁️</div><div class="fi-t">Echtzeit Cloud-Sync</div><div class="fi-d">Alle Daten synchron auf PC, Handy und Tablet. Änderungen erscheinen sofort überall — dank Firebase Firestore.</div></div>
-    <div class="fi reveal rd1"><div class="fi-ico">📱</div><div class="fi-t">PWA — installierbar</div><div class="fi-d">Wie eine echte App auf dem Homescreen installierbar. iOS und Android. Kein App Store nötig.</div></div>
-    <div class="fi reveal rd2"><div class="fi-ico">👥</div><div class="fi-t">Rollen-System</div><div class="fi-d">Prüfer sehen alles. Azubis sehen nur Lernmaterial. Getrennte Ansichten, ein Login-System.</div></div>
-    <div class="fi reveal"><div class="fi-ico">📋</div><div class="fi-t">PDF-Prüfberichte</div><div class="fi-d">Automatisch generierte Prüfberichte nach DIN EN 12390 mit Firmenlogo und Unterschriftsfeld.</div></div>
-    <div class="fi reveal rd1"><div class="fi-ico">🎓</div><div class="fi-t">Azubi-Schulung</div><div class="fi-d">50+ Lernkarten, Multiple-Choice Quiz aus echten Prüfungen, Kategoriefilter für gezieltes Lernen.</div></div>
-    <div class="fi reveal rd2"><div class="fi-ico">📐</div><div class="fi-t">25+ Prüfverfahren</div><div class="fi-d">Schritt-für-Schritt mit SVG-Illustrationen und Foto-Upload. Kurzanleitung zum Ausdrucken.</div></div>
+<!-- PROBEKOERPER -->
+<section class="section" id="probekoerper" style="background:#040810;">
+  <div class="stag">Probekörper</div>
+  <div class="sh reveal">Alle Probekörper.<br><em>Ein Manager.</em></div>
+  <p class="ss reveal rd1">Nicht nur Würfel — alle Probekörpertypen aus allen drei Fachbereichen verwalten.</p>
+  <div class="pk-grid">
+    <div class="pk-card reveal">
+      <div class="pk-ico">⬛</div>
+      <div class="pk-t">Würfel</div>
+      <div class="pk-d">150×150×150mm und 100×100×100mm. Druckfestigkeit nach EN 12390-3.</div>
+      <div class="pk-norm">EN 12390-2 · EN 12390-3</div>
+    </div>
+    <div class="pk-card reveal rd1">
+      <div class="pk-ico">🔲</div>
+      <div class="pk-t">Prismen</div>
+      <div class="pk-d">160×40×40mm. Biegezug- und Druckfestigkeit bei Mörtel und Beton.</div>
+      <div class="pk-norm">EN 196-1 · EN 12390</div>
+    </div>
+    <div class="pk-card reveal rd2">
+      <div class="pk-ico">🔵</div>
+      <div class="pk-t">Zylinder</div>
+      <div class="pk-d">Ø150×300mm oder Ø100×200mm. Druckfestigkeit, E-Modul, Spaltzugfestigkeit.</div>
+      <div class="pk-norm">EN 12390-3 · EN 12390-6</div>
+    </div>
+    <div class="pk-card reveal">
+      <div class="pk-ico">🟤</div>
+      <div class="pk-t">Bohrkerne (Asphalt)</div>
+      <div class="pk-d">Ø100mm oder Ø150mm. Raumgewicht, Verdichtungsgrad, Schichtdicke.</div>
+      <div class="pk-norm">EN 12697-6 · ZTV Asphalt</div>
+    </div>
+    <div class="pk-card reveal rd1">
+      <div class="pk-ico">🟡</div>
+      <div class="pk-t">Bodenproben</div>
+      <div class="pk-d">Proctor-Zylinder, Stechzylinder, ungestörte Proben für Geotechnik.</div>
+      <div class="pk-norm">DIN 18127 · DIN 18125</div>
+    </div>
+    <div class="pk-card reveal rd2">
+      <div class="pk-ico">🔺</div>
+      <div class="pk-t">Marshall-Probekörper</div>
+      <div class="pk-d">Ø101,6mm, beidseitig 75 Schläge. Stabilität und Fließwert.</div>
+      <div class="pk-norm">EN 12697-34</div>
+    </div>
   </div>
 </section>
 
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="stag">Features</div>
+  <div class="sh reveal">Was andere nicht <em>haben.</em></div>
+  <div class="fgrid">
+    <div class="fi reveal"><div class="fi-ico">☁️</div><div class="fi-t">Echtzeit Cloud-Sync</div><div class="fi-d">Alle Daten synchron auf PC, Handy und Tablet. Änderungen erscheinen sofort überall.</div></div>
+    <div class="fi reveal rd1"><div class="fi-ico">📱</div><div class="fi-t">PWA — installierbar</div><div class="fi-d">Wie eine echte App auf dem Homescreen installierbar. iOS und Android. Kein App Store nötig.</div></div>
+    <div class="fi reveal rd2"><div class="fi-ico">👥</div><div class="fi-t">Rollen-System</div><div class="fi-d">Prüfer sehen alles. Azubis sehen nur Lernmaterial. Admins verwalten das Team.</div></div>
+    <div class="fi reveal"><div class="fi-ico">📋</div><div class="fi-t">PDF-Prüfberichte</div><div class="fi-d">Automatisch generierte Berichte nach DIN EN 12390 mit Firmenlogo und Unterschriftsfeld.</div></div>
+    <div class="fi reveal rd1"><div class="fi-ico">🎓</div><div class="fi-t">Azubi-Schulung</div><div class="fi-d">60+ Lernkarten, Multiple-Choice Quiz aus echten Prüfungen, für alle drei Fachbereiche.</div></div>
+    <div class="fi reveal rd2"><div class="fi-ico">🏢</div><div class="fi-t">Firmen-Verwaltung</div><div class="fi-d">Separate Logins pro Firma. Jede Firma sieht nur ihre eigenen Daten. Admin-Panel inklusive.</div></div>
+  </div>
+</section>
+
+<!-- ROLLEN -->
 <section class="section" id="rollen">
   <div class="stag">Zugangsrollen</div>
   <div class="sh reveal">Für jeden die<br><em>richtige Ansicht.</em></div>
@@ -273,11 +315,11 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
     <div class="rc rc-p reveal">
       <div class="rbadge">🔬 Prüfer-Konto</div>
       <div class="rt">Alles für den Prüfer.</div>
-      <div class="rdesc">Vollständiger Zugang zu allen Modulen. Würfelverwaltung, Prüfberichte, Cloud-Sync und alle Normen.</div>
+      <div class="rdesc">Vollständiger Zugang zu allen Modulen. Probekörperverwaltung, Prüfberichte und Cloud-Sync.</div>
       <ul class="rfeats">
-        <li class="rfeat"><span class="rdot"></span>Würfelmanager mit Cloud-Sync</li>
+        <li class="rfeat"><span class="rdot"></span>Probekörperverwaltung (alle Typen)</li>
         <li class="rfeat"><span class="rdot"></span>Automatische PDF-Prüfberichte</li>
-        <li class="rfeat"><span class="rdot"></span>Alle 25+ Prüfverfahren-Anleitungen</li>
+        <li class="rfeat"><span class="rdot"></span>Alle 30+ Prüfverfahren-Anleitungen</li>
         <li class="rfeat"><span class="rdot"></span>Vollständige Normen-Bibliothek</li>
         <li class="rfeat"><span class="rdot"></span>Kalender + Push-Erinnerungen</li>
         <li class="rfeat"><span class="rdot"></span>Statistiken und Auswertungen</li>
@@ -287,11 +329,11 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
     <div class="rc rc-a reveal rd1">
       <div class="rbadge">📚 Azubi-Konto</div>
       <div class="rt">Perfekt für die Ausbildung.</div>
-      <div class="rdesc">Zugang zu allen Lernmaterialien. Lernkarten, Quiz und Rechner — ohne Verwaltungsfunktionen.</div>
+      <div class="rdesc">Zugang zu allen Lernmaterialien für alle drei Fachbereiche. Lernkarten, Quiz und Rechner.</div>
       <ul class="rfeats">
-        <li class="rfeat"><span class="rdot"></span>50+ Lernkarten mit Flip-Animation</li>
+        <li class="rfeat"><span class="rdot"></span>60+ Lernkarten (Beton, Geo, Asphalt)</li>
         <li class="rfeat"><span class="rdot"></span>Quiz aus echten Prüfungsfragen</li>
-        <li class="rfeat"><span class="rdot"></span>15+ Rechner (w/z, Dpr, MTD…)</li>
+        <li class="rfeat"><span class="rdot"></span>15+ Rechner für alle Fachbereiche</li>
         <li class="rfeat"><span class="rdot"></span>Alle Tabellen und Übersichten</li>
         <li class="rfeat"><span class="rdot"></span>Normen verständlich erklärt</li>
         <li class="rfeat"><span class="rdot"></span>Lernfortschritt wird gespeichert</li>
@@ -301,6 +343,7 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
   </div>
 </section>
 
+<!-- PRICING -->
 <section class="section" id="preise" style="background:linear-gradient(180deg,#020408,#030609);">
   <div class="stag">Preise</div>
   <div class="sh reveal">Einfach.<br><em>Transparent.</em></div>
@@ -312,12 +355,12 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
       <div class="pper">kostenlos · für immer</div>
       <div class="pdiv"></div>
       <ul class="pfeats">
-        <li class="pfeat">Alle Lernkarten (50+)</li>
+        <li class="pfeat">Alle Lernkarten (60+)</li>
         <li class="pfeat">Alle Quiz-Module</li>
         <li class="pfeat">Alle Rechner</li>
         <li class="pfeat">Normen-Übersicht</li>
         <li class="pfeat no">Prüfverfahren-Anleitungen</li>
-        <li class="pfeat no">Würfelmanager</li>
+        <li class="pfeat no">Probekörperverwaltung</li>
         <li class="pfeat no">Cloud-Sync</li>
         <li class="pfeat no">PDF-Berichte</li>
       </ul>
@@ -332,14 +375,14 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
       <ul class="pfeats">
         <li class="pfeat">Alles aus Azubi</li>
         <li class="pfeat">Alle Prüfverfahren-Anleitungen</li>
-        <li class="pfeat">Würfelmanager + Cloud-Sync</li>
+        <li class="pfeat">Probekörperverwaltung (alle Typen)</li>
         <li class="pfeat">PDF-Prüfberichte (DIN EN 12390)</li>
+        <li class="pfeat">Cloud-Sync alle Geräte</li>
         <li class="pfeat">Kalender + Erinnerungen</li>
         <li class="pfeat">Alle 3 Fachbereiche komplett</li>
-        <li class="pfeat">Bis zu 10 Nutzer</li>
         <li class="pfeat no">API-Zugang</li>
       </ul>
-      <a href="app.html?plan=pro" id="btn-pro" class="btn-p bpp">Pro starten →</a>
+      <a href="https://buy.stripe.com/8x200laky7rx1xteLj0x200" class="btn-p bpp" target="_blank" id="btn-pro">Pro starten → 49€/Monat</a>
     </div>
     <div class="pc reveal rd2">
       <div class="pplan">Enterprise</div>
@@ -356,7 +399,7 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
         <li class="pfeat">Datenschutz auf eigenem Server</li>
         <li class="pfeat">Individuelle Anpassungen</li>
       </ul>
-      <a href="app.html?plan=enterprise" id="btn-ent" class="btn-p bpo">Enterprise anfragen →</a>
+      <a href="https://buy.stripe.com/7sY00l2S67rx8ZV32B0x201" class="btn-p bpg" target="_blank" id="btn-ent">Enterprise → 99€/Monat</a>
     </div>
   </div>
 </section>
@@ -365,60 +408,30 @@ footer{border-top:1px solid rgba(255,255,255,.05);padding:44px 6%;display:flex;a
   <div class="ctah">Bereit loszulegen?<br><em>Kostenlos starten.</em></div>
   <div class="ctabtns">
     <a href="app.html" class="btn-hp">App öffnen →</a>
-    <a href="mailto:info@betoncheck.de" class="btn-hs">Kontakt</a>
+    <a href="mailto:info@pruefcheck.de" class="btn-hs">Kontakt</a>
   </div>
 </div>
 
 <footer>
   <a href="#" class="flogo"><div class="flm">BC</div><div class="flt">BetonCheck Pro</div></a>
   <div class="flinks">
-    <a href="app.html">App</a><a href="#module">Module</a><a href="#preise">Preise</a><a href="mailto:info@betoncheck.de">Kontakt</a><a href="admin.html">Admin</a>
+    <a href="app.html">App</a>
+    <a href="#module">Module</a>
+    <a href="#preise">Preise</a>
+    <a href="admin.html">Admin</a>
+    <a href="mailto:info@pruefcheck.de">Kontakt</a>
   </div>
   <div class="fcopy">© 2026 BetonCheck Pro · Made in Germany 🇩🇪</div>
 </footer>
 
 <script>
-// Cursor
-const cur=document.getElementById('cur'),curR=document.getElementById('curR');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
-(function anim(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;curR.style.left=rx+'px';curR.style.top=ry+'px';requestAnimationFrame(anim);})();
-// Card glow
+const nav=document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>40));
 document.querySelectorAll('.mcard').forEach(c=>{
   c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();c.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');c.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');});
 });
-// Nav scroll
-const nav=document.getElementById('nav');
-window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>40));
-// Reveal
 const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
-</script>
-
-<script>
-// Dynamically load Stripe payment links from Firebase config
-(async () => {
-  try {
-    const fbConfig = {
-      apiKey: "AIzaSyD5zBXhZj0kbwhT8qXOLxOOGVM6OiHxtXA",
-      authDomain: "pruefcheckpro.firebaseapp.com",
-      projectId: "pruefcheckpro",
-      storageBucket: "pruefcheckpro.firebasestorage.app",
-      messagingSenderId: "401257250920",
-      appId: "1:401257250920:web:fd29840f77833e13847bdd"
-    };
-    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js');
-    const { getFirestore, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js');
-    const app = initializeApp(fbConfig, 'landing');
-    const db = getFirestore(app);
-    const snap = await getDoc(doc(db, 'config', 'stripe'));
-    if (snap.exists()) {
-      const data = snap.data();
-      if (data.linkPro) document.getElementById('btn-pro').href = data.linkPro;
-      if (data.linkEnterprise) document.getElementById('btn-ent').href = data.linkEnterprise;
-    }
-  } catch(e) { /* fallback to app.html */ }
-})();
 </script>
 </body>
 </html>

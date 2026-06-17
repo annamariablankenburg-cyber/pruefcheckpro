@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BetonCheck — Probekörper</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Space Grotesk',sans-serif;background:#020408;color:#e8f0fe;-webkit-font-smoothing:antialiased;}
+.shell{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:210px;flex-shrink:0;background:rgba(8,12,20,.97);border-right:1px solid rgba(79,159,255,.07);display:flex;flex-direction:column;height:100vh;overflow-y:auto;}
+.sb-head{padding:14px 12px 10px;border-bottom:1px solid rgba(79,159,255,.07);}
+.sb-logo{font-size:14px;font-weight:600;color:#e8f0fe;margin-bottom:2px;}
+.sb-logo span{color:#4f9fff;}
+.sb-sub{font-size:8px;color:#2d3f52;font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;}
+.sb-nav{padding:8px 6px;flex:1;}
+.sb-sec{margin-bottom:10px;}
+.sb-lbl{font-size:8px;color:#1e2d3d;font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;padding:0 8px;margin-bottom:3px;}
+.sbn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 9px;border-radius:7px;background:none;border:1px solid transparent;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;color:#64748b;transition:all .12s;text-align:left;min-height:38px;-webkit-tap-highlight-color:transparent;}
+.sbn:hover{background:rgba(255,255,255,.04);color:#e8f0fe;}
+.sbn.act{background:rgba(79,159,255,.1);color:#4f9fff;border-color:rgba(79,159,255,.18);}
+.sbn-ico{font-size:13px;width:17px;text-align:center;flex-shrink:0;}
+.sb-cnt{margin-left:auto;font-size:8px;font-family:'JetBrains Mono',monospace;background:rgba(79,159,255,.12);color:#4f9fff;padding:1px 6px;border-radius:100px;}
+.sb-div{height:1px;background:rgba(255,255,255,.05);margin:5px 9px;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.topbar{height:48px;background:rgba(8,12,20,.95);border-bottom:1px solid rgba(79,159,255,.07);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;}
+.tb-t{font-family:'Instrument Serif',serif;font-size:15px;}
+.tb-a{display:flex;gap:7px;}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.panel{display:none;padding:clamp(14px,3vw,24px);}
+.panel.active{display:block;}
+/* TYPE GRID */
+.tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:11px;margin-bottom:20px;}
+.tc{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:13px;padding:18px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.tc:hover{border-color:rgba(79,159,255,.15);transform:translateY(-2px);}
+.tc-ico{font-size:26px;margin-bottom:7px;}
+.tc-name{font-size:13px;font-weight:600;margin-bottom:3px;}
+.tc-desc{font-size:10px;color:#6b8299;line-height:1.4;font-weight:300;}
+.tc-cnt{font-size:9px;font-family:'JetBrains Mono',monospace;color:#4f9fff;margin-top:7px;}
+.tc-norm{font-size:8px;font-family:'JetBrains Mono',monospace;color:#2d3f52;margin-top:2px;}
+/* LIST */
+.lh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.lh-title{font-family:'Instrument Serif',serif;font-size:20px;}
+.lh-a{display:flex;gap:7px;flex-wrap:wrap;}
+.search{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:7px 11px;color:#e8f0fe;font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;width:180px;-webkit-appearance:none;}
+.search:focus{border-color:rgba(79,159,255,.35);}
+.search::placeholder{color:#3d5066;}
+.ftabs{display:flex;gap:5px;margin-bottom:13px;flex-wrap:wrap;}
+.ftab{padding:4px 12px;border-radius:100px;font-size:10px;font-family:'JetBrains Mono',monospace;cursor:pointer;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);color:#6b8299;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.ftab.active{background:rgba(79,159,255,.12);border-color:rgba(79,159,255,.25);color:#4f9fff;}
+.ftab.warn{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.2);color:#f59e0b;}
+.ftab.danger{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.2);color:#f87171;}
+.tw{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;overflow:hidden;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{padding:8px 12px;text-align:left;font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#6b8299;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);}
+td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);color:#8aa3b8;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(79,159,255,.02);}
+td:first-child{color:#e8f0fe;font-weight:600;}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:100px;font-size:8px;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.b-ok{background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.2);}
+.b-soon{background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.2);}
+.b-over{background:rgba(248,113,113,.1);color:#f87171;border:1px solid rgba(248,113,113,.2);}
+.b-done{background:rgba(100,116,139,.1);color:#64748b;border:1px solid rgba(100,116,139,.2);}
+.b-blue{background:rgba(79,159,255,.1);color:#4f9fff;border:1px solid rgba(79,159,255,.2);}
+.b-geo{background:rgba(0,212,170,.1);color:#00d4aa;border:1px solid rgba(0,212,170,.2);}
+.b-asp{background:rgba(245,158,11,.08);color:#f59e0b;border:1px solid rgba(245,158,11,.15);}
+.tb-btn{padding:3px 9px;border-radius:5px;font-size:9px;font-weight:600;cursor:pointer;border:none;font-family:'Space Grotesk',sans-serif;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.tb-res{background:rgba(16,185,129,.12);color:#10b981;}
+.tb-del{background:rgba(248,113,113,.1);color:#f87171;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .2s;border:none;min-height:38px;-webkit-tap-highlight-color:transparent;}
+.btn-p{background:#4f9fff;color:#020408;}
+.btn-p:hover{background:#6aadff;}
+.btn-g{background:rgba(255,255,255,.06);color:#e8f0fe;border:1px solid rgba(255,255,255,.08);}
+/* MODAL */
+.mov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px;overflow-y:auto;}
+.mov.open{display:flex;}
+.modal{background:#0c1118;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:clamp(18px,4vw,28px);width:100%;max-width:500px;position:relative;max-height:90vh;overflow-y:auto;}
+.mc{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.06);border:none;color:#6b8299;width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
+.mt{font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:3px;}
+.ms{font-size:11px;color:#6b8299;font-weight:300;margin-bottom:18px;}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ff{margin-bottom:12px;}
+.fl{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;color:#6b8299;margin-bottom:4px;display:block;}
+.fi{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:9px 11px;color:#e8f0fe;font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;transition:border-color .2s;-webkit-appearance:none;}
+.fi:focus{border-color:rgba(79,159,255,.35);}
+.fi::placeholder{color:#3d5066;}
+.fs{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:9px 11px;color:#e8f0fe;font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;cursor:pointer;}
+.fs option{background:#0c1118;}
+.ma{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+/* EMPTY */
+.empty{text-align:center;padding:40px 20px;color:#3d5066;}
+.ei{font-size:36px;margin-bottom:10px;opacity:.4;}
+.et{font-size:13px;font-weight:500;color:#64748b;margin-bottom:5px;}
+.es{font-size:11px;font-weight:300;}
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;z-index:9999;padding:10px 16px;border-radius:9px;font-size:12px;font-weight:500;display:none;align-items:center;gap:7px;animation:si .3s ease;}
+.toast.show{display:flex;}
+.tok{background:#10b981;color:#020408;}
+.terr{background:#ef4444;color:#fff;}
+@keyframes si{from{transform:translateX(80px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+/* FAELLIG */
+.faellig-box{background:rgba(248,113,113,.04);border:1px solid rgba(248,113,113,.1);border-radius:12px;padding:16px;margin-bottom:20px;}
+.fb-title{font-size:13px;font-weight:600;color:#f87171;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+/* MOBILE */
+.mob-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;}
+.mob-ov.open{display:block;}
+.mob-btn{display:none;background:none;border:none;color:#e8f0fe;font-size:19px;cursor:pointer;padding:3px;}
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-214px;top:0;height:100vh;z-index:300;transition:left .25s ease;box-shadow:6px 0 30px rgba(0,0,0,.9);}
+  .sidebar.open{left:0;}
+  .mob-btn{display:flex!important;align-items:center;}
+  .topbar{padding:0 12px;}
+  .panel{padding:12px 11px 20px;}
+  .fr{grid-template-columns:1fr;}
+  th:nth-child(n+5),td:nth-child(n+5){display:none;}
+  .search{width:100%;}
+  .lh-a{flex-direction:column;align-items:flex-start;}
+}
+</style>
+</head>
+<body>
+<div class="mob-ov" id="mob-ov" onclick="closeSB()"></div>
+<div class="toast tok" id="tok">✓ <span id="tok-m"></span></div>
+<div class="toast terr" id="terr">✕ <span id="terr-m"></span></div>
+<div class="shell">
+<div class="sidebar" id="sb">
+  <div class="sb-head">
+    <div class="sb-logo">Beton<span>Check</span></div>
+    <div class="sb-sub">Probekörper Manager</div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-sec">
+      <div class="sb-lbl">Übersicht</div>
+      <button class="sbn act" onclick="showP('ov')"><span class="sbn-ico">🏠</span>Alle Typen<span class="sb-cnt" id="cnt-all">0</span></button>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">🧱 Beton</div>
+      <button class="sbn" onclick="showP('wuerfel')"><span class="sbn-ico">⬛</span>Würfel<span class="sb-cnt" id="cnt-wuerfel">0</span></button>
+      <button class="sbn" onclick="showP('prismen')"><span class="sbn-ico">🔲</span>Prismen<span class="sb-cnt" id="cnt-prismen">0</span></button>
+      <button class="sbn" onclick="showP('zylinder')"><span class="sbn-ico">🔵</span>Zylinder<span class="sb-cnt" id="cnt-zylinder">0</span></button>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">🛣️ Asphalt</div>
+      <button class="sbn" onclick="showP('bohrkerne')"><span class="sbn-ico">🟤</span>Bohrkerne<span class="sb-cnt" id="cnt-bohrkerne">0</span></button>
+      <button class="sbn" onclick="showP('marshall')"><span class="sbn-ico">🔺</span>Marshall-PK<span class="sb-cnt" id="cnt-marshall">0</span></button>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">🌍 Geotechnik</div>
+      <button class="sbn" onclick="showP('bodenproben')"><span class="sbn-ico">🟡</span>Bodenproben<span class="sb-cnt" id="cnt-bodenproben">0</span></button>
+    </div>
+  </div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="mob-btn" style="display:none" onclick="toggleSB()">☰</button>
+      <div class="tb-t" id="tb-t">Alle Probekörper</div>
+    </div>
+    <div class="tb-a">
+      <button class="btn btn-g" onclick="exportCSV()" style="font-size:11px;">📥 CSV</button>
+      <button class="btn btn-p" onclick="openAdd()">+ Neu</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="panel active" id="panel-ov">
+      <div style="font-family:'Instrument Serif',serif;font-size:clamp(20px,4vw,30px);margin-bottom:5px;">Probekörper Manager</div>
+      <p style="font-size:12px;color:#6b8299;font-weight:300;margin-bottom:20px;">Alle Typen aus allen drei Fachbereichen.</p>
+      <!-- FAELLIG -->
+      <div class="faellig-box" id="faellig-box" style="display:none">
+        <div class="fb-title">⚠️ Fällig / Überfällig</div>
+        <div id="faellig-list"></div>
+      </div>
+      <div class="tg">
+        <div class="tc" onclick="showP('wuerfel')"><div class="tc-ico">⬛</div><div class="tc-name">Würfel</div><div class="tc-desc">150×150×150mm und 100×100×100mm</div><div class="tc-cnt" id="ov-wuerfel">0 Stück</div><div class="tc-norm">EN 12390-3</div></div>
+        <div class="tc" onclick="showP('prismen')"><div class="tc-ico">🔲</div><div class="tc-name">Prismen</div><div class="tc-desc">160×40×40mm, Biegezug-/Druckfestigkeit</div><div class="tc-cnt" id="ov-prismen">0 Stück</div><div class="tc-norm">EN 196-1</div></div>
+        <div class="tc" onclick="showP('zylinder')"><div class="tc-ico">🔵</div><div class="tc-name">Zylinder</div><div class="tc-desc">Ø150×300mm oder Ø100×200mm</div><div class="tc-cnt" id="ov-zylinder">0 Stück</div><div class="tc-norm">EN 12390-3/6</div></div>
+        <div class="tc" onclick="showP('bohrkerne')"><div class="tc-ico">🟤</div><div class="tc-name">Bohrkerne</div><div class="tc-desc">Ø100mm aus Asphalt, Raumgewicht, VG</div><div class="tc-cnt" id="ov-bohrkerne">0 Stück</div><div class="tc-norm">EN 12697-6</div></div>
+        <div class="tc" onclick="showP('marshall')"><div class="tc-ico">🔺</div><div class="tc-name">Marshall-PK</div><div class="tc-desc">Ø101,6mm, Stabilität und Fließwert</div><div class="tc-cnt" id="ov-marshall">0 Stück</div><div class="tc-norm">EN 12697-34</div></div>
+        <div class="tc" onclick="showP('bodenproben')"><div class="tc-ico">🟡</div><div class="tc-name">Bodenproben</div><div class="tc-desc">Proctor-Zylinder, Wassergehalt, Dpr</div><div class="tc-cnt" id="ov-bodenproben">0 Stück</div><div class="tc-norm">DIN 18127</div></div>
+      </div>
+    </div>
+
+    <!-- WÜRFEL -->
+    <div class="panel" id="panel-wuerfel">
+      <div class="lh"><div class="lh-title">⬛ Würfel</div><div class="lh-a"><input class="search" placeholder="Suchen…" oninput="search('wuerfel',this.value)"/><button class="btn btn-p" onclick="openAdd('wuerfel')">+ Würfel</button></div></div>
+      <div class="ftabs"><button class="ftab active" onclick="ft('wuerfel','alle',this)">Alle</button><button class="ftab warn" onclick="ft('wuerfel','faellig',this)">Fällig ⚠️</button><button class="ftab danger" onclick="ft('wuerfel','ueberfaellig',this)">Überfällig 🔴</button><button class="ftab" onclick="ft('wuerfel','geprueft',this)">Geprüft ✓</button></div>
+      <div class="tw"><table><thead><tr><th>Nr.</th><th>Betonsorte</th><th>Hergestellt</th><th>Prüftag</th><th>Prüfdatum</th><th>Status</th><th>fc (N/mm²)</th><th>Aktion</th></tr></thead><tbody id="tbl-wuerfel"></tbody></table></div>
+    </div>
+
+    <!-- PRISMEN -->
+    <div class="panel" id="panel-prismen">
+      <div class="lh"><div class="lh-title">🔲 Prismen</div><div class="lh-a"><input class="search" placeholder="Suchen…" oninput="search('prismen',this.value)"/><button class="btn btn-p" onclick="openAdd('prismen')">+ Prisma</button></div></div>
+      <div class="ftabs"><button class="ftab active" onclick="ft('prismen','alle',this)">Alle</button><button class="ftab warn" onclick="ft('prismen','faellig',this)">Fällig</button><button class="ftab danger" onclick="ft('prismen','ueberfaellig',this)">Überfällig</button></div>
+      <div class="tw"><table><thead><tr><th>Nr.</th><th>Mörtelsorte</th><th>Hergestellt</th><th>Prüftag</th><th>Prüfdatum</th><th>Status</th><th>fc (N/mm²)</th><th>Aktion</th></tr></thead><tbody id="tbl-prismen"></tbody></table></div>
+    </div>
+
+    <!-- ZYLINDER -->
+    <div class="panel" id="panel-zylinder">
+      <div class="lh"><div class="lh-title">🔵 Zylinder</div><div class="lh-a"><input class="search" placeholder="Suchen…" oninput="search('zylinder',this.value)"/><button class="btn btn-p" onclick="openAdd('zylinder')">+ Zylinder</button></div></div>
+      <div class="ftabs"><button class="ftab active" onclick="ft('zylinder','alle',this)">Alle</button><button class="ftab warn" onclick="ft('zylinder','faellig',this)">Fällig</button><button class="ftab danger" onclick="ft('zylinder','ueberfaellig',this)">Überfällig</button></div>
+      <div class="tw"><table><thead><tr><th>Nr.</th><th>Betonsorte</th><th>Hergestellt</th><th>Prüftag</th><th>Prüfdatum</th><th>Status</th><th>fc (N/mm²)</th><th>Aktion</th></tr></thead><tbody id="tbl-zylinder"></tbody></table></div>
+    </div>
+
+    <!-- BOHRKERNE -->
+    <div class="panel" id="panel-bohrkerne">
+      <div class="lh"><div class="lh-title">🟤 Bohrkerne (Asphalt)</div><div class="lh-a"><input class="search" placeholder="Suchen…" oninput="search('bohrkerne',this.value)"/><button class="btn btn-p" onclick="openAdd('bohrkerne')">+ Bohrkern</button></div></div>
+      <div class="tw"><table><thead><tr><th>Nr.</th><th>Asphaltart</th><th>Entnahme</th><th>Baustelle</th><th>Schichtdicke</th><th>VG (%)</th><th>Aktion</th></tr></thead><tbody id="tbl-bohrkerne"></tbody></table></div>
+    </div>
+
+    <!-- MARSHALL -->
+    <div class="panel" id="panel-marshall">
+      <div class="lh"><div class="lh-title">🔺 Marshall-Probekörper</div><div class="lh-a"><button class="btn btn-p" onclick="openAdd('marshall')">+ Marshall-PK</button></div></div>
+      <div class="tw"><table><thead><tr><th>Nr.</th><th>Asphaltart</th><th>Hergestellt</th><th>Stabilität (kN)</th><th>Fließwert (mm)</th><th>MQ (N/mm)</th><th>Aktion</th></tr></thead><tbody id="tbl-marshall"></tbody></table></div>
+    </div>
+
+    <!-- BODENPROBEN -->
+    <div class="panel" id="panel-bodenproben">
+      <div class="lh"><div class="lh-title">🟡 Bodenproben</div><div class="lh-a"><button class="btn btn-p" onclick="openAdd('bodenproben')">+ Bodenprobe</button></div></div>
+      <div class="tw"><table><thead><tr><th>Nr.</th><th>Bodenart</th><th>Entnahme</th><th>Baustelle</th><th>Tiefe (m)</th><th>w (%)</th><th>Dpr (%)</th><th>Aktion</th></tr></thead><tbody id="tbl-bodenproben"></tbody></table></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- MODAL ADD -->
+<div class="mov" id="mov-add">
+  <div class="modal">
+    <button class="mc" onclick="closeMod('mov-add')">✕</button>
+    <div class="mt" id="mod-t">Probekörper hinzufügen</div>
+    <div class="ms" id="mod-s">Neuen Probekörper erfassen.</div>
+    <div id="mod-fields"></div>
+    <div class="ma">
+      <button class="btn btn-g" onclick="closeMod('mov-add')">Abbrechen</button>
+      <button class="btn btn-p" onclick="saveProbe()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESULT -->
+<div class="mov" id="mov-res">
+  <div class="modal">
+    <button class="mc" onclick="closeMod('mov-res')">✕</button>
+    <div class="mt">Prüfergebnis eintragen</div>
+    <div class="ms" id="res-sub">Ergebnis erfassen.</div>
+    <input type="hidden" id="res-id"/><input type="hidden" id="res-typ"/>
+    <div class="fr">
+      <div class="ff"><label class="fl">Prüfdatum</label><input class="fi" type="date" id="res-dat"/></div>
+      <div class="ff"><label class="fl">Bruchlast F (kN)</label><input class="fi" type="number" id="res-f" placeholder="z.B. 855" step="0.1" oninput="autoFC()"/></div>
+    </div>
+    <div class="fr">
+      <div class="ff"><label class="fl">fc (N/mm²) — auto</label><input class="fi" type="number" id="res-fc" placeholder="berechnet" step="0.1"/></div>
+      <div class="ff"><label class="fl">Bruchbild Typ (1-6)</label><input class="fi" type="number" id="res-bruch" min="1" max="6" placeholder="1"/></div>
+    </div>
+    <div class="ff"><label class="fl">Bemerkung</label><input class="fi" type="text" id="res-bem" placeholder="Optional"/></div>
+    <div class="ff"><label class="fl">Bewertung</label><select class="fs" id="res-bew"><option value="bestanden">✓ Bestanden</option><option value="nicht_bestanden">✕ Nicht bestanden</option><option value="ausstehend">⏳ Ausstehend</option></select></div>
+    <div class="ma">
+      <button class="btn btn-g" onclick="closeMod('mov-res')">Abbrechen</button>
+      <button class="btn btn-p" onclick="saveResult()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const fbCfg={apiKey:"AIzaSyD5zBXhZj0kbwhT8qXOLxOOGVM6OiHxtXA",authDomain:"pruefcheckpro.firebaseapp.com",projectId:"pruefcheckpro",storageBucket:"pruefcheckpro.firebasestorage.app",messagingSenderId:"401257250920",appId:"1:401257250920:web:fd29840f77833e13847bdd"};
+let db,uid='demo';
+try{const fb=firebase.apps.length?firebase.apps[0]:firebase.initializeApp(fbCfg,'proben');db=firebase.firestore(fb);firebase.auth(fb).onAuthStateChanged(u=>{uid=u?u.uid:'demo';loadAll();});}catch(e){loadAll();}
+
+const TYPES={
+  wuerfel:{icon:'⬛',label:'Würfel',norm:'EN 12390-3',fields:[
+    ['nummer','Nr. *','text','W-001',true],['betonsorte','Betonsorte *','text','C30/37 XC2',true],
+    ['herstdatum','Herstelldatum *','date','',true],['prueftag','Prüftag *','sel',['2','7','28','56','90'],true],
+    ['baustelle','Baustelle','text',''],['lieferschein','Lieferschein-Nr.','text','LS-'],
+    ['werk','Werk','text',''],['bemerkung','Bemerkung','text',''],
+  ]},
+  prismen:{icon:'🔲',label:'Prismen',norm:'EN 196-1',fields:[
+    ['nummer','Nr. *','text','P-001',true],['moertelsorte','Mörtelsorte *','text','M5',true],
+    ['herstdatum','Herstelldatum *','date','',true],['prueftag','Prüftag *','sel',['2','7','28'],true],
+    ['abmessungen','Abmessungen','sel',['160×40×40mm','40×40×160mm']],['baustelle','Baustelle','text',''],
+  ]},
+  zylinder:{icon:'🔵',label:'Zylinder',norm:'EN 12390-3',fields:[
+    ['nummer','Nr. *','text','Z-001',true],['betonsorte','Betonsorte *','text','C25/30',true],
+    ['herstdatum','Herstelldatum *','date','',true],['prueftag','Prüftag *','sel',['7','28','56','90'],true],
+    ['abmessungen','Abmessungen','sel',['Ø150×300mm','Ø100×200mm']],['baustelle','Baustelle','text',''],
+  ]},
+  bohrkerne:{icon:'🟤',label:'Bohrkerne',norm:'EN 12697-6',fields:[
+    ['nummer','Nr. *','text','BK-001',true],['asphaltart','Asphaltart *','sel',['AC D','SMA','PA','MA','AC B'],true],
+    ['entnahmedatum','Entnahmedatum *','date','',true],['baustelle','Baustelle/km *','text','B123 km 12+500',true],
+    ['schichtdicke','Schichtdicke (mm)','number','40'],['vg','Verdichtungsgrad (%)','number','97.5'],
+    ['bemerkung','Bemerkung','text',''],
+  ]},
+  marshall:{icon:'🔺',label:'Marshall-PK',norm:'EN 12697-34',fields:[
+    ['nummer','Nr. *','text','M-001',true],['asphaltart','Asphaltart *','sel',['AC 11 D','AC 16 D','SMA 11 S','PA 11','AC 22 T'],true],
+    ['herstdatum','Herstelldatum *','date','',true],
+    ['stabilitaet','Stabilität (kN)','number','8.5'],['fliesswert','Fließwert (mm)','number','3.2'],
+    ['bemerkung','Bemerkung','text',''],
+  ]},
+  bodenproben:{icon:'🟡',label:'Bodenproben',norm:'DIN 18127',fields:[
+    ['nummer','Nr. *','text','BP-001',true],['bodenart','Bodenart/Gruppe *','text','GW',true],
+    ['entnahmedatum','Entnahmedatum *','date','',true],['baustelle','Baustelle *','text','',true],
+    ['tiefe','Tiefe (m)','number','1.5'],['wassergehalt','Wassergehalt (%)','number','12.5'],
+    ['dpr','Dpr (%)','number','97.0'],['bemerkung','Bemerkung','text',''],
+  ]},
+};
+
+let allData={wuerfel:[],prismen:[],zylinder:[],bohrkerne:[],marshall:[],bodenproben:[]};
+let curType='wuerfel',curFilter='alle';
+
+async function loadAll(){
+  for(const t of Object.keys(TYPES)){
+    if(db){try{const s=await db.collection('proben').where('uid','==',uid).where('typ','==',t).orderBy('createdAt','desc').get();allData[t]=s.docs.map(d=>({id:d.id,...d.data()}));}catch(e){allData[t]=lsGet(t);}}
+    else{allData[t]=lsGet(t);}
+  }
+  updateCounts();renderAll();renderFaellig();
+}
+
+function lsGet(t){return JSON.parse(localStorage.getItem('bc_'+t)||'[]');}
+function lsSet(t,d){localStorage.setItem('bc_'+t,JSON.stringify(d));}
+
+function updateCounts(){
+  let tot=0;
+  for(const[t,d]of Object.entries(allData)){const c=d.length;tot+=c;document.getElementById('cnt-'+t).textContent=c;document.getElementById('ov-'+t).textContent=c+' Stück';}
+  document.getElementById('cnt-all').textContent=tot;
+}
+
+function renderAll(){Object.keys(TYPES).forEach(t=>renderTbl(t));}
+
+function renderTbl(t,filter='alle',q=''){
+  const tb=document.getElementById('tbl-'+t);if(!tb)return;
+  let d=allData[t]||[];
+  if(filter==='faellig')d=d.filter(p=>getStatus(p)==='faellig');
+  else if(filter==='ueberfaellig')d=d.filter(p=>getStatus(p)==='ueberfaellig');
+  else if(filter==='geprueft')d=d.filter(p=>p.geprueft);
+  if(q)d=d.filter(p=>JSON.stringify(p).toLowerCase().includes(q.toLowerCase()));
+  if(!d.length){tb.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="ei">${TYPES[t].icon}</div><div class="et">Keine Einträge</div><div class="es">+ Neu drücken um anzufangen</div></div></td></tr>`;return;}
+  tb.innerHTML=d.map(p=>renderRow(p,t)).join('');
+}
+
+function renderRow(p,t){
+  const s=getStatus(p);
+  const sb={'faellig':'<span class="badge b-soon">⚠ Fällig</span>','ueberfaellig':'<span class="badge b-over">🔴 Überfällig</span>','geprueft':'<span class="badge b-done">✓ Geprüft</span>','ok':'<span class="badge b-ok">● Läuft</span>'}[s]||'';
+  const fc=p.fc?`<span style="color:#10b981;font-weight:600;">${p.fc}</span>`:'<span style="color:#3d5066">—</span>';
+  let cols='';
+  if(['wuerfel','prismen','zylinder'].includes(t)){
+    const pd=p.herstdatum?calcPD(p.herstdatum,p.prueftag||28):'—';
+    const sorte=p.betonsorte||p.moertelsorte||'—';
+    cols=`<td style="font-size:11px;">${sorte}</td><td style="font-family:'JetBrains Mono',monospace;font-size:10px;">${fd(p.herstdatum)}</td><td><span class="badge b-blue">${p.prueftag||28}d</span></td><td style="font-family:'JetBrains Mono',monospace;font-size:10px;">${pd}</td><td>${sb}</td><td>${fc}</td>`;
+  }else if(t==='bohrkerne'){
+    cols=`<td>${p.asphaltart||'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-size:10px;">${fd(p.entnahmedatum)}</td><td style="font-size:10px;">${p.baustelle||'—'}</td><td>${p.schichtdicke||'—'} mm</td><td>${p.vg||'—'} %</td>`;
+  }else if(t==='marshall'){
+    const mq=p.stabilitaet&&p.fliesswert?Math.round(p.stabilitaet*1000/p.fliesswert):'—';
+    cols=`<td>${p.asphaltart||'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-size:10px;">${fd(p.herstdatum)}</td><td>${p.stabilitaet||'—'} kN</td><td>${p.fliesswert||'—'} mm</td><td>${mq} N/mm</td>`;
+  }else if(t==='bodenproben'){
+    cols=`<td>${p.bodenart||'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-size:10px;">${fd(p.entnahmedatum)}</td><td style="font-size:10px;">${p.baustelle||'—'}</td><td>${p.tiefe||'—'} m</td><td>${p.wassergehalt||'—'} %</td><td>${p.dpr||'—'} %</td>`;
+  }
+  const resBtn=['wuerfel','prismen','zylinder'].includes(t)?`<button class="tb-btn tb-res" onclick="openRes('${p.id}','${t}')">Ergebnis</button>`:'';
+  return`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:10px;">${p.nummer||'—'}</td>${cols}<td style="display:flex;gap:4px;">${resBtn}<button class="tb-btn tb-del" onclick="del('${p.id}','${t}')">🗑</button></td></tr>`;
+}
+
+function renderFaellig(){
+  const list=[];
+  ['wuerfel','prismen','zylinder'].forEach(t=>allData[t].forEach(p=>{const s=getStatus(p);if(s==='faellig'||s==='ueberfaellig')list.push({...p,_t:t});}));
+  const box=document.getElementById('faellig-box');const el=document.getElementById('faellig-list');
+  if(!list.length){box.style.display='none';return;}
+  box.style.display='block';
+  el.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:11px;">${list.map(p=>{
+    const s=getStatus(p);
+    return`<tr><td style="padding:5px 8px;color:#e8f0fe;font-family:'JetBrains Mono',monospace;font-size:10px;">${p.nummer||'—'}</td><td style="padding:5px 8px;"><span class="badge ${p._t==='bodenproben'?'b-geo':'b-blue'}">${TYPES[p._t].icon}</span></td><td style="padding:5px 8px;font-size:10px;">${p.betonsorte||p.moertelsorte||'—'}</td><td style="padding:5px 8px;">${calcPD(p.herstdatum,p.prueftag||28)}</td><td style="padding:5px 8px;"><span class="badge ${s==='ueberfaellig'?'b-over':'b-soon'}">${s==='ueberfaellig'?'🔴 Überfällig':'⚠ Fällig'}</span></td><td style="padding:5px 8px;"><button class="tb-btn tb-res" onclick="openRes('${p.id}','${p._t}')">Ergebnis</button></td></tr>`;
+  }).join('')}</table>`;
+}
+
+function getStatus(p){
+  if(p.geprueft)return'geprueft';
+  if(!p.herstdatum)return'ok';
+  const pd=new Date(calcPDRaw(p.herstdatum,p.prueftag||28));
+  const today=new Date();today.setHours(0,0,0,0);
+  const diff=Math.floor((pd-today)/(864e5));
+  if(diff<0)return'ueberfaellig';
+  if(diff<=2)return'faellig';
+  return'ok';
+}
+function calcPD(h,d){if(!h)return'—';const dt=new Date(h);dt.setDate(dt.getDate()+parseInt(d));return fd(dt.toISOString().split('T')[0]);}
+function calcPDRaw(h,d){const dt=new Date(h);dt.setDate(dt.getDate()+parseInt(d));return dt.toISOString().split('T')[0];}
+function fd(s){if(!s||s==='—')return'—';try{const d=new Date(s);return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});}catch(e){return s;}}
+
+// ADD
+function openAdd(t=curType){
+  curType=t;const cfg=TYPES[t];
+  document.getElementById('mod-t').textContent=cfg.icon+' '+cfg.label+' hinzufügen';
+  document.getElementById('mod-s').textContent=cfg.norm;
+  const fields=cfg.fields;
+  let html='';
+  for(let i=0;i<fields.length;i+=2){
+    const pair=fields.slice(i,i+2);
+    html+=`<div class="fr">${pair.map(f=>{
+      const[id,lbl,typ,ph,req]=f;
+      return`<div class="ff"><label class="fl">${lbl}</label>${typ==='sel'?`<select class="fs" id="f-${id}">${(Array.isArray(ph)?ph:[]).map(o=>`<option>${o}</option>`).join('')}</select>`:`<input class="fi" type="${typ}" id="f-${id}" placeholder="${ph||''}" ${req?'required':''}/>`}</div>`;
+    }).join('')}</div>`;
+  }
+  document.getElementById('mod-fields').innerHTML=html;
+  const today=new Date().toISOString().split('T')[0];
+  fields.filter(f=>f[2]==='date').forEach(f=>{const el=document.getElementById('f-'+f[0]);if(el)el.value=today;});
+  document.getElementById('mov-add').classList.add('open');
+}
+
+async function saveProbe(){
+  const cfg=TYPES[curType];const data={typ:curType,uid,geprueft:false,createdAt:new Date().toISOString()};
+  for(const f of cfg.fields){const el=document.getElementById('f-'+f[0]);if(el){if(f[4]&&!el.value.trim()){toast('err',f[1].replace(' *','')+' ist erforderlich');return;}data[f[0]]=el.value.trim();}}
+  try{
+    if(db){await db.collection('proben').add(data);}
+    else{data.id='l'+Date.now();const ls=lsGet(curType);ls.unshift(data);lsSet(curType,ls);}
+    closeMod('mov-add');toast('ok','Gespeichert!');loadAll();
+  }catch(e){toast('err',e.message);}
+}
+
+// RESULT
+function openRes(id,t){
+  curType=t;document.getElementById('res-id').value=id;document.getElementById('res-typ').value=t;
+  const p=allData[t].find(x=>x.id===id);
+  document.getElementById('res-sub').textContent=(p?.nummer||id)+' · '+TYPES[t].label;
+  document.getElementById('res-dat').value=new Date().toISOString().split('T')[0];
+  document.getElementById('res-f').value='';document.getElementById('res-fc').value='';
+  document.getElementById('mov-res').classList.add('open');
+}
+function autoFC(){
+  const f=parseFloat(document.getElementById('res-f').value);const t=document.getElementById('res-typ').value;
+  const areas={wuerfel:22500,prismen:1600,zylinder:17671};
+  if(f&&areas[t])document.getElementById('res-fc').value=(f*1000/areas[t]).toFixed(1);
+}
+async function saveResult(){
+  const id=document.getElementById('res-id').value;const t=document.getElementById('res-typ').value;
+  const u={geprueft:true,pruefDatumIst:document.getElementById('res-dat').value,kraft:document.getElementById('res-f').value,fc:document.getElementById('res-fc').value,bruchbild:document.getElementById('res-bruch').value,bemerkungErgebnis:document.getElementById('res-bem').value,bewertung:document.getElementById('res-bew').value};
+  try{
+    if(db&&!id.startsWith('l')){await db.collection('proben').doc(id).update(u);}
+    else{const ls=lsGet(t);const i=ls.findIndex(x=>x.id===id);if(i>-1){ls[i]={...ls[i],...u};lsSet(t,ls);}}
+    closeMod('mov-res');toast('ok','Ergebnis gespeichert!');loadAll();
+  }catch(e){toast('err',e.message);}
+}
+
+async function del(id,t){
+  if(!confirm('Probekörper wirklich löschen?'))return;
+  try{
+    if(db&&!id.startsWith('l')){await db.collection('proben').doc(id).delete();}
+    else{lsSet(t,lsGet(t).filter(x=>x.id!==id));}
+    toast('ok','Gelöscht.');loadAll();
+  }catch(e){toast('err',e.message);}
+}
+
+function exportCSV(){
+  let c='Typ,Nr.,Sorte/Art,Datum,Prüftag,Prüfdatum,fc,Status,Baustelle\n';
+  for(const[t,d]of Object.entries(allData)){d.forEach(p=>{c+=`${t},${p.nummer||''},${p.betonsorte||p.asphaltart||p.bodenart||''},${p.herstdatum||p.entnahmedatum||''},${p.prueftag||''},${calcPD(p.herstdatum||p.entnahmedatum,p.prueftag||28)},${p.fc||''},${getStatus(p)},${p.baustelle||''}\n`;});}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));a.download='probekoerper.csv';a.click();
+}
+
+function showP(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sbn').forEach(b=>b.classList.remove('act'));
+  document.getElementById('panel-'+id).classList.add('active');
+  const btn=document.querySelector(`.sbn[onclick="showP('${id}')"]`);if(btn)btn.classList.add('act');
+  const t={ov:'Alle Probekörper',wuerfel:'Würfel',prismen:'Prismen',zylinder:'Zylinder',bohrkerne:'Bohrkerne',marshall:'Marshall-PK',bodenproben:'Bodenproben'};
+  document.getElementById('tb-t').textContent=t[id]||id;
+  if(id!=='ov')curType=id;
+  closeSB();
+}
+function ft(t,f,btn){curFilter=f;document.querySelectorAll('.ftabs .ftab').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderTbl(t,f);}
+function search(t,q){renderTbl(t,curFilter,q);}
+function closeMod(id){document.getElementById(id).classList.remove('open');}
+function toggleSB(){document.getElementById('sb').classList.toggle('open');document.getElementById('mob-ov').classList.toggle('open');}
+function closeSB(){document.getElementById('sb').classList.remove('open');document.getElementById('mob-ov').classList.remove('open');}
+function toast(type,msg){const el=document.getElementById(type==='ok'?'tok':'terr');const m=document.getElementById(type==='ok'?'tok-m':'terr-m');m.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000);}
+document.querySelectorAll('.mov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+if(window.innerWidth<=768){const b=document.querySelector('.mob-btn');if(b)b.style.display='flex';}
+</script>
+</body>
+</html>
